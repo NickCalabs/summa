@@ -1,0 +1,222 @@
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  numeric,
+  jsonb,
+  pgEnum,
+  date,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+
+// ── Enums ──
+
+export const sheetTypeEnum = pgEnum("sheet_type", ["assets", "debts"]);
+export const providerTypeEnum = pgEnum("provider_type", [
+  "manual",
+  "ticker",
+  "wallet",
+  "exchange",
+  "simplefin",
+  "snaptrade",
+  "zillow",
+  "vin",
+  "custom",
+]);
+export const snapshotSourceEnum = pgEnum("snapshot_source", [
+  "provider",
+  "manual",
+  "import",
+]);
+
+// ── Users (Better Auth manages this table) ──
+// Better Auth creates: user, session, account, verification tables.
+// We extend the user table with `defaultCurrency` via `additionalFields`.
+// The schema below is for Drizzle awareness / seed script only.
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  defaultCurrency: text("default_currency").notNull().default("USD"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ── Portfolios ──
+
+export const portfolios = pgTable("portfolios", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  currency: text("currency").notNull().default("USD"),
+  startDate: date("start_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ── Sheets ──
+
+export const sheets = pgTable("sheets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  portfolioId: uuid("portfolio_id")
+    .notNull()
+    .references(() => portfolios.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: sheetTypeEnum("type").notNull().default("assets"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Sections ──
+
+export const sections = pgTable("sections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sheetId: uuid("sheet_id")
+    .notNull()
+    .references(() => sheets.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Assets ──
+
+export const assets = pgTable("assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sectionId: uuid("section_id")
+    .notNull()
+    .references(() => sections.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type").notNull().default("other"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  currency: text("currency").notNull().default("USD"),
+  quantity: numeric("quantity", { precision: 20, scale: 8 }),
+  costBasis: numeric("cost_basis", { precision: 20, scale: 2 }),
+  currentValue: numeric("current_value", { precision: 20, scale: 2 })
+    .notNull()
+    .default("0"),
+  currentPrice: numeric("current_price", { precision: 20, scale: 8 }),
+  isInvestable: boolean("is_investable").notNull().default(true),
+  isCashEquivalent: boolean("is_cash_equivalent").notNull().default(false),
+  providerType: providerTypeEnum("provider_type").notNull().default("manual"),
+  providerConfig: jsonb("provider_config")
+    .$type<{
+      ticker?: string;
+      exchange?: string;
+      source?: string;
+      walletAddress?: string;
+      connectionId?: string;
+    }>()
+    .default({}),
+  ownershipPct: numeric("ownership_pct", { precision: 5, scale: 2 })
+    .notNull()
+    .default("100"),
+  notes: text("notes"),
+  metadata: jsonb("metadata").default({}),
+  isArchived: boolean("is_archived").notNull().default(false),
+  staleDays: integer("stale_days"),
+  linkedDebtId: uuid("linked_debt_id"),
+  lastSyncedAt: timestamp("last_synced_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ── Asset Snapshots ──
+
+export const assetSnapshots = pgTable(
+  "asset_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assetId: uuid("asset_id")
+      .notNull()
+      .references(() => assets.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    value: numeric("value", { precision: 20, scale: 2 }).notNull(),
+    valueInBase: numeric("value_in_base", { precision: 20, scale: 2 }).notNull(),
+    price: numeric("price", { precision: 20, scale: 8 }),
+    quantity: numeric("quantity", { precision: 20, scale: 8 }),
+    source: snapshotSourceEnum("source").notNull().default("provider"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("asset_snapshot_unique").on(table.assetId, table.date),
+  ]
+);
+
+// ── Portfolio Snapshots ──
+
+export const portfolioSnapshots = pgTable(
+  "portfolio_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    portfolioId: uuid("portfolio_id")
+      .notNull()
+      .references(() => portfolios.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    totalAssets: numeric("total_assets", { precision: 20, scale: 2 }).notNull(),
+    totalDebts: numeric("total_debts", { precision: 20, scale: 2 }).notNull(),
+    netWorth: numeric("net_worth", { precision: 20, scale: 2 }).notNull(),
+    cashOnHand: numeric("cash_on_hand", { precision: 20, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("portfolio_snapshot_unique").on(table.portfolioId, table.date),
+  ]
+);
+
+// ── Exchange Rates ──
+
+export const exchangeRates = pgTable("exchange_rates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  base: text("base").notNull(),
+  rates: jsonb("rates").notNull(),
+  fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
+});
