@@ -34,6 +34,18 @@ docker compose up -d
 
 Open [http://localhost:3000](http://localhost:3000), create an account, and start tracking.
 
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `BETTER_AUTH_SECRET` | Yes | Random secret for session signing |
+| `BETTER_AUTH_URL` | Yes | Public URL of your Summa instance |
+| `PLAID_CLIENT_ID` | No | Plaid client ID (bank connections) |
+| `PLAID_SECRET` | No | Plaid secret key |
+| `PLAID_ENV` | No | `sandbox`, `development`, or `production` |
+| `ENCRYPTION_KEY` | No | 32-byte hex key for encrypting Plaid tokens |
+
 ## Development
 
 ```bash
