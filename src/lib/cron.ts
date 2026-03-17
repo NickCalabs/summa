@@ -64,6 +64,10 @@ async function refreshPrices() {
             if (!ticker) continue;
             const result = prices.get(ticker);
             if (!result) continue;
+            if (result.price <= 0) {
+              console.warn(`[cron] Skipping price update for ${ticker}: received invalid price ${result.price}`);
+              continue;
+            }
 
             const qty = asset.quantity ? Number(asset.quantity) : null;
             const newValue = qty != null ? (qty * result.price).toFixed(2) : result.price.toFixed(2);

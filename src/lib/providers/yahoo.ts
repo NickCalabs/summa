@@ -58,6 +58,10 @@ export async function getYahooBatchPrices(
       const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
       for (const q of quoteArray) {
         if (q?.symbol && q.regularMarketPrice != null) {
+          if (q.regularMarketPrice <= 0) {
+            console.warn(`[yahoo] Skipping ${q.symbol}: received invalid price ${q.regularMarketPrice}`);
+            continue;
+          }
           results.set(q.symbol, {
             symbol: q.symbol,
             price: q.regularMarketPrice,
