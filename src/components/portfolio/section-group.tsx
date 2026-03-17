@@ -10,9 +10,24 @@ interface SectionGroupProps {
   sheetTotal: number;
   currency: string;
   portfolioId: string;
+  sections: Section[];
+  isFirst: boolean;
+  isLast: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
-export function SectionGroup({ section, sheetTotal, currency, portfolioId }: SectionGroupProps) {
+export function SectionGroup({
+  section,
+  sheetTotal,
+  currency,
+  portfolioId,
+  sections,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+}: SectionGroupProps) {
   const collapsedSections = useUIStore((s) => s.collapsedSections);
   const toggleSection = useUIStore((s) => s.toggleSection);
   const isCollapsed = collapsedSections.has(section.id);
@@ -26,10 +41,20 @@ export function SectionGroup({ section, sheetTotal, currency, portfolioId }: Sec
           isCollapsed={isCollapsed}
           onToggle={() => toggleSection(section.id)}
           portfolioId={portfolioId}
+          isFirst={isFirst}
+          isLast={isLast}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
         />
       </div>
       {!isCollapsed && (
-        <AssetTable assets={section.assets} sheetTotal={sheetTotal} currency={currency} />
+        <AssetTable
+          assets={section.assets}
+          sheetTotal={sheetTotal}
+          currency={currency}
+          portfolioId={portfolioId}
+          sections={sections}
+        />
       )}
     </div>
   );

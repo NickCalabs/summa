@@ -8,6 +8,10 @@ interface UIStore {
   openDetailPanel: (assetId: string) => void;
   closeDetailPanel: () => void;
 
+  addAssetDialogSectionId: string | null;
+  openAddAssetDialog: (sectionId: string) => void;
+  closeAddAssetDialog: () => void;
+
   collapsedSections: Set<string>;
   toggleSection: (sectionId: string) => void;
 
@@ -23,6 +27,10 @@ export const useUIStore = create<UIStore>((set) => ({
   detailPanelAssetId: null,
   openDetailPanel: (assetId) => set({ detailPanelAssetId: assetId }),
   closeDetailPanel: () => set({ detailPanelAssetId: null }),
+
+  addAssetDialogSectionId: null,
+  openAddAssetDialog: (sectionId) => set({ addAssetDialogSectionId: sectionId }),
+  closeAddAssetDialog: () => set({ addAssetDialogSectionId: null }),
 
   collapsedSections: new Set(),
   toggleSection: (sectionId) =>

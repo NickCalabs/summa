@@ -7,6 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NetWorthHeader } from "./net-worth-header";
 import { SheetTabs } from "./sheet-tabs";
 import { SheetView } from "./sheet-view";
+import { TopBar } from "./top-bar";
+import { DetailPanel } from "./detail-panel";
+import { AddAssetDialog } from "./add-asset-dialog";
 
 interface PortfolioViewProps {
   portfolioId: string;
@@ -52,9 +55,17 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   if (!portfolio) return null;
 
   const activeSheet = portfolio.sheets.find((s) => s.id === activeSheetId) ?? portfolio.sheets[0];
+  const defaultSectionId = activeSheet?.sections[0]?.id ?? null;
+  const allSections = activeSheet?.sections ?? [];
 
   return (
     <div className="p-6 space-y-6">
+      <TopBar
+        portfolioId={portfolioId}
+        portfolioName={portfolio.name}
+        defaultSectionId={defaultSectionId}
+      />
+
       <NetWorthHeader aggregates={portfolio.aggregates} currency={portfolio.currency} />
 
       {/* Chart placeholder */}
@@ -72,6 +83,13 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
       {activeSheet && (
         <SheetView sheet={activeSheet} currency={portfolio.currency} portfolioId={portfolioId} />
       )}
+
+      <DetailPanel portfolioId={portfolioId} portfolio={portfolio} />
+      <AddAssetDialog
+        portfolioId={portfolioId}
+        currency={portfolio.currency}
+        sections={allSections}
+      />
     </div>
   );
 }
