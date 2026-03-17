@@ -66,7 +66,7 @@ export function SheetTabs({ sheets, activeSheetId, onSheetChange, portfolioId }:
 
   return (
     <Tabs
-      value={activeSheetId ?? undefined}
+      value={activeSheetId ?? sheets[0]?.id}
       onValueChange={(value) => onSheetChange(value as string)}
     >
       <div className="flex items-center gap-1">
