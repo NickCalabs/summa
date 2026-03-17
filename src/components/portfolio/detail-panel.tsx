@@ -33,6 +33,11 @@ import {
   useDeleteAsset,
 } from "@/hooks/use-assets";
 import { useSyncPlaidConnection } from "@/hooks/use-plaid";
+import {
+  useAssetTransactions,
+  useCreateTransaction,
+  type Transaction,
+} from "@/hooks/use-transactions";
 import { findAssetInTree } from "@/lib/portfolio-utils";
 import { parseCurrencyInput, formatNumberForInput } from "@/lib/currency";
 import { useCurrency } from "@/contexts/currency-context";
@@ -123,6 +128,7 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
             <Tabs defaultValue="value">
               <TabsList variant="line" className="w-full">
                 <TabsTrigger value="value">Value</TabsTrigger>
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
                 <TabsTrigger value="notes">Notes</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
@@ -134,6 +140,10 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
                   portfolioId={portfolioId}
                   updateAsset={updateAsset}
                 />
+              </TabsContent>
+
+              <TabsContent value="transactions" className="pt-4 space-y-4">
+                <TransactionsTab assetId={asset.id} currency={asset.currency} />
               </TabsContent>
 
               <TabsContent value="notes" className="pt-4">
@@ -635,6 +645,200 @@ function AssetSparkline({ assetId }: { assetId: string }) {
           />
         </LineChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+  buy: "Buy",
+  sell: "Sell",
+  deposit: "Deposit",
+  withdraw: "Withdraw",
+};
+
+function TransactionsTab({
+  assetId,
+  currency,
+}: {
+  assetId: string;
+  currency: string;
+}) {
+  const { data: txns, isLoading } = useAssetTransactions(assetId);
+  const createTransaction = useCreateTransaction(assetId);
+
+  const [type, setType] = useState<"buy" | "sell" | "deposit" | "withdraw">("buy");
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState("");
+  const [total, setTotal] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [notes, setNotes] = useState("");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!total || !date) return;
+
+    createTransaction.mutate(
+      {
+        type,
+        quantity: quantity || undefined,
+        price: price || undefined,
+        total,
+        date,
+        notes: notes || undefined,
+      },
+      {
+        onSuccess: () => {
+          setQuantity("");
+          setPrice("");
+          setTotal("");
+          setNotes("");
+          setDate(new Date().toISOString().split("T")[0]);
+        },
+      }
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 border rounded-lg p-3 bg-muted/30">
+        <p className="text-xs font-medium text-muted-foreground">Add transaction</p>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="col-span-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="sm" className="w-full justify-start" />
+                }
+              >
+                {TRANSACTION_TYPE_LABELS[type]}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-40">
+                <DropdownMenuRadioGroup
+                  value={type}
+                  onValueChange={(v) => setType(v as typeof type)}
+                >
+                  {(["buy", "sell", "deposit", "withdraw"] as const).map((t) => (
+                    <DropdownMenuRadioItem key={t} value={t}>
+                      {TRANSACTION_TYPE_LABELS[t]}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <Input
+            placeholder="Quantity"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            inputMode="decimal"
+            className="h-8 text-sm"
+          />
+          <Input
+            placeholder="Price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            inputMode="decimal"
+            className="h-8 text-sm"
+          />
+          <Input
+            placeholder="Total *"
+            value={total}
+            onChange={(e) => setTotal(e.target.value)}
+            inputMode="decimal"
+            required
+            className="h-8 text-sm"
+          />
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+            className="h-8 text-sm"
+          />
+          <Input
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="col-span-2 h-8 text-sm"
+          />
+        </div>
+
+        <Button
+          type="submit"
+          size="sm"
+          className="w-full"
+          disabled={createTransaction.isPending}
+        >
+          {createTransaction.isPending ? "Adding..." : "Add"}
+        </Button>
+      </form>
+
+      {isLoading ? (
+        <Skeleton className="h-20" />
+      ) : !txns || txns.length === 0 ? (
+        <div className="h-20 rounded-lg border border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground">
+          No transactions yet
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {txns.map((tx) => (
+            <TransactionRow key={tx.id} tx={tx} currency={currency} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TransactionRow({
+  tx,
+  currency,
+}: {
+  tx: Transaction;
+  currency: string;
+}) {
+  const isBuy = tx.type === "buy" || tx.type === "deposit";
+
+  return (
+    <div className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50">
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5">
+          <Badge
+            variant={isBuy ? "default" : "secondary"}
+            className="text-[10px] px-1.5 py-0"
+          >
+            {TRANSACTION_TYPE_LABELS[tx.type]}
+          </Badge>
+          <span className="text-xs text-muted-foreground">{tx.date}</span>
+        </div>
+        {tx.quantity && tx.price && (
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {Number(tx.quantity).toLocaleString()} ×{" "}
+            {Number(tx.price).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 8,
+            })}{" "}
+            {currency}
+          </span>
+        )}
+        {tx.notes && (
+          <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+            {tx.notes}
+          </span>
+        )}
+      </div>
+      <span
+        className={`tabular-nums font-medium text-sm ${isBuy ? "text-green-600" : "text-red-500"}`}
+      >
+        {isBuy ? "+" : "-"}
+        {Number(tx.total).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}{" "}
+        {currency}
+      </span>
     </div>
   );
 }

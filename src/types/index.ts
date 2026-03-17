@@ -133,6 +133,17 @@ export const takeSnapshot = z.object({
   portfolioId: z.string().uuid(),
 });
 
+// ── Transaction schemas ──
+
+export const createTransaction = z.object({
+  type: z.enum(["buy", "sell", "deposit", "withdraw"]),
+  quantity: z.string().optional(),
+  price: z.string().optional(),
+  total: z.string(),
+  date: z.string().date(),
+  notes: z.string().optional(),
+});
+
 // ── Plaid schemas ──
 
 export const plaidExchangeToken = z.object({

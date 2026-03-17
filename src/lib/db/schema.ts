@@ -255,6 +255,30 @@ export const plaidAccounts = pgTable("plaid_accounts", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ── Transactions ──
+
+export const transactionTypeEnum = pgEnum("transaction_type", [
+  "buy",
+  "sell",
+  "deposit",
+  "withdraw",
+]);
+
+export const transactions = pgTable("transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  assetId: uuid("asset_id")
+    .notNull()
+    .references(() => assets.id, { onDelete: "cascade" }),
+  type: transactionTypeEnum("type").notNull(),
+  quantity: numeric("quantity", { precision: 20, scale: 8 }),
+  price: numeric("price", { precision: 20, scale: 8 }),
+  total: numeric("total", { precision: 20, scale: 2 }).notNull(),
+  date: date("date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // ── Exchange Rates ──
 
 export const exchangeRates = pgTable("exchange_rates", {
