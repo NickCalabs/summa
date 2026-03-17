@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import yahooFinance from "yahoo-finance2";
-import type { PriceProvider, PriceResult, SearchResult } from "./types";
+import type { PriceProvider, PriceResult, SearchResult, BatchPriceResult } from "./types";
 
 const yf = yahooFinance as any;
 
@@ -45,3 +45,34 @@ export const yahooProvider: PriceProvider = {
       .filter((r: SearchResult) => r.symbol);
   },
 };
+
+export async function getYahooBatchPrices(
+  symbols: string[]
+): Promise<Map<string, BatchPriceResult>> {
+  const results = new Map<string, BatchPriceResult>();
+  const chunkSize = 50;
+
+  for (let i = 0; i < symbols.length; i += chunkSize) {
+    const chunk = symbols.slice(i, i + chunkSize);
+    try {
+      const quotes = await yf.quote(chunk);
+      const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
+      for (const q of quoteArray) {
+        if (q?.symbol && q.regularMarketPrice != null) {
+          results.set(q.symbol, {
+            symbol: q.symbol,
+            price: q.regularMarketPrice,
+            currency: q.currency ?? "USD",
+            timestamp: q.regularMarketTime
+              ? new Date(q.regularMarketTime)
+              : new Date(),
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`[yahoo] Batch quote error for chunk starting at ${i}:`, error);
+    }
+  }
+
+  return results;
+}

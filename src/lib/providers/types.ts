@@ -13,6 +13,13 @@ export interface SearchResult {
   source: "yahoo" | "coingecko";
 }
 
+export interface BatchPriceResult {
+  symbol: string;
+  price: number;
+  currency: string;
+  timestamp: Date;
+}
+
 export interface PriceProvider {
   type: "yahoo" | "coingecko";
   getPrice(symbol: string, currency: string): Promise<PriceResult>;

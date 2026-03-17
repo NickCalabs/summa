@@ -1,5 +1,5 @@
 import { TokenBucket, TtlCache } from "./rate-limit-cache";
-import type { PriceProvider, PriceResult, SearchResult } from "./types";
+import type { PriceProvider, PriceResult, SearchResult, BatchPriceResult } from "./types";
 
 const BASE_URL = "https://api.coingecko.com/api/v3";
 const CACHE_TTL = 5 * 60 * 1000;
@@ -73,3 +73,38 @@ export const coingeckoProvider: PriceProvider = {
     return results;
   },
 };
+
+export async function getCoinGeckoBatchPrices(
+  coinIds: string[],
+  currency: string
+): Promise<Map<string, BatchPriceResult>> {
+  const results = new Map<string, BatchPriceResult>();
+  const cur = currency.toLowerCase();
+  const chunkSize = 50;
+
+  for (let i = 0; i < coinIds.length; i += chunkSize) {
+    const chunk = coinIds.slice(i, i + chunkSize);
+    try {
+      const ids = chunk.map((id) => encodeURIComponent(id)).join(",");
+      const data = await cgFetch<Record<string, Record<string, number>>>(
+        `/simple/price?ids=${ids}&vs_currencies=${encodeURIComponent(cur)}`
+      );
+
+      for (const coinId of chunk) {
+        const coinData = data[coinId];
+        if (coinData && coinData[cur] !== undefined) {
+          results.set(coinId, {
+            symbol: coinId,
+            price: coinData[cur],
+            currency: currency.toUpperCase(),
+            timestamp: new Date(),
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`[coingecko] Batch price error for chunk starting at ${i}:`, error);
+    }
+  }
+
+  return results;
+}
