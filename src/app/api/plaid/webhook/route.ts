@@ -2,11 +2,125 @@ import { db } from "@/lib/db";
 import { plaidConnections, plaidAccounts, assets } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
-import { getBalances } from "@/lib/providers/plaid";
+import { getBalances, getPlaidClient } from "@/lib/providers/plaid";
+
+function base64UrlDecode(str: string): Buffer {
+  const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(
+    base64.length + (4 - (base64.length % 4)) % 4,
+    "="
+  );
+  return Buffer.from(padded, "base64");
+}
+
+async function verifyPlaidSignature(
+  token: string,
+  rawBody: string
+): Promise<boolean> {
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+
+  const [headerB64, payloadB64, sigB64] = parts;
+
+  let header: { kid?: string };
+  let payload: { iat?: number; request_body_sha256?: string };
+  try {
+    header = JSON.parse(base64UrlDecode(headerB64).toString("utf8"));
+    payload = JSON.parse(base64UrlDecode(payloadB64).toString("utf8"));
+  } catch {
+    return false;
+  }
+
+  const { kid } = header;
+  if (!kid) return false;
+
+  // Fetch JWK from Plaid for this key ID
+  const plaid = getPlaidClient();
+  const keyResponse = await plaid.webhookVerificationKeyGet({ key_id: kid });
+  const jwk = keyResponse.data.key as unknown as JsonWebKey;
+
+  // Import EC public key
+  const cryptoKey = await crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["verify"]
+  );
+
+  // Verify JWT signature over "headerB64.payloadB64"
+  const signingInput = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+  const signature = base64UrlDecode(sigB64);
+  const valid = await crypto.subtle.verify(
+    { name: "ECDSA", hash: "SHA-256" },
+    cryptoKey,
+    signature,
+    signingInput
+  );
+  if (!valid) return false;
+
+  // Check token freshness — Plaid uses a 5-minute window
+  if (payload.iat != null) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (nowSec - payload.iat > 300) return false;
+  }
+
+  // Verify body hash included in the JWT payload
+  if (payload.request_body_sha256) {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(rawBody)
+    );
+    const bodyHashHex = Buffer.from(digest).toString("hex");
+    if (bodyHashHex !== payload.request_body_sha256) return false;
+  }
+
+  return true;
+}
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+
+    // Signature verification
+    const verificationToken = request.headers.get("Plaid-Verification");
+    if (!("PLAID_WEBHOOK_SECRET" in process.env)) {
+      // Env var not set at all — skip verification (local dev)
+      console.warn(
+        "[plaid/webhook] PLAID_WEBHOOK_SECRET is not set; skipping signature verification"
+      );
+    } else if (!verificationToken) {
+      console.warn(
+        "[plaid/webhook] Missing Plaid-Verification header; rejecting request"
+      );
+      return new Response("Unauthorized", { status: 401 });
+    } else {
+      try {
+        const valid = await verifyPlaidSignature(verificationToken, rawBody);
+        if (!valid) {
+          console.warn(
+            "[plaid/webhook] Invalid Plaid webhook signature; rejecting request"
+          );
+          return new Response("Unauthorized", { status: 401 });
+        }
+      } catch (err) {
+        console.error("[plaid/webhook] Signature verification error:", err);
+        return new Response("Unauthorized", { status: 401 });
+      }
+    }
+
+    let body: {
+      webhook_type?: string;
+      webhook_code?: string;
+      item_id?: string;
+      error?: Record<string, string>;
+    };
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return new Response("OK", { status: 200 });
+    }
+
     const { webhook_type, webhook_code, item_id } = body;
 
     if (!item_id) {
@@ -96,7 +210,10 @@ export async function POST(request: Request) {
           })
           .where(eq(plaidConnections.id, connection.id));
       } catch (error) {
-        console.error(`[plaid-webhook] Balance refresh failed for connection ${connection.id}:`, error);
+        console.error(
+          `[plaid-webhook] Balance refresh failed for connection ${connection.id}:`,
+          error
+        );
       }
     }
 
