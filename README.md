@@ -19,6 +19,23 @@ A self-hosted net worth tracker that gives you a complete picture of your financ
 
 ## Quick Start
 
+**One-liner install** (requires Docker):
+
+```bash
+curl -sSL https://get.summa.sh | sh
+```
+
+This will create `~/summa/`, generate a secure config, and start Summa at [http://localhost:3000](http://localhost:3000).
+
+To install to a custom directory:
+
+```bash
+SUMMA_DIR=/opt/summa curl -sSL https://get.summa.sh | sh
+```
+
+<details>
+<summary>Manual install (clone + Docker Compose)</summary>
+
 ```bash
 # 1. Clone
 git clone https://github.com/summa-app/summa.git
@@ -31,6 +48,8 @@ cp .env.example .env
 # 3. Launch
 docker compose up -d
 ```
+
+</details>
 
 Open [http://localhost:3000](http://localhost:3000), create an account, and start tracking.
 
