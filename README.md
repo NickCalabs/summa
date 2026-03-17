@@ -53,6 +53,8 @@ docker compose up -d
 
 Open [http://localhost:3000](http://localhost:3000), create an account, and start tracking.
 
+Running on a server? See the **[Self-Hosting guide](docs/SELF-HOSTING.md)** for reverse proxy setup, backups, Plaid configuration, and more.
+
 ## Environment Variables
 
 | Variable | Required | Description |
