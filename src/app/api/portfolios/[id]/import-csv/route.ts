@@ -22,6 +22,11 @@ export async function POST(
       return errorResponse("File must be a CSV", 400);
     }
 
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+    if (file.size > MAX_FILE_SIZE) {
+      return errorResponse("File too large. Maximum size is 1MB.", 413);
+    }
+
     const text = await file.text();
     const parsed = Papa.parse<Record<string, string>>(text, {
       header: true,
