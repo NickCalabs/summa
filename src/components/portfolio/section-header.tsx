@@ -15,6 +15,7 @@ import { MoneyDisplay } from "./money-display";
 import { ConfirmDialog } from "./confirm-dialog";
 import { useUpdateSection, useDeleteSection } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
+import { useCurrency } from "@/contexts/currency-context";
 import type { Section } from "@/hooks/use-portfolio";
 
 interface SectionHeaderProps {
@@ -43,13 +44,14 @@ export function SectionHeader({
   const updateSection = useUpdateSection(portfolioId);
   const deleteSection = useDeleteSection(portfolioId);
   const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
+  const { toBase } = useCurrency();
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const sectionTotal = section.assets.reduce(
-    (sum, a) => sum + Number(a.currentValue),
+    (sum, a) => sum + toBase(Number(a.currentValue), a.currency),
     0
   );
 

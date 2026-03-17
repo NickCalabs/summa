@@ -1,14 +1,28 @@
 import type { Portfolio, Asset } from "@/hooks/use-portfolio";
+import { convertToBase } from "@/lib/currency";
+
+export function isAssetStale(asset: Asset): boolean {
+  if (asset.providerType === "manual") return false;
+  if (!asset.lastSyncedAt) return true;
+  const staleDays = asset.staleDays ?? 1;
+  return Date.now() - new Date(asset.lastSyncedAt).getTime() > staleDays * 86_400_000;
+}
 
 export function recomputeAggregates(portfolio: Portfolio): Portfolio {
   let totalAssets = 0;
   let totalDebts = 0;
   let cashOnHand = 0;
 
+  const rates = portfolio.rates ?? {};
+
   for (const sheet of portfolio.sheets) {
     for (const section of sheet.sections) {
       for (const asset of section.assets) {
-        const val = Number(asset.currentValue);
+        const rawVal = Number(asset.currentValue);
+        const val =
+          asset.currency !== portfolio.currency
+            ? convertToBase(rawVal, asset.currency, portfolio.currency, rates)
+            : rawVal;
         if (sheet.type === "debts") {
           totalDebts += val;
         } else {

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
+import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
 
 let started = false;
 
@@ -139,6 +140,34 @@ async function dailySnapshots() {
   }
 }
 
+async function refreshExchangeRates() {
+  const ts = new Date().toISOString();
+  console.log(`[cron] ${ts} Refreshing exchange rates...`);
+
+  try {
+    const allPortfolios = await db.select().from(portfolios);
+    const currencies = [...new Set(allPortfolios.map((p) => p.currency))];
+
+    for (const currency of currencies) {
+      try {
+        await refreshAndStoreRates(currency);
+        console.log(`[cron] ${ts} Refreshed rates for ${currency}`);
+      } catch (error) {
+        console.error(
+          `[cron] ${ts} Failed to refresh rates for ${currency}:`,
+          error
+        );
+      }
+    }
+
+    console.log(
+      `[cron] ${ts} Exchange rate refresh complete: ${currencies.length} currencies`
+    );
+  } catch (error) {
+    console.error(`[cron] ${ts} Exchange rate refresh failed:`, error);
+  }
+}
+
 export function startCronJobs() {
   if (started) return;
   started = true;
@@ -150,9 +179,10 @@ export function startCronJobs() {
     refreshPrices();
   });
 
-  // Midnight UTC — take daily portfolio snapshots
-  cron.schedule("0 0 * * *", () => {
-    dailySnapshots();
+  // Midnight UTC — refresh exchange rates then take daily portfolio snapshots
+  cron.schedule("0 0 * * *", async () => {
+    await refreshExchangeRates();
+    await dailySnapshots();
   }, { timezone: "UTC" });
 
   console.log(`[cron] ${new Date().toISOString()} Cron jobs registered`);

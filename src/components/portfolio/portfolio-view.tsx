@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePortfolio } from "@/hooks/use-portfolio";
+import Link from "next/link";
+import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { NetWorthHeader } from "./net-worth-header";
 import { SheetTabs } from "./sheet-tabs";
 import { SheetView } from "./sheet-view";
@@ -11,6 +13,7 @@ import { TopBar } from "./top-bar";
 import { DetailPanel } from "./detail-panel";
 import { AddAssetDialog } from "./add-asset-dialog";
 import { ChartSection } from "@/components/charts/chart-section";
+import { CurrencyProvider } from "@/contexts/currency-context";
 
 interface PortfolioViewProps {
   portfolioId: string;
@@ -46,9 +49,20 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   }
 
   if (error) {
+    const is404 = error instanceof ApiError && error.status === 404;
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-destructive">Failed to load portfolio. Please try again.</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <p className="text-destructive text-lg font-medium">
+          {is404 ? "Portfolio not found" : "Failed to load portfolio"}
+        </p>
+        <p className="text-muted-foreground text-sm">
+          {is404
+            ? "This portfolio may have been deleted or you don't have access."
+            : "Please try again later."}
+        </p>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard">Back to Dashboard</Link>
+        </Button>
       </div>
     );
   }
@@ -60,34 +74,42 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   const allSections = activeSheet?.sections ?? [];
 
   return (
-    <div className="p-6 space-y-6">
-      <TopBar
-        portfolioId={portfolioId}
-        portfolioName={portfolio.name}
-        defaultSectionId={defaultSectionId}
-      />
+    <CurrencyProvider baseCurrency={portfolio.currency} rates={portfolio.rates ?? {}}>
+      <div className="p-6 space-y-6">
+        <TopBar
+          portfolioId={portfolioId}
+          portfolioName={portfolio.name}
+          defaultSectionId={defaultSectionId}
+        />
 
-      <NetWorthHeader aggregates={portfolio.aggregates} currency={portfolio.currency} />
+        <NetWorthHeader aggregates={portfolio.aggregates} currency={portfolio.currency} />
 
-      <ChartSection portfolio={portfolio} />
+        <ChartSection portfolio={portfolio} />
 
-      <SheetTabs
-        sheets={portfolio.sheets}
-        activeSheetId={activeSheetId}
-        onSheetChange={setActiveSheet}
-        portfolioId={portfolioId}
-      />
+        <SheetTabs
+          sheets={portfolio.sheets}
+          activeSheetId={activeSheetId}
+          onSheetChange={setActiveSheet}
+          portfolioId={portfolioId}
+        />
 
-      {activeSheet && (
-        <SheetView sheet={activeSheet} currency={portfolio.currency} portfolioId={portfolioId} />
-      )}
+        {portfolio.sheets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-muted-foreground">
+              Add a sheet to get started
+            </p>
+          </div>
+        ) : activeSheet ? (
+          <SheetView sheet={activeSheet} currency={portfolio.currency} portfolioId={portfolioId} />
+        ) : null}
 
-      <DetailPanel portfolioId={portfolioId} portfolio={portfolio} />
-      <AddAssetDialog
-        portfolioId={portfolioId}
-        currency={portfolio.currency}
-        sections={allSections}
-      />
-    </div>
+        <DetailPanel portfolioId={portfolioId} portfolio={portfolio} />
+        <AddAssetDialog
+          portfolioId={portfolioId}
+          currency={portfolio.currency}
+          sections={allSections}
+        />
+      </div>
+    </CurrencyProvider>
   );
 }

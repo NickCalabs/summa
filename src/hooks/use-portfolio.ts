@@ -67,6 +67,16 @@ export interface Portfolio {
   updatedAt: string;
   sheets: Sheet[];
   aggregates: Aggregates;
+  rates: Record<string, number>;
+  ratesBase: string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
 }
 
 export function usePortfolio(id: string) {
@@ -74,7 +84,7 @@ export function usePortfolio(id: string) {
     queryKey: ["portfolio", id],
     queryFn: async () => {
       const res = await fetch(`/api/portfolios/${id}`);
-      if (!res.ok) throw new Error("Failed to fetch portfolio");
+      if (!res.ok) throw new ApiError("Failed to fetch portfolio", res.status);
       return res.json();
     },
   });

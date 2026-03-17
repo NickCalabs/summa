@@ -13,6 +13,8 @@ import {
   handleError,
 } from "@/lib/api-helpers";
 import { parseBody, updatePortfolio } from "@/types";
+import { getExchangeRates } from "@/lib/providers/exchange-rates";
+import { convertToBase } from "@/lib/currency";
 
 export async function GET(
   request: Request,
@@ -80,8 +82,15 @@ export async function GET(
       sections: sectionsBySheet.get(sheet.id) ?? [],
     }));
 
-    // TODO: Sprint 9 — convert asset values to portfolio base currency using exchange rates before aggregating
-    // Compute aggregates
+    // Fetch exchange rates if any asset has a different currency
+    const hasMixedCurrencies = assetRows.some(
+      (a) => a.currency !== portfolio.currency
+    );
+    const rates = hasMixedCurrencies
+      ? await getExchangeRates(portfolio.currency)
+      : {};
+
+    // Compute aggregates with currency conversion
     let totalAssets = 0;
     let totalDebts = 0;
     let cashOnHand = 0;
@@ -89,7 +98,12 @@ export async function GET(
     for (const sheet of tree) {
       for (const section of sheet.sections) {
         for (const asset of section.assets) {
-          const val = Number(asset.currentValue);
+          const val = convertToBase(
+            Number(asset.currentValue),
+            asset.currency,
+            portfolio.currency,
+            rates
+          );
           if (sheet.type === "debts") {
             totalDebts += val;
           } else {
@@ -107,6 +121,8 @@ export async function GET(
     return jsonResponse({
       ...portfolio,
       sheets: tree,
+      rates,
+      ratesBase: portfolio.currency,
       aggregates: {
         totalAssets: Number(totalAssets.toFixed(2)),
         totalDebts: Number(totalDebts.toFixed(2)),

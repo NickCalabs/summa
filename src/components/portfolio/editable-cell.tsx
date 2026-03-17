@@ -11,6 +11,15 @@ interface EditableCellProps {
   formatDisplay?: (value: string | number | null) => React.ReactNode;
   activateOn?: "click" | "doubleClick";
   className?: string;
+  cellRow?: number;
+  cellCol?: number;
+}
+
+function focusCell(row: number, col: number) {
+  const el = document.querySelector<HTMLElement>(
+    `[data-cell-row="${row}"][data-cell-col="${col}"]`
+  );
+  el?.click();
 }
 
 export function EditableCell({
@@ -21,6 +30,8 @@ export function EditableCell({
   formatDisplay,
   activateOn = "click",
   className = "",
+  cellRow,
+  cellCol,
 }: EditableCellProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -68,6 +79,17 @@ export function EditableCell({
     if (e.key === "Enter") {
       e.preventDefault();
       commit();
+      // Navigate to next row, same column
+      if (cellRow != null && cellCol != null) {
+        setTimeout(() => focusCell(cellRow + 1, cellCol), 0);
+      }
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      commit();
+      if (cellRow != null && cellCol != null) {
+        const nextCol = e.shiftKey ? cellCol - 1 : cellCol + 1;
+        setTimeout(() => focusCell(cellRow, nextCol), 0);
+      }
     } else if (e.key === "Escape") {
       setEditing(false);
     }
@@ -97,9 +119,14 @@ export function EditableCell({
       ? { onDoubleClick: startEditing }
       : { onClick: startEditing };
 
+  const dataProps: Record<string, number> = {};
+  if (cellRow != null) dataProps["data-cell-row"] = cellRow;
+  if (cellCol != null) dataProps["data-cell-col"] = cellCol;
+
   return (
     <span
       {...activationProps}
+      {...dataProps}
       className={`cursor-pointer rounded px-1 py-0.5 hover:bg-muted/60 transition-colors ${className}`}
     >
       {displayContent}

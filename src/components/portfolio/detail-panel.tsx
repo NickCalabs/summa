@@ -34,6 +34,7 @@ import {
 } from "@/hooks/use-assets";
 import { findAssetInTree } from "@/lib/portfolio-utils";
 import { parseCurrencyInput, formatNumberForInput } from "@/lib/currency";
+import { useCurrency } from "@/contexts/currency-context";
 import type { Portfolio } from "@/hooks/use-portfolio";
 
 const PROVIDER_TYPES = [
@@ -266,6 +267,8 @@ function ValueTab({
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [manualValue, setManualValue] = useState("");
+  const { baseCurrency, toBase } = useCurrency();
+  const isForeign = asset.currency !== baseCurrency;
 
   const hasQtyPrice =
     asset.quantity != null && asset.currentPrice != null;
@@ -281,18 +284,34 @@ function ValueTab({
 
   return (
     <>
-      <MoneyDisplay
-        amount={Number(asset.currentValue)}
-        currency={currency}
-        className="text-3xl font-bold"
-      />
+      {isForeign ? (
+        <>
+          <MoneyDisplay
+            amount={toBase(Number(asset.currentValue), asset.currency)}
+            currency={baseCurrency}
+            className="text-3xl font-bold"
+          />
+          <p className="text-sm text-muted-foreground tabular-nums">
+            <MoneyDisplay
+              amount={Number(asset.currentValue)}
+              currency={asset.currency}
+            />
+          </p>
+        </>
+      ) : (
+        <MoneyDisplay
+          amount={Number(asset.currentValue)}
+          currency={baseCurrency}
+          className="text-3xl font-bold"
+        />
+      )}
 
       {hasQtyPrice && (
         <p className="text-sm text-muted-foreground tabular-nums">
           {Number(asset.quantity).toLocaleString()} x{" "}
           <MoneyDisplay
             amount={Number(asset.currentPrice)}
-            currency={currency}
+            currency={asset.currency}
           />
         </p>
       )}

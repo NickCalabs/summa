@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { SectionGroup } from "./section-group";
 import { useCreateSection, useReorderSections } from "@/hooks/use-sections";
+import { useCurrency } from "@/contexts/currency-context";
 import type { Sheet } from "@/hooks/use-portfolio";
 
 interface SheetViewProps {
@@ -21,12 +22,13 @@ interface SheetViewProps {
 export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
   const createSection = useCreateSection(portfolioId);
   const reorderSections = useReorderSections(portfolioId);
+  const { toBase } = useCurrency();
   const [newSectionName, setNewSectionName] = useState("");
   const [addOpen, setAddOpen] = useState(false);
 
   const sheetTotal = sheet.sections.reduce(
     (sum, section) =>
-      sum + section.assets.reduce((s, a) => s + Number(a.currentValue), 0),
+      sum + section.assets.reduce((s, a) => s + toBase(Number(a.currentValue), a.currency), 0),
     0
   );
 

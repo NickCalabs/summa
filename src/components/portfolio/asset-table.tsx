@@ -30,6 +30,7 @@ import {
   useMoveAsset,
 } from "@/hooks/use-assets";
 import { useUIStore } from "@/stores/ui-store";
+import { useCurrency } from "@/contexts/currency-context";
 import type { Asset, Section } from "@/hooks/use-portfolio";
 
 interface AssetTableProps {
@@ -52,6 +53,7 @@ export function AssetTable({
   const deleteAsset = useDeleteAsset(portfolioId);
   const moveAsset = useMoveAsset(portfolioId);
   const openDetailPanel = useUIStore((s) => s.openDetailPanel);
+  const { baseCurrency, toBase } = useCurrency();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
@@ -143,12 +145,12 @@ export function AssetTable({
                   updateAsset.mutate({ id: asset.id, currentPrice })
                 }
                 type="currency"
-                currency={currency}
+                currency={asset.currency}
                 formatDisplay={(v) =>
                   v != null ? (
                     <MoneyDisplay
                       amount={Number(v)}
-                      currency={currency}
+                      currency={asset.currency}
                       className="tabular-nums"
                     />
                   ) : (
@@ -165,37 +167,64 @@ export function AssetTable({
         accessorKey: "currentValue",
         header: () => <div className="text-right">Value</div>,
         size: 130,
-        cell: ({ row }) => (
-          <div className="text-right">
-            <EditableCell
-              value={row.original.currentValue}
-              onCommit={(currentValue, parsedCurrency) => {
-                const data: Record<string, string> = {
-                  id: row.original.id,
-                  currentValue,
-                };
-                if (parsedCurrency) data.currency = parsedCurrency;
-                updateAsset.mutate(data as any);
-              }}
-              type="currency"
-              currency={currency}
-              formatDisplay={(v) => (
-                <MoneyDisplay
-                  amount={Number(v)}
-                  currency={currency}
-                  className="tabular-nums font-medium"
-                />
-              )}
-            />
-          </div>
-        ),
+        cell: ({ row }) => {
+          const asset = row.original;
+          const rawValue = Number(asset.currentValue);
+          const isForeign = asset.currency !== baseCurrency;
+          return (
+            <div className="text-right">
+              <EditableCell
+                value={asset.currentValue}
+                onCommit={(currentValue, parsedCurrency) => {
+                  const data: Record<string, string> = {
+                    id: asset.id,
+                    currentValue,
+                  };
+                  if (parsedCurrency) data.currency = parsedCurrency;
+                  updateAsset.mutate(data as any);
+                }}
+                type="currency"
+                currency={asset.currency}
+                formatDisplay={(v) => (
+                  <div>
+                    {isForeign ? (
+                      <>
+                        <MoneyDisplay
+                          amount={toBase(Number(v), asset.currency)}
+                          currency={baseCurrency}
+                          className="tabular-nums font-medium"
+                        />
+                        <div className="flex items-center justify-end gap-1 text-muted-foreground">
+                          <MoneyDisplay
+                            amount={Number(v)}
+                            currency={asset.currency}
+                            className="tabular-nums text-xs"
+                          />
+                          <Badge variant="outline" className="text-[9px]">
+                            {asset.currency}
+                          </Badge>
+                        </div>
+                      </>
+                    ) : (
+                      <MoneyDisplay
+                        amount={Number(v)}
+                        currency={baseCurrency}
+                        className="tabular-nums font-medium"
+                      />
+                    )}
+                  </div>
+                )}
+              />
+            </div>
+          );
+        },
       },
       {
         id: "allocation",
         header: () => <div className="text-right">Alloc.</div>,
         size: 70,
         cell: ({ row }) => {
-          const value = Number(row.original.currentValue);
+          const value = toBase(Number(row.original.currentValue), row.original.currency);
           const pct = sheetTotal > 0 ? (value / sheetTotal) * 100 : 0;
           return (
             <div className="text-right tabular-nums text-muted-foreground">
@@ -273,6 +302,8 @@ export function AssetTable({
     [
       sheetTotal,
       currency,
+      baseCurrency,
+      toBase,
       sections,
       updateAsset,
       archiveAsset,

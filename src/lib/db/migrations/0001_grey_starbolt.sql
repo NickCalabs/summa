@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "exchange_rates_base_unique" ON "exchange_rates" USING btree ("base");

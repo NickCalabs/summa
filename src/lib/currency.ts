@@ -63,3 +63,37 @@ export function formatNumberForInput(value: string | number | null): string {
   if (isNaN(num)) return "";
   return String(num);
 }
+
+/**
+ * Convert an amount from a foreign currency to the base currency.
+ * Rates map is keyed by foreign currency code with values meaning "1 base = X foreign".
+ * So foreign → base = amount / rates[fromCurrency].
+ */
+export function convertToBase(
+  amount: number,
+  fromCurrency: string,
+  baseCurrency: string,
+  rates: Record<string, number>
+): number {
+  if (fromCurrency === baseCurrency) return amount;
+  const rate = rates[fromCurrency];
+  if (!rate) return amount; // graceful fallback
+  return amount / rate;
+}
+
+/**
+ * Full cross-rate conversion. `rateMapBase` is the base currency of the rates map.
+ */
+export function convertCurrency(
+  amount: number,
+  from: string,
+  to: string,
+  rates: Record<string, number>,
+  rateMapBase: string
+): number {
+  if (from === to) return amount;
+  if (from === rateMapBase) return amount * rates[to];
+  if (to === rateMapBase) return amount / rates[from];
+  // Cross-rate: from → base → to
+  return (amount / rates[from]) * rates[to];
+}

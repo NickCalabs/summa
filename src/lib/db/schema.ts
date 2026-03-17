@@ -217,6 +217,8 @@ export const portfolioSnapshots = pgTable(
 export const exchangeRates = pgTable("exchange_rates", {
   id: uuid("id").primaryKey().defaultRandom(),
   base: text("base").notNull(),
-  rates: jsonb("rates").notNull(),
+  rates: jsonb("rates").$type<Record<string, number>>().notNull(),
   fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("exchange_rates_base_unique").on(table.base),
+]);
