@@ -7,11 +7,15 @@ interface StatCardProps {
   currency: string;
   subtitle?: React.ReactNode;
   children?: React.ReactNode;
+  onClick?: () => void;
 }
 
-export function StatCard({ title, value, currency, subtitle, children }: StatCardProps) {
+export function StatCard({ title, value, currency, subtitle, children, onClick }: StatCardProps) {
   return (
-    <Card>
+    <Card
+      className={onClick ? "cursor-pointer hover:shadow-md transition-shadow" : undefined}
+      onClick={onClick}
+    >
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
       </CardHeader>
