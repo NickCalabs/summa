@@ -72,6 +72,7 @@ export function AddAssetDialog({
   const [isCashEquivalent, setIsCashEquivalent] = useState(false);
   const [providerType, setProviderType] = useState("manual");
   const [providerConfig, setProviderConfig] = useState<Record<string, unknown>>({});
+  const [valueError, setValueError] = useState("");
 
   const open = addAssetDialogSectionId !== null;
 
@@ -89,6 +90,7 @@ export function AddAssetDialog({
     setIsCashEquivalent(false);
     setProviderType("manual");
     setProviderConfig({});
+    setValueError("");
   }
 
   function handleTickerSelect(result: SearchResult) {
@@ -134,6 +136,11 @@ export function AddAssetDialog({
     e.preventDefault();
     const trimmedName = name.trim();
     if (!trimmedName || !effectiveSectionId) return;
+
+    if (providerType !== "ticker" && Number(computedValue()) === 0) {
+      setValueError("Please enter a value greater than 0.");
+      return;
+    }
 
     const data: Record<string, unknown> = {
       sectionId: effectiveSectionId,
@@ -232,9 +239,10 @@ export function AddAssetDialog({
                 <Input
                   placeholder="Quantity"
                   value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
+                  onChange={(e) => { setQuantity(e.target.value); setValueError(""); }}
                   type="text"
                   inputMode="decimal"
+                  className={valueError ? "border-red-500" : undefined}
                 />
                 <span className="flex items-center text-muted-foreground">
                   x
@@ -242,9 +250,10 @@ export function AddAssetDialog({
                 <Input
                   placeholder="Price"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => { setPrice(e.target.value); setValueError(""); }}
                   type="text"
                   inputMode="decimal"
+                  className={valueError ? "border-red-500" : undefined}
                 />
                 <span className="flex items-center text-sm tabular-nums text-muted-foreground whitespace-nowrap">
                   = {Number(qtyPriceValue).toLocaleString()}
@@ -254,10 +263,14 @@ export function AddAssetDialog({
               <Input
                 placeholder="0.00"
                 value={valueInput}
-                onChange={(e) => setValueInput(e.target.value)}
+                onChange={(e) => { setValueInput(e.target.value); setValueError(""); }}
                 type="text"
                 inputMode="decimal"
+                className={valueError ? "border-red-500" : undefined}
               />
+            )}
+            {valueError && (
+              <p className="text-sm text-red-500">{valueError}</p>
             )}
           </div>
 
