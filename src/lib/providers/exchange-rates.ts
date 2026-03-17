@@ -44,7 +44,12 @@ export async function getExchangeRates(
       return row.rates;
     }
 
-    return {};
+    console.error(
+      `[exchange-rates] All rate sources failed for base ${base}. Cannot convert currencies.`
+    );
+    throw new Error(
+      `[exchange-rates] All rate sources failed for base ${base}. Cannot convert currencies.`
+    );
   }
 }
 
