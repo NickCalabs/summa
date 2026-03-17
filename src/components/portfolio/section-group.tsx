@@ -17,6 +17,7 @@ interface SectionGroupProps {
   onMoveDown: () => void;
 }
 
+
 export function SectionGroup({
   section,
   sheetTotal,
@@ -50,10 +51,8 @@ export function SectionGroup({
       {!isCollapsed && (
         <AssetTable
           assets={section.assets}
-          sheetTotal={sheetTotal}
           currency={currency}
           portfolioId={portfolioId}
-          sections={sections}
         />
       )}
     </div>

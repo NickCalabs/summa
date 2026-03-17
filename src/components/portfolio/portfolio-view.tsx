@@ -84,7 +84,13 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           defaultSectionId={defaultSectionId}
         />
 
-        <NetWorthHeader aggregates={portfolio.aggregates} currency={portfolio.currency} />
+        <NetWorthHeader
+          portfolioId={portfolioId}
+          aggregates={portfolio.aggregates}
+          currency={portfolio.currency}
+          sections={portfolio.sheets.filter((s) => s.type === "assets").flatMap((s) => s.sections)}
+          rates={portfolio.rates ?? {}}
+        />
 
         <ChartSection portfolio={portfolio} />
 
