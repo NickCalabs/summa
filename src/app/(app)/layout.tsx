@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { usePortfolios } from "@/hooks/use-portfolio";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
 function LayoutIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -78,6 +80,7 @@ const navItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: portfolioList, isLoading: portfoliosLoading } = usePortfolios();
 
   async function handleLogout() {
     await authClient.signOut();
@@ -94,13 +97,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         <Separator className="bg-white/10" />
 
-        {/* Portfolio list placeholder */}
+        {/* Portfolio list */}
         <div className="flex-1 overflow-y-auto p-3">
           <p className="px-2 py-1 text-xs font-medium uppercase tracking-wider text-white/40">
             Portfolios
           </p>
-          <div className="mt-1 rounded-md bg-white/5 px-3 py-2 text-sm text-white/70">
-            My Net Worth
+          <div className="mt-1 space-y-0.5">
+            {portfoliosLoading ? (
+              <>
+                <Skeleton className="h-8 w-full bg-white/5" />
+                <Skeleton className="h-8 w-full bg-white/5" />
+              </>
+            ) : (
+              portfolioList?.map((p) => {
+                const isActive = pathname === `/portfolio/${p.id}`;
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/portfolio/${p.id}`}
+                    className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "bg-white/10 text-white"
+                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    {p.name}
+                  </Link>
+                );
+              })
+            )}
           </div>
         </div>
 
