@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -172,15 +172,14 @@ function PlaidLinkOpener({
     onExit,
   });
 
-  // Auto-open when ready
-  const openRef = useCallback(() => {
-    if (ready) open();
-  }, [ready, open]);
+  const hasOpened = useRef(false);
 
-  // Trigger open
-  if (ready) {
-    setTimeout(openRef, 0);
-  }
+  useEffect(() => {
+    if (ready && !hasOpened.current) {
+      hasOpened.current = true;
+      open();
+    }
+  }, [ready, open]);
 
   return null;
 }
