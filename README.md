@@ -4,7 +4,7 @@
 
 A self-hosted net worth tracker that gives you a complete picture of your finances — without handing your data to a third party.
 
-![Screenshot placeholder](https://placehold.co/1200x700/1E1E2E/white?text=Summa)
+![Summa dashboard — dark mode](public/screenshot-dark.svg)
 
 ## Features
 

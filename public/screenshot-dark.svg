@@ -1,0 +1,246 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.35"/>
+      <stop offset="75%" stop-color="#3B82F6" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sidebarGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#161624"/>
+    </linearGradient>
+    <linearGradient id="stocksBar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+    <clipPath id="chartClip">
+      <rect x="280" y="238" width="960" height="170"/>
+    </clipPath>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.4)"/>
+    </filter>
+  </defs>
+
+  <!-- ===== APP BACKGROUND ===== -->
+  <rect width="1280" height="760" fill="#0f0f1a"/>
+
+  <!-- ===== SIDEBAR ===== -->
+  <rect width="236" height="760" fill="url(#sidebarGrad)"/>
+  <line x1="236" y1="0" x2="236" y2="760" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Logo -->
+  <text x="22" y="46" font-family="system-ui,-apple-system,sans-serif" font-size="19" font-weight="700" fill="#ffffff" letter-spacing="-0.4">Summa</text>
+
+  <!-- Sidebar divider -->
+  <line x1="14" y1="64" x2="222" y2="64" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+  <!-- PORTFOLIOS label -->
+  <text x="16" y="88" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="600" fill="rgba(255,255,255,0.32)" letter-spacing="1.2">PORTFOLIOS</text>
+
+  <!-- Portfolio item 1 (active) -->
+  <rect x="8" y="96" width="220" height="34" rx="7" fill="rgba(255,255,255,0.10)"/>
+  <circle cx="28" cy="113" r="3.5" fill="#60A5FA"/>
+  <text x="42" y="118" font-family="system-ui,-apple-system,sans-serif" font-size="13.5" fill="#ffffff">Main Portfolio</text>
+
+  <!-- Portfolio item 2 -->
+  <circle cx="28" cy="152" r="3.5" fill="rgba(255,255,255,0.25)"/>
+  <text x="42" y="157" font-family="system-ui,-apple-system,sans-serif" font-size="13.5" fill="rgba(255,255,255,0.45)">Retirement Fund</text>
+
+  <!-- Portfolio item 3 -->
+  <circle cx="28" cy="185" r="3.5" fill="rgba(255,255,255,0.25)"/>
+  <text x="42" y="190" font-family="system-ui,-apple-system,sans-serif" font-size="13.5" fill="rgba(255,255,255,0.45)">Crypto Wallet</text>
+
+  <!-- Sidebar divider -->
+  <line x1="14" y1="210" x2="222" y2="210" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+  <!-- Dashboard nav -->
+  <rect x="8" y="218" width="220" height="34" rx="7" fill="transparent"/>
+  <rect x="19" y="227" width="6" height="6" rx="1" fill="rgba(255,255,255,0.38)"/>
+  <rect x="27" y="227" width="6" height="6" rx="1" fill="rgba(255,255,255,0.38)"/>
+  <rect x="19" y="235" width="6" height="6" rx="1" fill="rgba(255,255,255,0.38)"/>
+  <rect x="27" y="235" width="6" height="6" rx="1" fill="rgba(255,255,255,0.38)"/>
+  <text x="42" y="239" font-family="system-ui,-apple-system,sans-serif" font-size="13.5" fill="rgba(255,255,255,0.50)">Dashboard</text>
+
+  <!-- Settings nav -->
+  <rect x="8" y="258" width="220" height="34" rx="7" fill="transparent"/>
+  <circle cx="27" cy="275" r="5.5" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="1.5"/>
+  <circle cx="27" cy="275" r="2" fill="rgba(255,255,255,0.38)"/>
+  <text x="42" y="279" font-family="system-ui,-apple-system,sans-serif" font-size="13.5" fill="rgba(255,255,255,0.50)">Settings</text>
+
+  <!-- Logout at bottom -->
+  <text x="22" y="742" font-family="system-ui,-apple-system,sans-serif" font-size="12.5" fill="rgba(255,255,255,0.28)">← Log out</text>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <!-- Greeting -->
+  <text x="268" y="46" font-family="system-ui,-apple-system,sans-serif" font-size="21" font-weight="700" fill="#f0f0ff">Hello, Alex</text>
+
+  <!-- ===== STAT CARDS (y=62 to y=178) ===== -->
+
+  <!-- Card 1: Net Worth -->
+  <rect x="268" y="62" width="230" height="116" rx="10" fill="#1c1c2e" stroke="rgba(255,255,255,0.08)" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="284" y="84" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.38)" letter-spacing="0.5">NET WORTH</text>
+  <text x="284" y="114" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700" fill="#f0f0ff">$482,350</text>
+  <text x="284" y="133" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="rgba(255,255,255,0.36)">Investable: $240,200</text>
+  <text x="284" y="152" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#4ade80">1D ↑ +$1,250  (+0.26%)</text>
+  <text x="284" y="168" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#4ade80">1Y ↑ +$72,800 (+17.8%)</text>
+
+  <!-- Card 2: Assets -->
+  <rect x="514" y="62" width="230" height="116" rx="10" fill="#1c1c2e" stroke="rgba(255,255,255,0.08)" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="530" y="84" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.38)" letter-spacing="0.5">ASSETS</text>
+  <text x="530" y="114" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700" fill="#f0f0ff">$612,800</text>
+  <text x="530" y="152" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#4ade80">1D ↑ +$1,890  (+0.31%)</text>
+  <text x="530" y="168" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#4ade80">1Y ↑ +$111,300 (+22.4%)</text>
+
+  <!-- Card 3: Debts -->
+  <rect x="760" y="62" width="230" height="116" rx="10" fill="#1c1c2e" stroke="rgba(255,255,255,0.08)" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="776" y="84" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.38)" letter-spacing="0.5">DEBTS</text>
+  <text x="776" y="114" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700" fill="#f0f0ff">$130,450</text>
+  <text x="776" y="152" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#f87171">1D ↑ +$155  (+0.12%)</text>
+  <text x="776" y="168" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#f87171">1Y ↑ +$5,120 (+4.1%)</text>
+
+  <!-- Card 4: Cash on Hand -->
+  <rect x="1006" y="62" width="258" height="116" rx="10" fill="#1c1c2e" stroke="rgba(255,255,255,0.08)" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="1022" y="84" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.38)" letter-spacing="0.5">CASH ON HAND</text>
+  <text x="1022" y="114" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700" fill="#f0f0ff">$42,150</text>
+  <text x="1022" y="133" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="rgba(255,255,255,0.36)">6.9% of total assets</text>
+  <text x="1022" y="152" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#4ade80">1D ↑ +$750  (+1.8%)</text>
+
+  <!-- ===== NET WORTH CHART CARD (y=194 to y=430) ===== -->
+  <rect x="268" y="194" width="996" height="236" rx="10" fill="#1c1c2e" stroke="rgba(255,255,255,0.08)" stroke-width="1" filter="url(#cardShadow)"/>
+
+  <!-- Chart card header -->
+  <text x="284" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#f0f0ff">Net Worth</text>
+
+  <!-- Date range buttons — 1Y active -->
+  <text x="1014" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)">1M</text>
+  <text x="1040" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)">3M</text>
+  <text x="1066" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)">6M</text>
+  <text x="1092" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)">YTD</text>
+  <rect x="1119" y="207" width="28" height="20" rx="5" fill="rgba(255,255,255,0.12)"/>
+  <text x="1124" y="221" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="#f0f0ff">1Y</text>
+  <text x="1152" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)">ALL</text>
+
+  <!-- Chart divider line -->
+  <line x1="268" y1="232" x2="1264" y2="232" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+  <!-- Y-axis labels -->
+  <text x="1232" y="250" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="end">$490K</text>
+  <text x="1232" y="294" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="end">$460K</text>
+  <text x="1232" y="338" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="end">$430K</text>
+  <text x="1232" y="382" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="end">$400K</text>
+  <text x="1232" y="418" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="end">$390K</text>
+
+  <!-- Subtle horizontal grid lines -->
+  <line x1="280" y1="248" x2="1228" y2="248" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="280" y1="292" x2="1228" y2="292" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="280" y1="336" x2="1228" y2="336" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="280" y1="380" x2="1228" y2="380" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <line x1="280" y1="416" x2="1228" y2="416" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- Chart area fill -->
+  <!-- Points: Mar(280,416) Apr(364,402) May(448,390) Jun(532,368) Jul(616,380) Aug(700,348) Sep(784,323) Oct(868,302) Nov(952,312) Dec(1036,286) Jan(1120,269) Feb(1204,256)-->
+  <!-- chartClip rect: x=280, y=238, w=924, h=182 (bottom=420) -->
+  <g clip-path="url(#chartClip)">
+    <path d="M 280,416 C 322,416 322,402 364,402 C 406,402 406,390 448,390 C 490,390 490,368 532,368 C 573,368 573,380 616,380 C 658,380 658,348 700,348 C 742,348 742,323 784,323 C 825,323 825,302 868,302 C 910,302 910,312 952,312 C 994,312 994,286 1036,286 C 1078,286 1078,269 1120,269 C 1162,269 1162,256 1204,256 L 1204,420 L 280,420 Z" fill="url(#chartAreaGrad)"/>
+    <!-- Chart line -->
+    <path d="M 280,416 C 322,416 322,402 364,402 C 406,402 406,390 448,390 C 490,390 490,368 532,368 C 573,368 573,380 616,380 C 658,380 658,348 700,348 C 742,348 742,323 784,323 C 825,323 825,302 868,302 C 910,302 910,312 952,312 C 994,312 994,286 1036,286 C 1078,286 1078,269 1120,269 C 1162,269 1162,256 1204,256" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+    <!-- Endpoint dot -->
+    <circle cx="1204" cy="256" r="4" fill="#3B82F6"/>
+    <circle cx="1204" cy="256" r="7" fill="rgba(59,130,246,0.25)"/>
+  </g>
+
+  <!-- X-axis labels -->
+  <text x="280" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Mar</text>
+  <text x="364" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Apr</text>
+  <text x="448" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">May</text>
+  <text x="532" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Jun</text>
+  <text x="616" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Jul</text>
+  <text x="700" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Aug</text>
+  <text x="784" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Sep</text>
+  <text x="868" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Oct</text>
+  <text x="952" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Nov</text>
+  <text x="1036" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Dec</text>
+  <text x="1120" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">Jan</text>
+  <text x="1204" y="434" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="rgba(255,255,255,0.4)" text-anchor="middle" font-weight="500">Feb</text>
+
+  <!-- ===== ALLOCATION CARD (y=446 to y=640) ===== -->
+  <rect x="268" y="446" width="996" height="274" rx="10" fill="#1c1c2e" stroke="rgba(255,255,255,0.08)" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="284" y="472" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#f0f0ff">Allocation</text>
+
+  <!-- Assets section -->
+  <text x="284" y="498" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.45)">Assets</text>
+  <text x="900" y="498" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="rgba(255,255,255,0.45)" text-anchor="end">$612,800</text>
+
+  <!-- Stacked allocation bar (Assets) -->
+  <!-- Total bar width: 916px, x=284 to x=1200, height=28, y=506, rx=6 -->
+  <rect x="284" y="506" width="916" height="28" rx="6" fill="#2a2a3e"/>
+  <!-- Stocks 45%: 916*0.45 = 412 -->
+  <rect x="284" y="506" width="412" height="28" rx="6" fill="#3B82F6"/>
+  <!-- Real Estate 25%: 916*0.25 = 229 → ends at 284+412+229=925 -->
+  <rect x="696" y="506" width="229" height="28" fill="#8B5CF6"/>
+  <!-- Crypto 18%: 916*0.18 = 165 → ends at 925+165=1090 -->
+  <rect x="925" y="506" width="165" height="28" fill="#22D3EE"/>
+  <!-- Cash 12%: 916*0.12 = 110 → ends at 1090+110=1200 -->
+  <rect x="1090" y="506" width="110" height="28" rx="6" fill="#4ADE80"/>
+  <!-- Percent labels on bar -->
+  <text x="490" y="525" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.9)" text-anchor="middle">45%</text>
+  <text x="810" y="525" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.9)" text-anchor="middle">25%</text>
+  <text x="1007" y="525" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.9)" text-anchor="middle">18%</text>
+
+  <!-- Legend for assets bar -->
+  <rect x="284" y="544" width="10" height="10" rx="2" fill="#3B82F6"/>
+  <text x="300" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Stocks</text>
+  <text x="356" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$275,760</text>
+
+  <rect x="448" y="544" width="10" height="10" rx="2" fill="#8B5CF6"/>
+  <text x="464" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Real Estate</text>
+  <text x="546" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$153,200</text>
+
+  <rect x="638" y="544" width="10" height="10" rx="2" fill="#22D3EE"/>
+  <text x="654" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Crypto</text>
+  <text x="706" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$110,490</text>
+
+  <rect x="784" y="544" width="10" height="10" rx="2" fill="#4ADE80"/>
+  <text x="800" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Cash</text>
+  <text x="836" y="554" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$73,350</text>
+
+  <!-- Divider -->
+  <line x1="284" y1="572" x2="1200" y2="572" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+  <!-- Debts section -->
+  <text x="284" y="594" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.45)">Debts</text>
+  <text x="900" y="594" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="rgba(255,255,255,0.45)" text-anchor="end">$130,450</text>
+
+  <!-- Stacked allocation bar (Debts) -->
+  <rect x="284" y="602" width="916" height="28" rx="6" fill="#2a2a3e"/>
+  <!-- Mortgage 72%: 916*0.72 = 660 -->
+  <rect x="284" y="602" width="660" height="28" rx="6" fill="#EF4444"/>
+  <!-- Car Loan 19%: 916*0.19 = 174 → 944+174=1118 — wait ends at 284+660+174=1118 -->
+  <rect x="944" y="602" width="174" height="28" fill="#F97316"/>
+  <!-- Credit Card 9%: 916*0.09 = 82 → 1118+82=1200 -->
+  <rect x="1118" y="602" width="82" height="28" rx="6" fill="#FBBF24"/>
+  <!-- Percent labels -->
+  <text x="614" y="621" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.9)" text-anchor="middle">72%</text>
+  <text x="1030" y="621" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.9)" text-anchor="middle">19%</text>
+
+  <!-- Legend for debts bar -->
+  <rect x="284" y="640" width="10" height="10" rx="2" fill="#EF4444"/>
+  <text x="300" y="650" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Mortgage</text>
+  <text x="370" y="650" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$93,924</text>
+
+  <rect x="460" y="640" width="10" height="10" rx="2" fill="#F97316"/>
+  <text x="476" y="650" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Car Loan</text>
+  <text x="540" y="650" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$24,786</text>
+
+  <rect x="628" y="640" width="10" height="10" rx="2" fill="#FBBF24"/>
+  <text x="644" y="650" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.65)">Credit Card</text>
+  <text x="724" y="650" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" fill="rgba(255,255,255,0.45)">$11,740</text>
+
+  <!-- ===== TOOLTIP OVERLAY (hovering on chart) ===== -->
+  <rect x="1028" y="258" width="130" height="56" rx="8" fill="#2a2a3e" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <text x="1044" y="278" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="rgba(255,255,255,0.5)">Feb 17, 2026</text>
+  <text x="1044" y="298" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="700" fill="#f0f0ff">$482,350</text>
+  <text x="1044" y="313" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" fill="#4ade80">↑ +$92,350 this year</text>
+  <!-- Tooltip vertical line -->
+  <line x1="1204" y1="238" x2="1204" y2="420" stroke="rgba(255,255,255,0.10)" stroke-width="1" stroke-dasharray="3,3"/>
+</svg>
