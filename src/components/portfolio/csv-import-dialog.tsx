@@ -55,8 +55,11 @@ export function CsvImportDialog({
   const uploadCsv = useUploadCsv(portfolioId);
   const importCsv = useImportCsv(portfolioId);
 
+  const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("upload");
+  const [fileError, setFileError] = useState<string | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<Record<string, string>[]>([]);
@@ -73,6 +76,7 @@ export function CsvImportDialog({
 
   function reset() {
     setStep("upload");
+    setFileError(null);
     setHeaders([]);
     setColumnMapping({});
     setPreview([]);
@@ -95,6 +99,14 @@ export function CsvImportDialog({
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setFileError(null);
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("File is too large. Please upload a CSV under 1MB.");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
 
     const data = await uploadCsv.mutateAsync(file);
     setHeaders(data.headers);
@@ -182,6 +194,9 @@ export function CsvImportDialog({
                 Upload a .csv file with your asset data
               </p>
             </div>
+            {fileError && (
+              <p className="text-sm text-destructive text-center">{fileError}</p>
+            )}
           </div>
         )}
 
