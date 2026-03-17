@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { ResponsiveContainer, LineChart, Line } from "recharts";
+import { useAssetSnapshots } from "@/hooks/use-snapshots";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
   SheetContent,
@@ -294,9 +297,7 @@ function ValueTab({
         </p>
       )}
 
-      <div className="h-24 rounded-lg border border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground">
-        Chart coming soon
-      </div>
+      <AssetSparkline assetId={asset.id} />
 
       <form onSubmit={handleValueUpdate} className="flex gap-2">
         <Input
@@ -517,6 +518,47 @@ function SettingRow({
     <div className="flex items-center justify-between gap-4">
       <label className="text-sm text-muted-foreground shrink-0">{label}</label>
       <div className="w-40">{children}</div>
+    </div>
+  );
+}
+
+function AssetSparkline({ assetId }: { assetId: string }) {
+  const from = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split("T")[0];
+  }, []);
+
+  const { data: snapshots, isLoading } = useAssetSnapshots(assetId, from);
+
+  const chartData = useMemo(() => {
+    if (!snapshots) return [];
+    return [...snapshots].reverse().map((s) => ({ date: s.date, value: Number(s.value) }));
+  }, [snapshots]);
+
+  if (isLoading) return <Skeleton className="h-24" />;
+
+  if (chartData.length < 2) {
+    return (
+      <div className="h-24 rounded-lg border border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground">
+        Not enough data
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-24">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData}>
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="var(--chart-net-worth)"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }

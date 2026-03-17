@@ -1,0 +1,120 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
+import { formatChartDate, formatCompactCurrency } from "@/lib/chart-utils";
+import { ChartEmpty } from "./chart-empty";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface AssetsDebtsChartProps {
+  portfolioId: string;
+  from?: string;
+  currency: string;
+}
+
+export function AssetsDebtsChart({ portfolioId, from, currency }: AssetsDebtsChartProps) {
+  const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
+
+  const chartData = useMemo(() => {
+    if (!snapshots) return [];
+    return [...snapshots]
+      .reverse()
+      .map((s) => ({
+        date: s.date,
+        assets: Number(s.totalAssets),
+        debts: Number(s.totalDebts),
+      }));
+  }, [snapshots]);
+
+  if (isLoading) return <Skeleton className="h-[200px] md:h-[300px] w-full" />;
+  if (chartData.length < 2) {
+    return (
+      <div className="h-[200px] md:h-[300px]">
+        <ChartEmpty />
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[200px] md:h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+          <defs>
+            <linearGradient id="assetsGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22C55E" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#22C55E" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="debtsGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#EF4444" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="date"
+            tickFormatter={formatChartDate}
+            tick={{ fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
+            minTickGap={40}
+          />
+          <YAxis
+            tickFormatter={(v) => formatCompactCurrency(v, currency)}
+            tick={{ fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
+            width={70}
+          />
+          <Tooltip content={<AssetsDebtsTooltip currency={currency} />} />
+          <Area
+            type="monotone"
+            dataKey="assets"
+            stroke="#22C55E"
+            strokeWidth={2}
+            fill="url(#assetsGradient)"
+          />
+          <Area
+            type="monotone"
+            dataKey="debts"
+            stroke="#EF4444"
+            strokeWidth={2}
+            fill="url(#debtsGradient)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function AssetsDebtsTooltip({
+  active,
+  payload,
+  label,
+  currency,
+}: {
+  active?: boolean;
+  payload?: Array<{ dataKey: string; value: number; color: string }>;
+  label?: string;
+  currency: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(v);
+  return (
+    <div className="rounded-md bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md border">
+      <p className="text-muted-foreground">{label ? formatChartDate(label) : ""}</p>
+      {payload.map((p) => (
+        <p key={p.dataKey} className="font-medium" style={{ color: p.color }}>
+          {p.dataKey === "assets" ? "Assets" : "Debts"}: {fmt(p.value)}
+        </p>
+      ))}
+    </div>
+  );
+}

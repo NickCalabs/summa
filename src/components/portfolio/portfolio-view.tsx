@@ -10,6 +10,7 @@ import { SheetView } from "./sheet-view";
 import { TopBar } from "./top-bar";
 import { DetailPanel } from "./detail-panel";
 import { AddAssetDialog } from "./add-asset-dialog";
+import { ChartSection } from "@/components/charts/chart-section";
 
 interface PortfolioViewProps {
   portfolioId: string;
@@ -68,10 +69,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
       <NetWorthHeader aggregates={portfolio.aggregates} currency={portfolio.currency} />
 
-      {/* Chart placeholder */}
-      <div className="h-48 rounded-xl border border-dashed border-border/50 flex items-center justify-center text-sm text-muted-foreground">
-        Chart — coming soon
-      </div>
+      <ChartSection portfolio={portfolio} />
 
       <SheetTabs
         sheets={portfolio.sheets}
