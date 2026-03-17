@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { NetWorthHeader } from "./net-worth-header";
 import { SheetTabs } from "./sheet-tabs";
 import { SheetView } from "./sheet-view";
@@ -60,9 +60,9 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
             ? "This portfolio may have been deleted or you don't have access."
             : "Please try again later."}
         </p>
-        <Button variant="outline" asChild>
-          <Link href="/dashboard">Back to Dashboard</Link>
-        </Button>
+        <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+          Back to Dashboard
+        </Link>
       </div>
     );
   }

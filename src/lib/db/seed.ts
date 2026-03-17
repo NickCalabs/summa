@@ -48,9 +48,9 @@ async function seed() {
     .values({ portfolioId: portfolio.id, name: "Cash & Banking", type: "assets", sortOrder: 0 })
     .returning();
 
-  const [investSheet] = await db
+  const [techSheet] = await db
     .insert(schema.sheets)
-    .values({ portfolioId: portfolio.id, name: "Investments", type: "assets", sortOrder: 1 })
+    .values({ portfolioId: portfolio.id, name: "Tech Portfolio", type: "assets", sortOrder: 1 })
     .returning();
 
   const [cryptoSheet] = await db
@@ -58,177 +58,227 @@ async function seed() {
     .values({ portfolioId: portfolio.id, name: "Crypto", type: "assets", sortOrder: 2 })
     .returning();
 
+  const [realEstateSheet] = await db
+    .insert(schema.sheets)
+    .values({ portfolioId: portfolio.id, name: "Real Estate", type: "assets", sortOrder: 3 })
+    .returning();
+
   const [debtSheet] = await db
     .insert(schema.sheets)
-    .values({ portfolioId: portfolio.id, name: "Debts", type: "debts", sortOrder: 3 })
+    .values({ portfolioId: portfolio.id, name: "Debts", type: "debts", sortOrder: 4 })
     .returning();
 
   // ── Sections ──
-  const [checkingSavings] = await db
+  const [cashSection] = await db
     .insert(schema.sections)
-    .values({ sheetId: cashSheet.id, name: "Checking & Savings", sortOrder: 0 })
+    .values({ sheetId: cashSheet.id, name: "Accounts", sortOrder: 0 })
     .returning();
 
-  const [otherCash] = await db
+  const [stocksSection] = await db
     .insert(schema.sections)
-    .values({ sheetId: cashSheet.id, name: "Other Cash", sortOrder: 1 })
+    .values({ sheetId: techSheet.id, name: "Individual Stocks", sortOrder: 0 })
     .returning();
 
-  const [brokerage] = await db
+  const [retirementSection] = await db
     .insert(schema.sections)
-    .values({ sheetId: investSheet.id, name: "Brokerage", sortOrder: 0 })
+    .values({ sheetId: techSheet.id, name: "Retirement", sortOrder: 1 })
     .returning();
 
-  const [retirement] = await db
-    .insert(schema.sections)
-    .values({ sheetId: investSheet.id, name: "Retirement", sortOrder: 1 })
-    .returning();
-
-  const [cryptoHoldings] = await db
+  const [cryptoSection] = await db
     .insert(schema.sections)
     .values({ sheetId: cryptoSheet.id, name: "Holdings", sortOrder: 0 })
     .returning();
 
-  const [cryptoDefi] = await db
+  const [propertySection] = await db
     .insert(schema.sections)
-    .values({ sheetId: cryptoSheet.id, name: "DeFi", sortOrder: 1 })
+    .values({ sheetId: realEstateSheet.id, name: "Properties", sortOrder: 0 })
     .returning();
 
-  const [mortgages] = await db
+  const [debtSection] = await db
     .insert(schema.sections)
-    .values({ sheetId: debtSheet.id, name: "Mortgages", sortOrder: 0 })
-    .returning();
-
-  const [loans] = await db
-    .insert(schema.sections)
-    .values({ sheetId: debtSheet.id, name: "Loans", sortOrder: 1 })
+    .values({ sheetId: debtSheet.id, name: "Liabilities", sortOrder: 0 })
     .returning();
 
   // ── Assets ──
   const assetsData = [
-    // Cash & Banking — Checking & Savings
+    // Cash & Banking
     {
-      sectionId: checkingSavings.id,
-      name: "Chase Checking",
+      sectionId: cashSection.id,
+      name: "Checking",
       type: "cash",
       currency: "USD",
-      currentValue: "12500.00",
+      currentValue: "15000.00",
       isCashEquivalent: true,
       isInvestable: false,
       sortOrder: 0,
     },
     {
-      sectionId: checkingSavings.id,
-      name: "Marcus Savings",
+      sectionId: cashSection.id,
+      name: "High-Yield Savings",
       type: "cash",
       currency: "USD",
-      currentValue: "50000.00",
+      currentValue: "85000.00",
       isCashEquivalent: true,
       isInvestable: false,
       sortOrder: 1,
     },
-    // Cash & Banking — Other Cash
     {
-      sectionId: otherCash.id,
+      sectionId: cashSection.id,
       name: "Emergency Fund",
       type: "cash",
       currency: "USD",
-      currentValue: "22500.00",
+      currentValue: "35000.00",
       isCashEquivalent: true,
       isInvestable: false,
-      sortOrder: 0,
+      sortOrder: 2,
     },
-    // Investments — Brokerage
+    // Tech Portfolio — Individual Stocks
     {
-      sectionId: brokerage.id,
-      name: "Schwab Brokerage",
+      sectionId: stocksSection.id,
+      name: "Apple",
       type: "stock",
       currency: "USD",
-      currentValue: "85000.00",
+      quantity: "150.00000000",
+      currentPrice: "178.00000000",
+      currentValue: "26700.00",
       isInvestable: true,
       sortOrder: 0,
       providerType: "ticker" as const,
+      providerConfig: { ticker: "AAPL", source: "yahoo" },
+      lastSyncedAt: new Date(),
     },
-    // Investments — Retirement
     {
-      sectionId: retirement.id,
-      name: "Fidelity 401k",
+      sectionId: stocksSection.id,
+      name: "Alphabet",
       type: "stock",
       currency: "USD",
-      currentValue: "245000.00",
+      quantity: "80.00000000",
+      currentPrice: "175.00000000",
+      currentValue: "14000.00",
+      isInvestable: true,
+      sortOrder: 1,
+      providerType: "ticker" as const,
+      providerConfig: { ticker: "GOOGL", source: "yahoo" },
+      lastSyncedAt: new Date(),
+    },
+    {
+      sectionId: stocksSection.id,
+      name: "Microsoft",
+      type: "stock",
+      currency: "USD",
+      quantity: "60.00000000",
+      currentPrice: "420.00000000",
+      currentValue: "25200.00",
+      isInvestable: true,
+      sortOrder: 2,
+      providerType: "ticker" as const,
+      providerConfig: { ticker: "MSFT", source: "yahoo" },
+      lastSyncedAt: new Date(),
+    },
+    {
+      sectionId: stocksSection.id,
+      name: "NVIDIA",
+      type: "stock",
+      currency: "USD",
+      quantity: "200.00000000",
+      currentPrice: "130.00000000",
+      currentValue: "26000.00",
+      isInvestable: true,
+      sortOrder: 3,
+      providerType: "ticker" as const,
+      providerConfig: { ticker: "NVDA", source: "yahoo" },
+      lastSyncedAt: new Date(),
+    },
+    // Tech Portfolio — Retirement
+    {
+      sectionId: retirementSection.id,
+      name: "401(k)",
+      type: "stock",
+      currency: "USD",
+      currentValue: "420000.00",
       isInvestable: true,
       sortOrder: 0,
     },
-    // Crypto — Holdings
     {
-      sectionId: cryptoHoldings.id,
+      sectionId: retirementSection.id,
+      name: "Roth IRA",
+      type: "stock",
+      currency: "USD",
+      currentValue: "92000.00",
+      isInvestable: true,
+      sortOrder: 1,
+    },
+    // Crypto
+    {
+      sectionId: cryptoSection.id,
       name: "Bitcoin",
       type: "crypto",
       currency: "USD",
-      quantity: "0.65000000",
-      currentPrice: "64615.38",
-      currentValue: "42000.00",
+      quantity: "1.50000000",
+      currentPrice: "85000.00000000",
+      currentValue: "127500.00",
       isInvestable: true,
       sortOrder: 0,
       providerType: "ticker" as const,
       providerConfig: { ticker: "bitcoin", source: "coingecko" },
+      lastSyncedAt: new Date(),
     },
     {
-      sectionId: cryptoHoldings.id,
+      sectionId: cryptoSection.id,
       name: "Ethereum",
       type: "crypto",
       currency: "USD",
-      quantity: "2.80000000",
-      currentPrice: "3035.71",
-      currentValue: "8500.00",
+      quantity: "12.00000000",
+      currentPrice: "2800.00000000",
+      currentValue: "33600.00",
       isInvestable: true,
       sortOrder: 1,
       providerType: "ticker" as const,
       providerConfig: { ticker: "ethereum", source: "coingecko" },
+      lastSyncedAt: new Date(),
     },
     {
-      sectionId: cryptoHoldings.id,
+      sectionId: cryptoSection.id,
       name: "Solana",
       type: "crypto",
       currency: "USD",
-      quantity: "25.00000000",
-      currentPrice: "128.00",
-      currentValue: "3200.00",
+      quantity: "100.00000000",
+      currentPrice: "170.00000000",
+      currentValue: "17000.00",
       isInvestable: true,
       sortOrder: 2,
       providerType: "ticker" as const,
       providerConfig: { ticker: "solana", source: "coingecko" },
+      lastSyncedAt: new Date(),
     },
-    // Crypto — DeFi
+    // Real Estate
     {
-      sectionId: cryptoDefi.id,
-      name: "Aave USDC Lending",
-      type: "crypto",
+      sectionId: propertySection.id,
+      name: "Primary Residence",
+      type: "real_estate",
       currency: "USD",
-      currentValue: "5000.00",
-      isInvestable: true,
-      isCashEquivalent: true,
+      currentValue: "650000.00",
+      isInvestable: false,
       sortOrder: 0,
     },
-    // Debts — Mortgages
+    // Debts
     {
-      sectionId: mortgages.id,
+      sectionId: debtSection.id,
       name: "Mortgage",
       type: "real_estate",
       currency: "USD",
-      currentValue: "265000.00",
+      currentValue: "420000.00",
       isInvestable: false,
       sortOrder: 0,
     },
-    // Debts — Loans
     {
-      sectionId: loans.id,
+      sectionId: debtSection.id,
       name: "Student Loan",
       type: "other",
       currency: "USD",
-      currentValue: "18000.00",
+      currentValue: "28000.00",
       isInvestable: false,
-      sortOrder: 0,
+      sortOrder: 1,
     },
   ];
 
@@ -240,24 +290,18 @@ async function seed() {
   console.log(`Created ${insertedAssets.length} assets`);
 
   // ── Portfolio Snapshots (90 days of history) ──
-  // Start ~$85K net worth, grow to ~$120K with 2-3 dips
+  // Target: Assets ~$1,567,000, Debts $448,000, Net Worth ~$1,119,000
+  // Growth from ~$950K to ~$1.2M net worth over 90 days
+
   const today = new Date();
   const snapshots = [];
 
-  // Calculate current net worth from seed data
-  // Assets: 12500 + 50000 + 22500 + 85000 + 245000 + 42000 + 8500 + 3200 + 5000 = 473700
-  // Debts: 265000 + 18000 = 283000
-  // Net: 473700 - 283000 = 190700 (but spec says ~$120K target... let's use the actual seed values)
-  // Actually the spec says "Start at ~$85K net worth 90 days ago, grow to ~$120K today"
-  // But our seed data totals ~$190K. Let's use the actual seed data values and
-  // build a realistic growth curve from 90 days ago.
-
-  const currentNetWorth = 190700;
-  const startNetWorth = 155000; // ~18% lower 90 days ago
-  const currentTotalAssets = 473700;
-  const startTotalAssets = 418000;
-  const currentTotalDebts = 283000;
-  const startTotalDebts = 283000; // debts stay roughly constant
+  const currentNetWorth = 1119000;
+  const startNetWorth = 950000;
+  const currentTotalAssets = 1567000;
+  const startTotalAssets = 1350000;
+  const currentTotalDebts = 448000;
+  const startTotalDebts = 450000; // debts decrease slightly
 
   for (let day = 89; day >= 0; day--) {
     const date = new Date(today);
@@ -289,7 +333,7 @@ async function seed() {
     const netWorth = totalAssets - totalDebts;
 
     // Cash on hand (relatively stable, slight growth)
-    const cashOnHand = 80000 + 5000 * t + (Math.random() - 0.5) * 1000;
+    const cashOnHand = 125000 + 10000 * t + (Math.random() - 0.5) * 2000;
 
     snapshots.push({
       portfolioId: portfolio.id,

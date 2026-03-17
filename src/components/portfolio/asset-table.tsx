@@ -7,7 +7,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { MoreHorizontalIcon } from "lucide-react";
+import { MoreHorizontalIcon, PackageOpenIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,7 @@ import {
 } from "@/hooks/use-assets";
 import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
+import { isAssetStale } from "@/lib/portfolio-utils";
 import type { Asset, Section } from "@/hooks/use-portfolio";
 
 interface AssetTableProps {
@@ -107,6 +108,8 @@ export function AssetTable({
               updateAsset.mutate({ id: row.original.id, quantity })
             }
             type="number"
+            cellRow={row.index}
+            cellCol={0}
             formatDisplay={(v) => (
               <span className="tabular-nums">
                 {v != null ? Number(v).toLocaleString() : "—"}
@@ -146,6 +149,8 @@ export function AssetTable({
                 }
                 type="currency"
                 currency={asset.currency}
+                cellRow={row.index}
+                cellCol={1}
                 formatDisplay={(v) =>
                   v != null ? (
                     <MoneyDisplay
@@ -169,7 +174,6 @@ export function AssetTable({
         size: 130,
         cell: ({ row }) => {
           const asset = row.original;
-          const rawValue = Number(asset.currentValue);
           const isForeign = asset.currency !== baseCurrency;
           return (
             <div className="text-right">
@@ -185,6 +189,8 @@ export function AssetTable({
                 }}
                 type="currency"
                 currency={asset.currency}
+                cellRow={row.index}
+                cellCol={2}
                 formatDisplay={(v) => (
                   <div>
                     {isForeign ? (
@@ -320,8 +326,12 @@ export function AssetTable({
 
   if (assets.length === 0) {
     return (
-      <div className="py-8 text-center text-sm text-muted-foreground">
-        No assets yet
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <PackageOpenIcon className="size-10 text-muted-foreground/50 mb-3" />
+        <p className="font-medium text-sm">Add your first asset</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Click the &quot;Add&quot; button above to start tracking
+        </p>
       </div>
     );
   }
@@ -359,27 +369,30 @@ export function AssetTable({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row, i) => (
-              <tr
-                key={row.id}
-                className={`group/row border-b border-border/30 transition-colors hover:bg-muted/50 ${
-                  i % 2 === 1 ? "bg-muted/20" : ""
-                }`}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={`px-3 py-2 ${
-                      (cell.column.columnDef.meta as any)?.hideBelow1024
-                        ? "hidden lg:table-cell"
-                        : ""
-                    }`}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {table.getRowModel().rows.map((row, i) => {
+              const stale = isAssetStale(row.original);
+              return (
+                <tr
+                  key={row.id}
+                  className={`group/row border-b border-border/30 transition-colors hover:bg-muted/50 ${
+                    i % 2 === 1 ? "bg-muted/20" : ""
+                  } ${stale ? "bg-muted/30 italic text-muted-foreground" : ""}`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`px-3 py-2 ${
+                        (cell.column.columnDef.meta as any)?.hideBelow1024
+                          ? "hidden lg:table-cell"
+                          : ""
+                      }`}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

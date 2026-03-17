@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Summa
 
-## Getting Started
+**The balance sheet you actually own.**
 
-First, run the development server:
+A self-hosted net worth tracker that gives you a complete picture of your finances — without handing your data to a third party.
+
+![Screenshot placeholder](https://placehold.co/1200x700/1E1E2E/white?text=Summa)
+
+## Features
+
+- **Self-hosted** — your financial data stays on your hardware
+- **Multi-currency** — track assets in any currency with automatic exchange rate conversion
+- **Auto-updating prices** — stocks via Yahoo Finance, crypto via CoinGecko
+- **Spreadsheet-style UI** — editable cells, Tab/Enter navigation, sections and sheets
+- **Charts** — net worth history with 90-day trends
+- **Dark mode** — full dark/light theme support
+- **Keyboard-first** — Tab between cells, Enter to advance rows, Escape to close panels
+- **Docker-ready** — one command to deploy
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Clone
+git clone https://github.com/summa-app/summa.git
+cd summa
+
+# 2. Configure
+cp .env.example .env
+# Edit .env — at minimum, change BETTER_AUTH_SECRET to a random string
+
+# 3. Launch
+docker compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), create an account, and start tracking.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Prerequisites: Node.js 22+, pnpm, PostgreSQL
 
-## Learn More
+pnpm install
 
-To learn more about Next.js, take a look at the following resources:
+# Start the database (or use your own)
+docker compose up db -d
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run migrations
+pnpm db:migrate
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Seed demo data (optional)
+pnpm db:seed
 
-## Deploy on Vercel
+# Start dev server
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 · React 19 · TypeScript · Drizzle ORM · PostgreSQL · Better Auth · TanStack Query · Tailwind CSS 4 · Recharts · Zustand
+
+## Roadmap
+
+- **v0.1** — Core spreadsheet UI, auto-prices, charts, multi-currency, Docker (done)
+- **v0.2** — Plaid/bank connections, import/export CSV
+- **v0.3** — Goals & milestones, projected net worth
+- **v1.0** — Mobile app, shared portfolios, custom dashboards
+
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss what you'd like to change.
+
+## License
+
+[AGPL-3.0](LICENSE)

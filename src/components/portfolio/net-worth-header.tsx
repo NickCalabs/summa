@@ -25,15 +25,15 @@ export function NetWorthHeader({ aggregates, currency, isLoading }: NetWorthHead
         currency={currency}
         className="text-4xl font-bold tracking-tight"
       />
-      <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
         <span>
           Assets: <MoneyDisplay amount={aggregates.totalAssets} currency={currency} />
         </span>
-        <span aria-hidden="true">&middot;</span>
+        <span className="hidden sm:inline" aria-hidden="true">&middot;</span>
         <span>
           Debts: <MoneyDisplay amount={aggregates.totalDebts} currency={currency} />
         </span>
-        <span aria-hidden="true">&middot;</span>
+        <span className="hidden sm:inline" aria-hidden="true">&middot;</span>
         <span>
           Cash: <MoneyDisplay amount={aggregates.cashOnHand} currency={currency} />
         </span>

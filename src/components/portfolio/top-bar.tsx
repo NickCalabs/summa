@@ -69,7 +69,7 @@ export function TopBar({
 
       <div className="flex-1" />
 
-      <div className="relative">
+      <div className="relative hidden sm:block">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
         <Input
           placeholder="Search assets..."

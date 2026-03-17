@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { MenuIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePortfolios } from "@/hooks/use-portfolio";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ConnectionBanner } from "@/components/connection-banner";
 
 function LayoutIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -77,10 +81,90 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
+function SidebarContent({
+  pathname,
+  portfoliosLoading,
+  portfolioList,
+  onNavigate,
+}: {
+  pathname: string;
+  portfoliosLoading: boolean;
+  portfolioList: { id: string; name: string }[] | undefined;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      <div className="p-5">
+        <h1 className="text-xl font-bold tracking-tight">Summa</h1>
+      </div>
+
+      <Separator className="bg-white/10" />
+
+      {/* Portfolio list */}
+      <div className="flex-1 overflow-y-auto p-3">
+        <p className="px-2 py-1 text-xs font-medium uppercase tracking-wider text-white/40">
+          Portfolios
+        </p>
+        <div className="mt-1 space-y-0.5">
+          {portfoliosLoading ? (
+            <>
+              <Skeleton className="h-8 w-full bg-white/5" />
+              <Skeleton className="h-8 w-full bg-white/5" />
+            </>
+          ) : (
+            portfolioList?.map((p) => {
+              const isActive = pathname === `/portfolio/${p.id}`;
+              return (
+                <Link
+                  key={p.id}
+                  href={`/portfolio/${p.id}`}
+                  onClick={onNavigate}
+                  className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive
+                      ? "bg-white/10 text-white"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {p.name}
+                </Link>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <Separator className="bg-white/10" />
+
+      {/* Navigation */}
+      <nav className="p-3 space-y-1">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                isActive
+                  ? "bg-white/10 text-white"
+                  : "text-white/60 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <item.icon />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </>
+  );
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: portfolioList, isLoading: portfoliosLoading } = usePortfolios();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function handleLogout() {
     await authClient.signOut();
@@ -89,72 +173,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen">
-      {/* Sidebar — always dark */}
-      <aside className="flex w-60 flex-col bg-[#1E1E2E] text-white">
-        <div className="p-5">
-          <h1 className="text-xl font-bold tracking-tight">Summa</h1>
-        </div>
-
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-60 flex-col bg-[#1E1E2E] text-white">
+        <SidebarContent
+          pathname={pathname}
+          portfoliosLoading={portfoliosLoading}
+          portfolioList={portfolioList}
+        />
         <Separator className="bg-white/10" />
-
-        {/* Portfolio list */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <p className="px-2 py-1 text-xs font-medium uppercase tracking-wider text-white/40">
-            Portfolios
-          </p>
-          <div className="mt-1 space-y-0.5">
-            {portfoliosLoading ? (
-              <>
-                <Skeleton className="h-8 w-full bg-white/5" />
-                <Skeleton className="h-8 w-full bg-white/5" />
-              </>
-            ) : (
-              portfolioList?.map((p) => {
-                const isActive = pathname === `/portfolio/${p.id}`;
-                return (
-                  <Link
-                    key={p.id}
-                    href={`/portfolio/${p.id}`}
-                    className={`block rounded-md px-3 py-2 text-sm transition-colors ${
-                      isActive
-                        ? "bg-white/10 text-white"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    {p.name}
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <Separator className="bg-white/10" />
-
-        {/* Navigation */}
-        <nav className="p-3 space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-white/10 text-white"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <item.icon />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <Separator className="bg-white/10" />
-
-        {/* Bottom actions */}
         <div className="p-3 flex items-center justify-between">
           <ThemeToggle />
           <Button
@@ -169,8 +195,54 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Mobile sidebar drawer */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent
+          side="left"
+          className="w-60 p-0 bg-[#1E1E2E] text-white border-none"
+          showCloseButton={false}
+        >
+          <SidebarContent
+            pathname={pathname}
+            portfoliosLoading={portfoliosLoading}
+            portfolioList={portfolioList}
+            onNavigate={() => setSidebarOpen(false)}
+          />
+          <Separator className="bg-white/10" />
+          <div className="p-3 flex items-center justify-between">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/5"
+              onClick={handleLogout}
+            >
+              <LogOutIcon />
+              <span className="sr-only">Sign out</span>
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile header */}
+        <div className="flex md:hidden items-center gap-3 px-4 py-3 border-b bg-background">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <MenuIcon className="size-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+          <span className="font-bold">Summa</span>
+        </div>
+
+        <ConnectionBanner />
+        <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+      </div>
     </div>
   );
 }

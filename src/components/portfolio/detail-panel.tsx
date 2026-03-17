@@ -88,7 +88,7 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
     return (
       <>
         <Sheet open={open} onOpenChange={handleOpenChange}>
-          <SheetContent className="sm:max-w-[480px]">
+          <SheetContent className="w-full sm:max-w-[480px]">
             <SheetHeader>
               <SheetTitle>Asset not found</SheetTitle>
               <SheetDescription>
