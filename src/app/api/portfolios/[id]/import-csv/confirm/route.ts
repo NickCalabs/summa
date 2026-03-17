@@ -21,6 +21,11 @@ export async function POST(
 
     const body = await parseBody(request, csvImportConfirm);
 
+    const MAX_ROWS = 10000;
+    if (body.rows.length > MAX_ROWS) {
+      return errorResponse(`Too many rows. Maximum is ${MAX_ROWS} rows per import.`, 413);
+    }
+
     // Verify section belongs to this portfolio
     const [section] = await db
       .select({ id: sections.id })
