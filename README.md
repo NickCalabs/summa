@@ -53,6 +53,8 @@ docker compose up -d
 
 Open [http://localhost:3000](http://localhost:3000), create an account, and start tracking.
 
+New to Summa? See the **[Getting Started guide](docs/GETTING-STARTED.md)** for a walkthrough of your first 5 minutes.
+
 ## Environment Variables
 
 | Variable | Required | Description |
