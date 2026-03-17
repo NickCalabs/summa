@@ -50,4 +50,7 @@ export function validateEnv(): void {
   }
 }
 
-validateEnv();
+// Only validate at runtime, not during Next.js build
+if (process.env.NEXT_PHASE !== "phase-production-build") {
+  validateEnv();
+}

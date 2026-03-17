@@ -13,7 +13,7 @@ function getClientIp(request: NextRequest): string {
   if (forwarded) {
     return forwarded.split(",")[0].trim();
   }
-  return request.ip ?? "unknown";
+  return (request as NextRequest & { ip?: string }).ip ?? "unknown";
 }
 
 function cleanExpiredEntries() {

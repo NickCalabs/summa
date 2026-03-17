@@ -50,7 +50,7 @@ async function verifyPlaidSignature(
 
   // Verify JWT signature over "headerB64.payloadB64"
   const signingInput = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-  const signature = base64UrlDecode(sigB64);
+  const signature = new Uint8Array(base64UrlDecode(sigB64));
   const valid = await crypto.subtle.verify(
     { name: "ECDSA", hash: "SHA-256" },
     cryptoKey,
