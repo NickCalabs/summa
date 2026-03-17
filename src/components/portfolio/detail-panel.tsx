@@ -120,7 +120,6 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
         <SheetContent className="sm:max-w-[480px] overflow-y-auto">
           <PanelHeader
             asset={asset}
-            portfolioId={portfolioId}
             updateAsset={updateAsset}
           />
 
@@ -137,7 +136,6 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
                 <ValueTab
                   asset={asset}
                   currency={portfolio.currency}
-                  portfolioId={portfolioId}
                   updateAsset={updateAsset}
                 />
               </TabsContent>
@@ -149,7 +147,6 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
               <TabsContent value="notes" className="pt-4">
                 <NotesTab
                   asset={asset}
-                  portfolioId={portfolioId}
                   updateAsset={updateAsset}
                 />
               </TabsContent>
@@ -157,7 +154,6 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
               <TabsContent value="settings" className="pt-4 space-y-4">
                 <SettingsTab
                   asset={asset}
-                  portfolioId={portfolioId}
                   updateAsset={updateAsset}
                   archiveAsset={archiveAsset}
                   closeDetailPanel={closeDetailPanel}
@@ -204,11 +200,9 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
 
 function PanelHeader({
   asset,
-  portfolioId,
   updateAsset,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
-  portfolioId: string;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -269,12 +263,10 @@ function PanelHeader({
 function ValueTab({
   asset,
   currency,
-  portfolioId,
   updateAsset,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
   currency: string;
-  portfolioId: string;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [manualValue, setManualValue] = useState("");
@@ -348,11 +340,9 @@ function ValueTab({
 
 function NotesTab({
   asset,
-  portfolioId,
   updateAsset,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
-  portfolioId: string;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [notes, setNotes] = useState(asset.notes ?? "");
@@ -383,14 +373,12 @@ function NotesTab({
 
 function SettingsTab({
   asset,
-  portfolioId,
   updateAsset,
   archiveAsset,
   closeDetailPanel,
   onDeleteClick,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
-  portfolioId: string;
   updateAsset: ReturnType<typeof useUpdateAsset>;
   archiveAsset: ReturnType<typeof useArchiveAsset>;
   closeDetailPanel: () => void;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
@@ -14,24 +14,23 @@ export default function DashboardPage() {
   const { data: portfolioList, isLoading } = usePortfolios();
   const session = authClient.useSession();
   const router = useRouter();
-  const [onboarding, setOnboarding] = useState(false);
+  const onboardingRef = useRef(false);
 
-  useEffect(() => {
-    if (isLoading || onboarding) return;
-    if (portfolioList && portfolioList.length === 0) {
-      setOnboarding(true);
-      fetch("/api/portfolios/onboard", { method: "POST" })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.portfolioId) {
-            router.push(`/portfolio/${data.portfolioId}`);
-          }
-        })
-        .catch(() => setOnboarding(false));
-    }
-  }, [portfolioList, isLoading, onboarding, router]);
+  const shouldOnboard = !isLoading && portfolioList && portfolioList.length === 0 && !onboardingRef.current;
 
-  if (isLoading || onboarding) {
+  if (shouldOnboard) {
+    onboardingRef.current = true;
+    fetch("/api/portfolios/onboard", { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.portfolioId) {
+          router.push(`/portfolio/${data.portfolioId}`);
+        }
+      })
+      .catch(() => { onboardingRef.current = false; });
+  }
+
+  if (isLoading || onboardingRef.current) {
     return (
       <div className="p-8 space-y-4">
         <Skeleton className="h-8 w-48" />

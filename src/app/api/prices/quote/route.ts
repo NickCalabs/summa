@@ -2,7 +2,6 @@ import {
   requireAuth,
   jsonResponse,
   errorResponse,
-  handleError,
 } from "@/lib/api-helpers";
 import { getProvider } from "@/lib/providers/types";
 

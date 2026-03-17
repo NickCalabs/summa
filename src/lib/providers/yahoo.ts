@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 import yahooFinance from "yahoo-finance2";
 import type { PriceProvider, PriceResult, SearchResult, BatchPriceResult } from "./types";
 

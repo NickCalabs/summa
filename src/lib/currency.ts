@@ -92,8 +92,19 @@ export function convertCurrency(
   rateMapBase: string
 ): number {
   if (from === to) return amount;
-  if (from === rateMapBase) return amount * rates[to];
-  if (to === rateMapBase) return amount / rates[from];
+  if (from === rateMapBase) {
+    const toRate = rates[to];
+    if (!toRate) return amount; // graceful fallback — missing rate
+    return amount * toRate;
+  }
+  if (to === rateMapBase) {
+    const fromRate = rates[from];
+    if (!fromRate) return amount; // graceful fallback — missing rate
+    return amount / fromRate;
+  }
   // Cross-rate: from → base → to
-  return (amount / rates[from]) * rates[to];
+  const fromRate = rates[from];
+  const toRate = rates[to];
+  if (!fromRate || !toRate) return amount; // graceful fallback — missing rate
+  return (amount / fromRate) * toRate;
 }

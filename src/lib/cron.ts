@@ -11,6 +11,13 @@ import { decrypt } from "@/lib/encryption";
 
 let started = false;
 
+// Concurrency guards — prevent overlapping job executions
+const running = {
+  prices: false,
+  plaid: false,
+  snapshots: false,
+};
+
 async function refreshPrices() {
   const ts = new Date().toISOString();
   console.log(`[cron] ${ts} Starting price refresh...`);
@@ -257,18 +264,30 @@ export function startCronJobs() {
 
   // Every 15 minutes — refresh ticker-based asset prices
   cron.schedule("*/15 * * * *", () => {
-    refreshPrices();
+    if (running.prices) return;
+    running.prices = true;
+    refreshPrices()
+      .catch((err) => console.error("[cron] Unhandled error in refreshPrices:", err))
+      .finally(() => { running.prices = false; });
   });
 
   // Every 6 hours — refresh Plaid balances
   cron.schedule("0 */6 * * *", () => {
-    refreshPlaidBalances();
+    if (running.plaid) return;
+    running.plaid = true;
+    refreshPlaidBalances()
+      .catch((err) => console.error("[cron] Unhandled error in refreshPlaidBalances:", err))
+      .finally(() => { running.plaid = false; });
   });
 
   // Midnight UTC — refresh exchange rates then take daily portfolio snapshots
-  cron.schedule("0 0 * * *", async () => {
-    await refreshExchangeRates();
-    await dailySnapshots();
+  cron.schedule("0 0 * * *", () => {
+    if (running.snapshots) return;
+    running.snapshots = true;
+    refreshExchangeRates()
+      .then(() => dailySnapshots())
+      .catch((err) => console.error("[cron] Unhandled error in daily jobs:", err))
+      .finally(() => { running.snapshots = false; });
   }, { timezone: "UTC" });
 
   console.log(`[cron] ${new Date().toISOString()} Cron jobs registered`);

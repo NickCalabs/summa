@@ -21,7 +21,7 @@ interface AssetTableProps {
   portfolioId: string;
 }
 
-export function AssetTable({ assets, currency, portfolioId }: AssetTableProps) {
+export function AssetTable({ assets }: AssetTableProps) {
   const openDetailPanel = useUIStore((s) => s.openDetailPanel);
   const { baseCurrency, toBase } = useCurrency();
 

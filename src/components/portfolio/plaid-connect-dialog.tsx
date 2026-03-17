@@ -34,7 +34,6 @@ import {
   useSyncPlaidConnection,
   useDisconnectPlaid,
   type PlaidConnection,
-  type PlaidAccount,
 } from "@/hooks/use-plaid";
 import { usePlaidLink } from "react-plaid-link";
 import type { Section } from "@/hooks/use-portfolio";

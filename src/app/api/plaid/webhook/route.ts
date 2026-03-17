@@ -95,13 +95,14 @@ export async function POST(request: Request) {
             updatedAt: new Date(),
           })
           .where(eq(plaidConnections.id, connection.id));
-      } catch {
-        // Log but don't fail the webhook
+      } catch (error) {
+        console.error(`[plaid-webhook] Balance refresh failed for connection ${connection.id}:`, error);
       }
     }
 
     return new Response("OK", { status: 200 });
-  } catch {
+  } catch (error) {
+    console.error("[plaid-webhook] Unhandled webhook error:", error);
     return new Response("OK", { status: 200 });
   }
 }

@@ -44,6 +44,11 @@ export class TokenBucket {
 
 export class TtlCache<T> {
   private store = new Map<string, { data: T; expiresAt: number }>();
+  private maxSize: number;
+
+  constructor(maxSize: number = 500) {
+    this.maxSize = maxSize;
+  }
 
   get(key: string): T | undefined {
     const entry = this.store.get(key);
@@ -56,6 +61,18 @@ export class TtlCache<T> {
   }
 
   set(key: string, data: T, ttlMs: number) {
+    // Evict expired entries if at capacity
+    if (this.store.size >= this.maxSize) {
+      const now = Date.now();
+      for (const [k, v] of this.store) {
+        if (now > v.expiresAt) this.store.delete(k);
+      }
+      // If still at capacity after eviction, remove oldest entry
+      if (this.store.size >= this.maxSize) {
+        const firstKey = this.store.keys().next().value;
+        if (firstKey !== undefined) this.store.delete(firstKey);
+      }
+    }
     this.store.set(key, { data, expiresAt: Date.now() + ttlMs });
   }
 }

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { betterAuth } from "better-auth";
 
 const publicPaths = ["/login", "/register", "/api/auth", "/api/health", "/api/plaid/webhook"];
 

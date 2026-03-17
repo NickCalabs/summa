@@ -20,10 +20,8 @@ interface SectionGroupProps {
 
 export function SectionGroup({
   section,
-  sheetTotal,
   currency,
   portfolioId,
-  sections,
   isFirst,
   isLast,
   onMoveUp,

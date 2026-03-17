@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetWorthChart } from "./net-worth-chart";
@@ -17,17 +17,19 @@ interface ChartSectionProps {
 }
 
 export function ChartSection({ portfolio }: ChartSectionProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const [range, setRange] = useState<DateRangeKey>("3M");
-
-  useEffect(() => {
-    setCollapsed(localStorage.getItem(STORAGE_KEY) === "true");
-  }, []);
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
       const next = !prev;
-      localStorage.setItem(STORAGE_KEY, String(next));
+      try { localStorage.setItem(STORAGE_KEY, String(next)); } catch { /* ignore */ }
       return next;
     });
   }

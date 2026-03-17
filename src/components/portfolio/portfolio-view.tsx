@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { NetWorthHeader } from "./net-worth-header";
 import { SheetTabs } from "./sheet-tabs";
 import { SheetView } from "./sheet-view";
