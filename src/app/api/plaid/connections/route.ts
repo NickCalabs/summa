@@ -37,6 +37,7 @@ export async function GET(request: Request) {
       itemId: c.itemId,
       errorCode: c.errorCode,
       errorMessage: c.errorMessage,
+      errorExpiresAt: c.errorExpiresAt,
       lastSyncedAt: c.lastSyncedAt,
       consentExpiration: c.consentExpiration,
       createdAt: c.createdAt,

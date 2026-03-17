@@ -25,11 +25,14 @@ export async function POST(request: Request) {
 
     if (webhook_type === "ITEM" && webhook_code === "ERROR") {
       const errorInfo = body.error ?? {};
+      const errorExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
       await db
         .update(plaidConnections)
         .set({
           errorCode: errorInfo.error_code ?? "UNKNOWN",
           errorMessage: errorInfo.error_message ?? "An error occurred",
+          errorExpiresAt,
+          errorRetryCount: 1,
           updatedAt: new Date(),
         })
         .where(eq(plaidConnections.id, connection.id));
@@ -42,6 +45,8 @@ export async function POST(request: Request) {
         .set({
           errorCode: "PENDING_EXPIRATION",
           errorMessage: "Connection will expire soon. Please re-authenticate.",
+          errorExpiresAt: null,
+          errorRetryCount: 0,
           updatedAt: new Date(),
         })
         .where(eq(plaidConnections.id, connection.id));
@@ -92,6 +97,8 @@ export async function POST(request: Request) {
             lastSyncedAt: new Date(),
             errorCode: null,
             errorMessage: null,
+            errorExpiresAt: null,
+            errorRetryCount: 0,
             updatedAt: new Date(),
           })
           .where(eq(plaidConnections.id, connection.id));

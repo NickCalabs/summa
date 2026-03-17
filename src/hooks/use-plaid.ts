@@ -35,6 +35,7 @@ export interface PlaidConnection {
   itemId: string;
   errorCode: string | null;
   errorMessage: string | null;
+  errorExpiresAt: string | null;
   lastSyncedAt: string | null;
   consentExpiration: string | null;
   createdAt: string;
