@@ -5,12 +5,14 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgres://summa:${POSTGRES_PASSWORD:-summa}@db:5432/summa
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-to-a-random-secret}
+      # REQUIRED: Override these before running in production — defaults will be rejected at startup
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET must be set to a strong random secret (openssl rand -base64 32)}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      # REQUIRED in production: set to a 64-char hex string (openssl rand -hex 32)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set to a 64-char hex string (openssl rand -hex 32)}
       PLAID_CLIENT_ID: ${PLAID_CLIENT_ID:-}
       PLAID_SECRET: ${PLAID_SECRET:-}
       PLAID_ENV: ${PLAID_ENV:-sandbox}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
     depends_on:
       db:
         condition: service_healthy
