@@ -1,11 +1,13 @@
 import cron from "node-cron";
 import { db } from "@/lib/db";
-import { assets, portfolios } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { assets, portfolios, plaidConnections, plaidAccounts } from "@/lib/db/schema";
+import { eq, isNull } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
+import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
+import { decrypt } from "@/lib/encryption";
 
 let started = false;
 
@@ -168,6 +170,85 @@ async function refreshExchangeRates() {
   }
 }
 
+async function refreshPlaidBalances() {
+  if (!isPlaidConfigured()) return;
+
+  const ts = new Date().toISOString();
+  console.log(`[cron] ${ts} Starting Plaid balance refresh...`);
+
+  try {
+    // Get connections without errors
+    const connections = await db
+      .select()
+      .from(plaidConnections)
+      .where(isNull(plaidConnections.errorCode));
+
+    let updatedCount = 0;
+
+    for (const connection of connections) {
+      try {
+        const accessToken = decrypt(connection.accessTokenEnc);
+        const balances = await getBalances(accessToken);
+
+        for (const balance of balances) {
+          await db
+            .update(plaidAccounts)
+            .set({
+              currentBalance: balance.currentBalance?.toFixed(2) ?? null,
+              availableBalance: balance.availableBalance?.toFixed(2) ?? null,
+              updatedAt: new Date(),
+            })
+            .where(eq(plaidAccounts.plaidAccountId, balance.accountId));
+
+          const [account] = await db
+            .select()
+            .from(plaidAccounts)
+            .where(eq(plaidAccounts.plaidAccountId, balance.accountId))
+            .limit(1);
+
+          if (account?.assetId && balance.currentBalance != null) {
+            await db
+              .update(assets)
+              .set({
+                currentValue: Math.abs(balance.currentBalance).toFixed(2),
+                lastSyncedAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(assets.id, account.assetId));
+            updatedCount++;
+          }
+        }
+
+        await db
+          .update(plaidConnections)
+          .set({ lastSyncedAt: new Date(), updatedAt: new Date() })
+          .where(eq(plaidConnections.id, connection.id));
+      } catch (error: any) {
+        console.error(
+          `[cron] ${ts} Plaid refresh failed for connection ${connection.id}:`,
+          error
+        );
+        // Store error on connection
+        await db
+          .update(plaidConnections)
+          .set({
+            errorCode: error?.response?.data?.error_code ?? "SYNC_ERROR",
+            errorMessage:
+              error?.response?.data?.error_message ?? "Balance sync failed",
+            updatedAt: new Date(),
+          })
+          .where(eq(plaidConnections.id, connection.id));
+      }
+    }
+
+    console.log(
+      `[cron] ${ts} Plaid balance refresh complete: ${updatedCount} assets updated`
+    );
+  } catch (error) {
+    console.error(`[cron] ${ts} Plaid balance refresh failed:`, error);
+  }
+}
+
 export function startCronJobs() {
   if (started) return;
   started = true;
@@ -177,6 +258,11 @@ export function startCronJobs() {
   // Every 15 minutes — refresh ticker-based asset prices
   cron.schedule("*/15 * * * *", () => {
     refreshPrices();
+  });
+
+  // Every 6 hours — refresh Plaid balances
+  cron.schedule("0 */6 * * *", () => {
+    refreshPlaidBalances();
   });
 
   // Midnight UTC — refresh exchange rates then take daily portfolio snapshots

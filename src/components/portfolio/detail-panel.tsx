@@ -32,6 +32,7 @@ import {
   useArchiveAsset,
   useDeleteAsset,
 } from "@/hooks/use-assets";
+import { useSyncPlaidConnection } from "@/hooks/use-plaid";
 import { findAssetInTree } from "@/lib/portfolio-utils";
 import { parseCurrencyInput, formatNumberForInput } from "@/lib/currency";
 import { useCurrency } from "@/contexts/currency-context";
@@ -430,6 +431,13 @@ function SettingsTab({
         </SettingRow>
       )}
 
+      {asset.providerType === "plaid" && (
+        <PlaidAssetSettings
+          asset={asset}
+          updateAsset={updateAsset}
+        />
+      )}
+
       <SettingRow label="Ownership %">
         <BlurCommitInput
           value={formatNumberForInput(asset.ownershipPct)}
@@ -523,6 +531,55 @@ function SettingsTab({
         </Button>
       </div>
     </>
+  );
+}
+
+function PlaidAssetSettings({
+  asset,
+  updateAsset,
+}: {
+  asset: NonNullable<ReturnType<typeof findAssetInTree>>;
+  updateAsset: ReturnType<typeof useUpdateAsset>;
+}) {
+  const syncConnection = useSyncPlaidConnection();
+  const connectionId = (asset.providerConfig as any)?.connectionId;
+
+  return (
+    <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+      <p className="text-xs font-medium text-muted-foreground">
+        Synced via Plaid
+      </p>
+      {asset.lastSyncedAt && (
+        <p className="text-xs text-muted-foreground">
+          Last synced: {new Date(asset.lastSyncedAt).toLocaleString()}
+        </p>
+      )}
+      <div className="flex gap-2">
+        {connectionId && (
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => syncConnection.mutate(connectionId)}
+            disabled={syncConnection.isPending}
+          >
+            {syncConnection.isPending ? "Syncing..." : "Sync Now"}
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={() =>
+            updateAsset.mutate({
+              id: asset.id,
+              providerType: "manual",
+              providerConfig: {},
+            } as any)
+          }
+        >
+          Disconnect
+        </Button>
+      </div>
+    </div>
   );
 }
 

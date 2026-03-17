@@ -84,6 +84,7 @@ export const createAsset = z.object({
       "zillow",
       "vin",
       "custom",
+      "plaid",
     ])
     .optional(),
   providerConfig: z.record(z.string(), z.unknown()).optional(),
@@ -113,6 +114,7 @@ export const updateAsset = z.object({
       "zillow",
       "vin",
       "custom",
+      "plaid",
     ])
     .optional(),
   providerConfig: z.record(z.string(), z.unknown()).optional(),
@@ -129,6 +131,32 @@ export const moveAsset = z.object({
 
 export const takeSnapshot = z.object({
   portfolioId: z.string().uuid(),
+});
+
+// ── Plaid schemas ──
+
+export const plaidExchangeToken = z.object({
+  publicToken: z.string().min(1),
+  institutionId: z.string().min(1),
+  institutionName: z.string().min(1),
+});
+
+export const plaidLinkAccounts = z.object({
+  accounts: z.array(
+    z.object({
+      plaidAccountId: z.string().min(1),
+      sectionId: z.string().uuid(),
+    })
+  ),
+});
+
+// ── CSV schemas ──
+
+export const csvImportConfirm = z.object({
+  sectionId: z.string().uuid(),
+  columnMapping: z.record(z.string(), z.string()),
+  defaultCurrency: z.string().length(3).optional(),
+  rows: z.array(z.record(z.string(), z.string())),
 });
 
 // ── Parse helper ──

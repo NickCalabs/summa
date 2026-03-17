@@ -12,6 +12,8 @@ import { SheetView } from "./sheet-view";
 import { TopBar } from "./top-bar";
 import { DetailPanel } from "./detail-panel";
 import { AddAssetDialog } from "./add-asset-dialog";
+import { PlaidConnectDialog } from "./plaid-connect-dialog";
+import { CsvImportDialog } from "./csv-import-dialog";
 import { ChartSection } from "@/components/charts/chart-section";
 import { CurrencyProvider } from "@/contexts/currency-context";
 
@@ -105,6 +107,12 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
         <DetailPanel portfolioId={portfolioId} portfolio={portfolio} />
         <AddAssetDialog
+          portfolioId={portfolioId}
+          currency={portfolio.currency}
+          sections={allSections}
+        />
+        <PlaidConnectDialog sections={allSections} />
+        <CsvImportDialog
           portfolioId={portfolioId}
           currency={portfolio.currency}
           sections={allSections}

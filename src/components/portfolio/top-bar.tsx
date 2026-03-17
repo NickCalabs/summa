@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, SearchIcon, SettingsIcon } from "lucide-react";
+import {
+  PlusIcon,
+  SearchIcon,
+  SettingsIcon,
+  BuildingIcon,
+  UploadIcon,
+  DownloadIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUpdatePortfolio } from "@/hooks/use-portfolio-mutations";
 import { useUIStore } from "@/stores/ui-store";
+import { usePlaidStatus } from "@/hooks/use-plaid";
 
 interface TopBarProps {
   portfolioId: string;
@@ -20,6 +28,9 @@ export function TopBar({
 }: TopBarProps) {
   const updatePortfolio = useUpdatePortfolio(portfolioId);
   const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
+  const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
+  const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
+  const { data: plaidStatus } = usePlaidStatus();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -77,6 +88,29 @@ export function TopBar({
           className="h-8 w-48 pl-8 text-xs"
         />
       </div>
+
+      {plaidStatus?.configured && (
+        <Button variant="outline" size="sm" onClick={openPlaidDialog}>
+          <BuildingIcon className="size-3.5" data-icon="inline-start" />
+          Connect Bank
+        </Button>
+      )}
+
+      <Button variant="outline" size="sm" onClick={openCsvImportDialog}>
+        <UploadIcon className="size-3.5" data-icon="inline-start" />
+        Import
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          (window.location.href = `/api/portfolios/${portfolioId}/export-csv`)
+        }
+      >
+        <DownloadIcon className="size-3.5" data-icon="inline-start" />
+        Export
+      </Button>
 
       <Button
         size="sm"

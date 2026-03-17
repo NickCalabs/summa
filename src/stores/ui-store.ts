@@ -18,6 +18,14 @@ interface UIStore {
   selectedAssetIds: Set<string>;
   toggleAssetSelection: (assetId: string) => void;
   clearSelection: () => void;
+
+  plaidDialogOpen: boolean;
+  openPlaidDialog: () => void;
+  closePlaidDialog: () => void;
+
+  csvImportDialogOpen: boolean;
+  openCsvImportDialog: () => void;
+  closeCsvImportDialog: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -56,4 +64,12 @@ export const useUIStore = create<UIStore>((set) => ({
       return { selectedAssetIds: next };
     }),
   clearSelection: () => set({ selectedAssetIds: new Set() }),
+
+  plaidDialogOpen: false,
+  openPlaidDialog: () => set({ plaidDialogOpen: true }),
+  closePlaidDialog: () => set({ plaidDialogOpen: false }),
+
+  csvImportDialogOpen: false,
+  openCsvImportDialog: () => set({ csvImportDialogOpen: true }),
+  closeCsvImportDialog: () => set({ csvImportDialogOpen: false }),
 }));

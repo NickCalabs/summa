@@ -7,6 +7,10 @@ services:
       DATABASE_URL: postgres://summa:${POSTGRES_PASSWORD:-summa}@db:5432/summa
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-to-a-random-secret}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      PLAID_CLIENT_ID: ${PLAID_CLIENT_ID:-}
+      PLAID_SECRET: ${PLAID_SECRET:-}
+      PLAID_ENV: ${PLAID_ENV:-sandbox}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
     depends_on:
       db:
         condition: service_healthy

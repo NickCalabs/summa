@@ -25,6 +25,7 @@ export const providerTypeEnum = pgEnum("provider_type", [
   "zillow",
   "vin",
   "custom",
+  "plaid",
 ]);
 export const snapshotSourceEnum = pgEnum("snapshot_source", [
   "provider",
@@ -154,6 +155,7 @@ export const assets = pgTable("assets", {
       source?: string;
       walletAddress?: string;
       connectionId?: string;
+      plaidAccountId?: string;
     }>()
     .default({}),
   ownershipPct: numeric("ownership_pct", { precision: 5, scale: 2 })
@@ -211,6 +213,47 @@ export const portfolioSnapshots = pgTable(
     uniqueIndex("portfolio_snapshot_unique").on(table.portfolioId, table.date),
   ]
 );
+
+// ── Plaid Connections ──
+
+export const plaidConnections = pgTable("plaid_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  institutionId: text("institution_id").notNull(),
+  institutionName: text("institution_name").notNull(),
+  accessTokenEnc: text("access_token_enc").notNull(),
+  itemId: text("item_id").notNull().unique(),
+  consentExpiration: timestamp("consent_expiration"),
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  lastSyncedAt: timestamp("last_synced_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ── Plaid Accounts ──
+
+export const plaidAccounts = pgTable("plaid_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  connectionId: uuid("connection_id")
+    .notNull()
+    .references(() => plaidConnections.id, { onDelete: "cascade" }),
+  plaidAccountId: text("plaid_account_id").notNull().unique(),
+  assetId: uuid("asset_id").references(() => assets.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  officialName: text("official_name"),
+  type: text("type").notNull(),
+  subtype: text("subtype"),
+  mask: text("mask"),
+  currentBalance: numeric("current_balance", { precision: 20, scale: 2 }),
+  availableBalance: numeric("available_balance", { precision: 20, scale: 2 }),
+  isoCurrencyCode: text("iso_currency_code").default("USD"),
+  isTracked: boolean("is_tracked").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 // ── Exchange Rates ──
 

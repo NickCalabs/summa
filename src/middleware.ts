@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { betterAuth } from "better-auth";
 
-const publicPaths = ["/login", "/register", "/api/auth", "/api/health"];
+const publicPaths = ["/login", "/register", "/api/auth", "/api/health", "/api/plaid/webhook"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
