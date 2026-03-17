@@ -65,6 +65,8 @@ export async function POST(
         lastSyncedAt: new Date(),
         errorCode: null,
         errorMessage: null,
+        errorExpiresAt: null,
+        errorRetryCount: 0,
         updatedAt: new Date(),
       })
       .where(eq(plaidConnections.id, id));

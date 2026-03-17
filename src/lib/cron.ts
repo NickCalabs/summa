@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { db } from "@/lib/db";
 import { assets, portfolios, plaidConnections, plaidAccounts } from "@/lib/db/schema";
-import { eq, isNull, or, lt } from "drizzle-orm";
+import { eq, isNull, isNotNull, ne, and, or, lt } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
@@ -207,7 +207,11 @@ async function refreshPlaidBalances() {
       .where(
         or(
           isNull(plaidConnections.errorCode),
-          isNull(plaidConnections.errorExpiresAt),
+          and(
+            isNotNull(plaidConnections.errorCode),
+            ne(plaidConnections.errorCode, "PENDING_EXPIRATION"),
+            isNull(plaidConnections.errorExpiresAt)
+          ),
           lt(plaidConnections.errorExpiresAt, now)
         )
       );
@@ -215,8 +219,6 @@ async function refreshPlaidBalances() {
     let updatedCount = 0;
 
     for (const connection of connections) {
-      // PENDING_EXPIRATION requires user re-auth — skip auto-retry
-      if (connection.errorCode === "PENDING_EXPIRATION") continue;
 
       try {
         const accessToken = decrypt(connection.accessTokenEnc);

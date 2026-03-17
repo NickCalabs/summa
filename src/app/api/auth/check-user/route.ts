@@ -6,10 +6,22 @@ import { sql } from "drizzle-orm";
 // Rate limit: 5 requests per 5 minutes per IP
 const checkUserRateLimit = new Map<string, { count: number; resetAt: number }>();
 
+function cleanExpiredEntries() {
+  const now = Date.now();
+  for (const [key, entry] of checkUserRateLimit.entries()) {
+    if (now > entry.resetAt) {
+      checkUserRateLimit.delete(key);
+    }
+  }
+}
+
 export async function GET(request: Request) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
   const now = Date.now();
   const windowMs = 5 * 60 * 1000; // 5 minutes
+
+  cleanExpiredEntries();
+
   const limit = checkUserRateLimit.get(ip);
 
   if (limit && now < limit.resetAt) {
