@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { db } from "@/lib/db";
 import { assets, portfolios, plaidConnections, plaidAccounts } from "@/lib/db/schema";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, or, lt } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
@@ -17,6 +17,14 @@ const running = {
   plaid: false,
   snapshots: false,
 };
+
+// Maximum backoff: 7 days in ms
+const MAX_BACKOFF_MS = 7 * 24 * 60 * 60 * 1000;
+
+function nextBackoffMs(retryCount: number): number {
+  const ms = 24 * 60 * 60 * 1000 * Math.pow(2, retryCount - 1);
+  return Math.min(ms, MAX_BACKOFF_MS);
+}
 
 async function refreshPrices() {
   const ts = new Date().toISOString();
@@ -185,18 +193,31 @@ async function refreshPlaidBalances() {
   if (!isPlaidConfigured()) return;
 
   const ts = new Date().toISOString();
+  const now = new Date();
   console.log(`[cron] ${ts} Starting Plaid balance refresh...`);
 
   try {
-    // Get connections without errors
+    // Include connections that:
+    //   1. Have no error (healthy), OR
+    //   2. Have an error with no expiry set (legacy records — treat as expired), OR
+    //   3. Have an error whose expiry has passed (time to retry)
     const connections = await db
       .select()
       .from(plaidConnections)
-      .where(isNull(plaidConnections.errorCode));
+      .where(
+        or(
+          isNull(plaidConnections.errorCode),
+          isNull(plaidConnections.errorExpiresAt),
+          lt(plaidConnections.errorExpiresAt, now)
+        )
+      );
 
     let updatedCount = 0;
 
     for (const connection of connections) {
+      // PENDING_EXPIRATION requires user re-auth — skip auto-retry
+      if (connection.errorCode === "PENDING_EXPIRATION") continue;
+
       try {
         const accessToken = decrypt(connection.accessTokenEnc);
         const balances = await getBalances(accessToken);
@@ -232,20 +253,31 @@ async function refreshPlaidBalances() {
 
         await db
           .update(plaidConnections)
-          .set({ lastSyncedAt: new Date(), updatedAt: new Date() })
+          .set({
+            lastSyncedAt: new Date(),
+            errorCode: null,
+            errorMessage: null,
+            errorExpiresAt: null,
+            errorRetryCount: 0,
+            updatedAt: new Date(),
+          })
           .where(eq(plaidConnections.id, connection.id));
       } catch (error: any) {
         console.error(
           `[cron] ${ts} Plaid refresh failed for connection ${connection.id}:`,
           error
         );
-        // Store error on connection
+        // Exponential backoff: 24h → 48h → 96h, capped at 7 days
+        const nextRetryCount = (connection.errorRetryCount ?? 0) + 1;
+        const errorExpiresAt = new Date(Date.now() + nextBackoffMs(nextRetryCount));
         await db
           .update(plaidConnections)
           .set({
             errorCode: error?.response?.data?.error_code ?? "SYNC_ERROR",
             errorMessage:
               error?.response?.data?.error_message ?? "Balance sync failed",
+            errorExpiresAt,
+            errorRetryCount: nextRetryCount,
             updatedAt: new Date(),
           })
           .where(eq(plaidConnections.id, connection.id));

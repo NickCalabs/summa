@@ -140,6 +140,7 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
                       itemId: data.connection.itemId,
                       errorCode: null,
                       errorMessage: null,
+                      errorExpiresAt: null,
                       lastSyncedAt: null,
                       consentExpiration: null,
                       createdAt: new Date().toISOString(),
@@ -239,6 +240,12 @@ function ConnectionCard({
 
       {hasError && connection.errorMessage && (
         <p className="text-xs text-destructive">{connection.errorMessage}</p>
+      )}
+
+      {hasError && connection.errorExpiresAt && connection.errorCode !== "PENDING_EXPIRATION" && (
+        <p className="text-xs text-muted-foreground">
+          Auto-retry at {new Date(connection.errorExpiresAt).toLocaleString()}
+        </p>
       )}
 
       {connection.lastSyncedAt && (
