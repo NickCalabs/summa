@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -84,12 +84,12 @@ export function AssetTable({
         header: "Ticker",
         size: 80,
         cell: ({ row }) => {
-          const config = row.original as Asset & {
-            providerConfig?: { ticker?: string };
-          };
+          const config = row.original.providerConfig as
+            | { ticker?: string }
+            | null;
           return (
             <span className="text-muted-foreground text-xs font-mono">
-              {(config as any).providerConfig?.ticker ?? "—"}
+              {config?.ticker ?? "—"}
             </span>
           );
         },
@@ -116,28 +116,50 @@ export function AssetTable({
       {
         accessorKey: "currentPrice",
         header: "Price",
-        size: 100,
-        cell: ({ row }) => (
-          <EditableCell
-            value={row.original.currentPrice}
-            onCommit={(currentPrice) =>
-              updateAsset.mutate({ id: row.original.id, currentPrice })
-            }
-            type="currency"
-            currency={currency}
-            formatDisplay={(v) =>
-              v != null ? (
-                <MoneyDisplay
-                  amount={Number(v)}
-                  currency={currency}
-                  className="tabular-nums"
-                />
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )
-            }
-          />
-        ),
+        size: 120,
+        cell: ({ row }) => {
+          const asset = row.original;
+          let freshnessBadge: React.ReactNode = null;
+          if (asset.providerType === "ticker") {
+            const isFresh =
+              asset.lastSyncedAt &&
+              Date.now() - new Date(asset.lastSyncedAt).getTime() <
+                (asset.staleDays || 1) * 86_400_000;
+            freshnessBadge = isFresh ? (
+              <Badge variant="outline" className="text-[9px] ml-1">
+                auto
+              </Badge>
+            ) : (
+              <Badge variant="destructive" className="text-[9px] ml-1">
+                stale
+              </Badge>
+            );
+          }
+          return (
+            <span className="flex items-center">
+              <EditableCell
+                value={asset.currentPrice}
+                onCommit={(currentPrice) =>
+                  updateAsset.mutate({ id: asset.id, currentPrice })
+                }
+                type="currency"
+                currency={currency}
+                formatDisplay={(v) =>
+                  v != null ? (
+                    <MoneyDisplay
+                      amount={Number(v)}
+                      currency={currency}
+                      className="tabular-nums"
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )
+                }
+              />
+              {freshnessBadge}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "currentValue",

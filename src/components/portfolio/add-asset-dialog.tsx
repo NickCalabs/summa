@@ -18,10 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TickerSearchCombobox } from "./ticker-search-combobox";
 import { useUIStore } from "@/stores/ui-store";
 import { useCreateAsset } from "@/hooks/use-assets";
 import { parseCurrencyInput } from "@/lib/currency";
 import type { Section } from "@/hooks/use-portfolio";
+import type { SearchResult } from "@/lib/providers/types";
 
 const ASSET_TYPES = [
   "stock",
@@ -68,6 +70,8 @@ export function AddAssetDialog({
   const [price, setPrice] = useState("");
   const [sectionId, setSectionId] = useState("");
   const [isCashEquivalent, setIsCashEquivalent] = useState(false);
+  const [providerType, setProviderType] = useState("manual");
+  const [providerConfig, setProviderConfig] = useState<Record<string, unknown>>({});
 
   const open = addAssetDialogSectionId !== null;
 
@@ -83,6 +87,30 @@ export function AddAssetDialog({
     setPrice("");
     setSectionId("");
     setIsCashEquivalent(false);
+    setProviderType("manual");
+    setProviderConfig({});
+  }
+
+  function handleTickerSelect(result: SearchResult) {
+    setName(result.name);
+    setType(result.type);
+    setProviderType("ticker");
+    setProviderConfig({
+      ticker: result.symbol,
+      source: result.source,
+      exchange: result.exchange,
+    });
+    setQtyPriceMode(true);
+    setQuantity("1");
+
+    fetch(
+      `/api/prices/quote?symbol=${encodeURIComponent(result.symbol)}&source=${encodeURIComponent(result.source)}`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.price != null) setPrice(String(data.price));
+      })
+      .catch(() => {});
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -120,6 +148,11 @@ export function AddAssetDialog({
       if (price) data.currentPrice = price;
     }
 
+    if (providerType !== "manual") {
+      data.providerType = providerType;
+      data.providerConfig = providerConfig;
+    }
+
     createAsset.mutate(data as any, {
       onSuccess: () => {
         closeAddAssetDialog();
@@ -146,12 +179,11 @@ export function AddAssetDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Name</label>
-            <Input
+            <TickerSearchCombobox
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Apple Inc."
+              onChange={setName}
+              onSelect={handleTickerSelect}
               autoFocus
-              required
             />
           </div>
 

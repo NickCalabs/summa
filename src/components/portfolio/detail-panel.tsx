@@ -365,7 +365,7 @@ function SettingsTab({
   closeDetailPanel: () => void;
   onDeleteClick: () => void;
 }) {
-  const assetAny = asset as any;
+  const config = asset.providerConfig as Record<string, unknown> | null;
 
   return (
     <>
@@ -398,11 +398,11 @@ function SettingsTab({
       {asset.providerType === "ticker" && (
         <SettingRow label="Ticker symbol">
           <BlurCommitInput
-            value={assetAny.providerConfig?.ticker ?? ""}
+            value={(config?.ticker as string) ?? ""}
             onCommit={(ticker) =>
               updateAsset.mutate({
                 id: asset.id,
-                providerConfig: { ticker },
+                providerConfig: { ...config, ticker },
               } as any)
             }
             placeholder="e.g. AAPL"
@@ -423,7 +423,7 @@ function SettingsTab({
 
       <SettingRow label="Stale days">
         <BlurCommitInput
-          value={assetAny.staleDays != null ? String(assetAny.staleDays) : ""}
+          value={asset.staleDays != null ? String(asset.staleDays) : ""}
           onCommit={(v) => {
             const num = parseInt(v, 10);
             updateAsset.mutate({

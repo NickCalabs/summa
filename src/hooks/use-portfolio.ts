@@ -21,6 +21,9 @@ export interface Asset {
   isInvestable: boolean;
   isCashEquivalent: boolean;
   providerType: string;
+  providerConfig: Record<string, unknown> | null;
+  staleDays: number | null;
+  lastSyncedAt: string | null;
   ownershipPct: string;
   notes: string | null;
   isArchived: boolean;
