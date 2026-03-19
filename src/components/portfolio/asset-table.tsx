@@ -13,7 +13,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { PackageOpenIcon } from "lucide-react";
+import { PackageOpenIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MoneyDisplay } from "./money-display";
 import { useUIStore } from "@/stores/ui-store";
@@ -152,9 +152,14 @@ export function AssetTable({ assets, portfolioId }: AssetTableProps) {
             );
           }
 
+          const isNameSaving =
+            updateAsset.isPending &&
+            updateAsset.variables?.id === asset.id &&
+            "name" in (updateAsset.variables ?? {});
+
           return (
             <div
-              className="select-none"
+              className="select-none flex items-center gap-1.5"
               onClick={() => {
                 if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
                 clickTimerRef.current = setTimeout(
@@ -174,6 +179,9 @@ export function AssetTable({ assets, portfolioId }: AssetTableProps) {
               >
                 {asset.name}
               </span>
+              {isNameSaving && (
+                <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
+              )}
               {isDisconnected && (
                 <div className="text-xs text-muted-foreground">
                   (disconnected)
@@ -208,32 +216,43 @@ export function AssetTable({ assets, portfolioId }: AssetTableProps) {
             );
           }
 
+          const isValueSaving =
+            updateAsset.isPending &&
+            updateAsset.variables?.id === asset.id &&
+            "currentValue" in (updateAsset.variables ?? {});
+
+
           return (
             <div
               className="text-right tabular-nums cursor-text hover:bg-muted/50 rounded -mx-1 px-1 py-0.5 -my-0.5"
               onClick={() => startEdit(asset.id, "currentValue")}
             >
-              {isForeign ? (
-                <>
+              <div className="flex items-center justify-end gap-1">
+                {isValueSaving && (
+                  <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
+                )}
+                {isForeign ? (
+                  <>
+                    <MoneyDisplay
+                      amount={toBase(Number(asset.currentValue), asset.currency)}
+                      currency={baseCurrency}
+                      className="font-medium"
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      <MoneyDisplay
+                        amount={Number(asset.currentValue)}
+                        currency={asset.currency}
+                      />
+                    </div>
+                  </>
+                ) : (
                   <MoneyDisplay
-                    amount={toBase(Number(asset.currentValue), asset.currency)}
+                    amount={Number(asset.currentValue)}
                     currency={baseCurrency}
                     className="font-medium"
                   />
-                  <div className="text-xs text-muted-foreground">
-                    <MoneyDisplay
-                      amount={Number(asset.currentValue)}
-                      currency={asset.currency}
-                    />
-                  </div>
-                </>
-              ) : (
-                <MoneyDisplay
-                  amount={Number(asset.currentValue)}
-                  currency={baseCurrency}
-                  className="font-medium"
-                />
-              )}
+                )}
+              </div>
               {isPartialOwnership && (
                 <div className="text-xs text-muted-foreground">
                   Owned {asset.ownershipPct}%{" · "}
@@ -273,6 +292,8 @@ export function AssetTable({ assets, portfolioId }: AssetTableProps) {
       startEdit,
       commitEdit,
       cancelEdit,
+      updateAsset.isPending,
+      updateAsset.variables,
     ]
   );
 

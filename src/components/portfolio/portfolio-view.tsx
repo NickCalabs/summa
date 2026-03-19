@@ -43,8 +43,24 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
         <Skeleton className="h-48 w-full rounded-xl" />
         <Skeleton className="h-8 w-80" />
         <div className="space-y-4">
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-lg" />
+          {[0, 1].map((s) => (
+            <div key={s} className="rounded-lg border border-border/50 bg-card">
+              <div className="px-3 py-3 border-b border-border/50">
+                <Skeleton className="h-5 w-32" />
+              </div>
+              <div>
+                {[0, 1, 2].map((r) => (
+                  <div
+                    key={r}
+                    className="flex items-center justify-between px-3 py-2.5 border-b border-border/30 last:border-0"
+                  >
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
