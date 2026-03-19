@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "./confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +55,7 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
 
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [newConnection, setNewConnection] = useState<PlaidConnection | null>(null);
+  const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; name: string } | null>(null);
 
   async function handleConnectBank() {
     const result = await createLinkToken.mutateAsync();
@@ -61,6 +63,7 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(next) => !next && closePlaidDialog()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -84,7 +87,7 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
                       key={conn.id}
                       connection={conn}
                       onSync={() => syncConnection.mutate(conn.id)}
-                      onDisconnect={() => disconnectPlaid.mutate(conn.id)}
+                      onDisconnect={() => setDisconnectTarget({ id: conn.id, name: conn.institutionName })}
                       isSyncing={syncConnection.isPending}
                     />
                   ))}
@@ -155,6 +158,24 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
         )}
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={disconnectTarget !== null}
+      onOpenChange={(open) => { if (!open) setDisconnectTarget(null); }}
+      title={`Disconnect ${disconnectTarget?.name ?? "bank"}?`}
+      description="Synced transactions will not be deleted, but no new data will sync from this bank account."
+      confirmLabel="Disconnect"
+      variant="destructive"
+      isPending={disconnectPlaid.isPending}
+      onConfirm={() => {
+        if (disconnectTarget) {
+          disconnectPlaid.mutate(disconnectTarget.id, {
+            onSuccess: () => setDisconnectTarget(null),
+          });
+        }
+      }}
+    />
+    </>
   );
 }
 

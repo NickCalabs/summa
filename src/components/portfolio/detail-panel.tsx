@@ -73,6 +73,7 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
   const deleteAsset = useDeleteAsset(portfolioId);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const open = detailPanelAssetId !== null;
   const asset = open
@@ -158,6 +159,7 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
                   archiveAsset={archiveAsset}
                   closeDetailPanel={closeDetailPanel}
                   onDeleteClick={() => setDeleteOpen(true)}
+                  onArchiveClick={() => setArchiveOpen(true)}
                 />
               </TabsContent>
             </Tabs>
@@ -185,6 +187,28 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
               {
                 onSuccess: () => {
                   setDeleteOpen(false);
+                  closeDetailPanel();
+                },
+              }
+            );
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        title="Archive asset"
+        description={`Archive "${asset.name}"? Archived assets are hidden from your portfolio but their data is preserved.`}
+        confirmLabel="Archive"
+        isPending={archiveAsset.isPending}
+        onConfirm={() => {
+          if (asset) {
+            archiveAsset.mutate(
+              { id: asset.id },
+              {
+                onSuccess: () => {
+                  setArchiveOpen(false);
                   closeDetailPanel();
                 },
               }
@@ -377,12 +401,14 @@ function SettingsTab({
   archiveAsset,
   closeDetailPanel,
   onDeleteClick,
+  onArchiveClick,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
   updateAsset: ReturnType<typeof useUpdateAsset>;
   archiveAsset: ReturnType<typeof useArchiveAsset>;
   closeDetailPanel: () => void;
   onDeleteClick: () => void;
+  onArchiveClick: () => void;
 }) {
   const config = asset.providerConfig as Record<string, unknown> | null;
 
@@ -512,10 +538,7 @@ function SettingsTab({
           variant="outline"
           size="sm"
           className="w-full"
-          onClick={() => {
-            archiveAsset.mutate({ id: asset.id });
-            closeDetailPanel();
-          }}
+          onClick={onArchiveClick}
         >
           Archive
         </Button>
@@ -541,43 +564,55 @@ function PlaidAssetSettings({
 }) {
   const syncConnection = useSyncPlaidConnection();
   const connectionId = (asset.providerConfig as any)?.connectionId;
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
 
   return (
-    <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
-      <p className="text-xs font-medium text-muted-foreground">
-        Synced via Plaid
-      </p>
-      {asset.lastSyncedAt && (
-        <p className="text-xs text-muted-foreground">
-          Last synced: {new Date(asset.lastSyncedAt).toLocaleString()}
+    <>
+      <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+        <p className="text-xs font-medium text-muted-foreground">
+          Synced via Plaid
         </p>
-      )}
-      <div className="flex gap-2">
-        {connectionId && (
+        {asset.lastSyncedAt && (
+          <p className="text-xs text-muted-foreground">
+            Last synced: {new Date(asset.lastSyncedAt).toLocaleString()}
+          </p>
+        )}
+        <div className="flex gap-2">
+          {connectionId && (
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => syncConnection.mutate(connectionId)}
+              disabled={syncConnection.isPending}
+            >
+              {syncConnection.isPending ? "Syncing..." : "Sync Now"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="xs"
-            onClick={() => syncConnection.mutate(connectionId)}
-            disabled={syncConnection.isPending}
+            onClick={() => setDisconnectOpen(true)}
           >
-            {syncConnection.isPending ? "Syncing..." : "Sync Now"}
+            Disconnect
           </Button>
-        )}
-        <Button
-          variant="outline"
-          size="xs"
-          onClick={() =>
-            updateAsset.mutate({
-              id: asset.id,
-              providerType: "manual",
-              providerConfig: {},
-            } as any)
-          }
-        >
-          Disconnect
-        </Button>
+        </div>
       </div>
-    </div>
+
+      <ConfirmDialog
+        open={disconnectOpen}
+        onOpenChange={setDisconnectOpen}
+        title="Disconnect from Plaid"
+        description="This asset will be converted to manual entry. Existing data will not be deleted, but no new data will sync from your bank."
+        confirmLabel="Disconnect"
+        isPending={updateAsset.isPending}
+        onConfirm={() =>
+          updateAsset.mutate(
+            { id: asset.id, providerType: "manual", providerConfig: {} } as any,
+            { onSuccess: () => setDisconnectOpen(false) }
+          )
+        }
+      />
+    </>
   );
 }
 
