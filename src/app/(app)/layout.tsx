@@ -76,6 +76,16 @@ function LogOutIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function VersionBadge() {
+  const version = process.env.NEXT_PUBLIC_APP_VERSION;
+  const sha = process.env.NEXT_PUBLIC_GIT_SHA;
+  return (
+    <p className="px-2 text-[10px] text-white/25 font-mono leading-none" title={`Build: ${sha}`}>
+      v{version} · {sha}
+    </p>
+  );
+}
+
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutIcon },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
@@ -181,6 +191,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           portfolioList={portfolioList}
         />
         <Separator className="bg-white/10" />
+        <div className="px-3 pt-2 pb-0">
+          <VersionBadge />
+        </div>
         <div className="p-3 flex items-center justify-between">
           <ThemeToggle />
           <Button
@@ -209,6 +222,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onNavigate={() => setSidebarOpen(false)}
           />
           <Separator className="bg-white/10" />
+          <div className="px-3 pt-2 pb-0">
+            <VersionBadge />
+          </div>
           <div className="p-3 flex items-center justify-between">
             <ThemeToggle />
             <Button
