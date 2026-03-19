@@ -15,18 +15,35 @@ import {
 } from "@tanstack/react-table";
 import { PackageOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "./confirm-dialog";
 import { MoneyDisplay } from "./money-display";
 import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
 import { isAssetStale } from "@/lib/portfolio-utils";
-import type { Asset } from "@/hooks/use-portfolio";
-import { useUpdateAsset } from "@/hooks/use-assets";
+import type { Asset, Section } from "@/hooks/use-portfolio";
+import {
+  useUpdateAsset,
+  useArchiveAsset,
+  useDeleteAsset,
+  useMoveAsset,
+} from "@/hooks/use-assets";
 
 interface AssetTableProps {
   assets: Asset[];
   currency: string;
   portfolioId: string;
   sectionId: string;
+  sections: Section[];
 }
 
 type EditField = "name" | "currentValue";
@@ -81,14 +98,18 @@ function InlineInput({
   );
 }
 
-export function AssetTable({ assets, portfolioId, sectionId }: AssetTableProps) {
+export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTableProps) {
   const openDetailPanel = useUIStore((s) => s.openDetailPanel);
   const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
   const { baseCurrency, toBase } = useCurrency();
   const updateAsset = useUpdateAsset(portfolioId);
+  const archiveAsset = useArchiveAsset(portfolioId);
+  const deleteAsset = useDeleteAsset(portfolioId);
+  const moveAsset = useMoveAsset(portfolioId);
 
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Keep a stable ref to assets so commitEdit doesn't need assets in its deps
   const assetsRef = useRef(assets);
@@ -272,18 +293,64 @@ export function AssetTable({ assets, portfolioId, sectionId }: AssetTableProps) 
         },
       },
       {
-        id: "detail",
+        id: "actions",
         size: 40,
-        cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => openDetailPanel(row.original.id)}
-          >
-            <LinesIcon />
-          </Button>
-        ),
+        cell: ({ row }) => {
+          const asset = row.original;
+          const otherSections = sections.filter((s) => s.id !== asset.sectionId);
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  />
+                }
+              >
+                <MoreHorizontalIcon />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => openDetailPanel(asset.id)}>
+                  Edit details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => archiveAsset.mutate({ id: asset.id })}
+                >
+                  Archive
+                </DropdownMenuItem>
+                {otherSections.length > 0 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      Move to section
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {otherSections.map((s) => (
+                        <DropdownMenuItem
+                          key={s.id}
+                          onSelect={() =>
+                            moveAsset.mutate({ id: asset.id, sectionId: s.id })
+                          }
+                        >
+                          {s.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setDeleteTarget(asset.id)}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
       },
     ],
     [
@@ -296,6 +363,9 @@ export function AssetTable({ assets, portfolioId, sectionId }: AssetTableProps) 
       cancelEdit,
       updateAsset.isPending,
       updateAsset.variables,
+      sections,
+      archiveAsset,
+      moveAsset,
     ]
   );
 
@@ -321,7 +391,10 @@ export function AssetTable({ assets, portfolioId, sectionId }: AssetTableProps) 
     );
   }
 
+  const deleteTargetAsset = assets.find((a) => a.id === deleteTarget);
+
   return (
+    <>
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
@@ -382,10 +455,31 @@ export function AssetTable({ assets, portfolioId, sectionId }: AssetTableProps) 
         </tfoot>
       </table>
     </div>
+
+    <ConfirmDialog
+      open={deleteTarget !== null}
+      onOpenChange={(open) => {
+        if (!open) setDeleteTarget(null);
+      }}
+      title="Delete asset"
+      description={`Delete "${deleteTargetAsset?.name ?? "this asset"}"? This action cannot be undone.`}
+      confirmLabel="Delete"
+      variant="destructive"
+      isPending={deleteAsset.isPending}
+      onConfirm={() => {
+        if (deleteTarget) {
+          deleteAsset.mutate(
+            { id: deleteTarget },
+            { onSuccess: () => setDeleteTarget(null) }
+          );
+        }
+      }}
+    />
+    </>
   );
 }
 
-function LinesIcon() {
+function MoreHorizontalIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -398,9 +492,10 @@ function LinesIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+      <circle cx="5" cy="12" r="1" />
     </svg>
   );
 }
+
