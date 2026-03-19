@@ -12,8 +12,10 @@ This guide covers running Summa on your own server beyond the quick-start. If yo
 4. [Reverse Proxy & HTTPS](#reverse-proxy--https)
 5. [Persisting & Backing Up the Database](#persisting--backing-up-the-database)
 6. [Updating Summa](#updating-summa)
-7. [Plaid Setup](#plaid-setup)
-8. [Troubleshooting](#troubleshooting)
+7. [Health Check](#health-check)
+8. [First-Run Checklist](#first-run-checklist)
+9. [Plaid Setup](#plaid-setup)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -82,8 +84,15 @@ Edit `~/summa/.env` to configure Summa. All variables are passed into the contai
 | `POSTGRES_PASSWORD` | Password for the bundled PostgreSQL database |
 | `BETTER_AUTH_SECRET` | Random secret for signing auth sessions — **must be kept private** |
 | `BETTER_AUTH_URL` | Full public URL of your Summa instance (e.g. `https://summa.example.com`) |
+| `ENCRYPTION_KEY` | **Required in production** — 64-char hex string for encrypting stored secrets |
 
-> **Tip:** Generate a strong secret with `openssl rand -hex 32`.
+> **Tip:** Generate secrets with:
+> ```bash
+> openssl rand -hex 32   # BETTER_AUTH_SECRET
+> openssl rand -hex 32   # ENCRYPTION_KEY (64-char hex = 32 bytes)
+> ```
+
+> **Warning:** Never change `ENCRYPTION_KEY` once you have live data — any encrypted values (e.g. Plaid tokens) will become unreadable.
 
 ### Optional — Plaid (bank connections)
 
@@ -92,13 +101,6 @@ Edit `~/summa/.env` to configure Summa. All variables are passed into the contai
 | `PLAID_CLIENT_ID` | Your Plaid client ID |
 | `PLAID_SECRET` | Your Plaid secret key |
 | `PLAID_ENV` | `sandbox`, `development`, or `production` |
-| `ENCRYPTION_KEY` | 32-byte hex key used to encrypt stored Plaid access tokens |
-
-Generate an encryption key:
-
-```bash
-openssl rand -hex 32
-```
 
 ### Database URL
 
@@ -174,6 +176,70 @@ sudo systemctl reload nginx
 
 > **Important:** After setting up your domain, update `BETTER_AUTH_URL` in `.env` to `https://summa.yourdomain.com` and restart: `docker compose up -d`.
 
+### Cloudflare (Full Strict mode)
+
+When using Cloudflare as your DNS/proxy with **Full Strict** SSL mode, Cloudflare terminates SSL for visitors and then connects to your origin over HTTPS. Your origin server needs a certificate that Cloudflare trusts — the easiest option is a **Cloudflare Origin Certificate** (free, valid up to 15 years).
+
+**1. Generate an Origin Certificate**
+
+In the Cloudflare dashboard: **SSL/TLS → Origin Server → Create Certificate**. Download `origin.pem` (certificate) and `origin.key` (private key) to your server.
+
+```bash
+sudo mkdir -p /etc/ssl/cloudflare
+sudo mv origin.pem /etc/ssl/cloudflare/summa.pem
+sudo mv origin.key /etc/ssl/cloudflare/summa.key
+sudo chmod 600 /etc/ssl/cloudflare/summa.key
+```
+
+**2. Configure nginx**
+
+Create `/etc/nginx/sites-available/summa`:
+
+```nginx
+server {
+    listen 80;
+    server_name summa.sh;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name summa.sh;
+
+    ssl_certificate     /etc/ssl/cloudflare/summa.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/summa.key;
+
+    location / {
+        proxy_pass         http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection 'upgrade';
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Enable and reload:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/summa /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**3. Set `BETTER_AUTH_URL`** to your public domain in `.env`:
+
+```
+BETTER_AUTH_URL=https://summa.sh
+```
+
+Then restart: `docker compose up -d`
+
+> **Note:** Port 443 must be open on your server firewall. Cloudflare connects from their IP ranges — you can optionally restrict port 443 to [Cloudflare IP ranges](https://www.cloudflare.com/ips/) for additional security.
+
 ---
 
 ## Persisting & Backing Up the Database
@@ -238,6 +304,61 @@ To pin to a specific version instead of `latest`, edit the `image:` line in `doc
 ```yaml
 image: ghcr.io/summa-app/summa:0.2.0
 ```
+
+---
+
+## Health Check
+
+Summa exposes a health endpoint at `/api/health` on port `3000`:
+
+```bash
+curl http://localhost:3000/api/health
+# → {"ok":true,"timestamp":1710000000000}
+```
+
+Use this for uptime monitoring, load balancer health checks, or verifying the container started correctly:
+
+```bash
+# Quick check after deploy
+docker compose exec app wget -qO- http://localhost:3000/api/health
+```
+
+The app listens on **port 3000** inside the container (mapped to the host via `docker-compose.yml`).
+
+---
+
+## First-Run Checklist
+
+After `docker compose up -d`, verify the deployment is healthy:
+
+1. **Check containers are running:**
+
+   ```bash
+   docker compose ps
+   # app: running, db: healthy
+   ```
+
+2. **Verify migrations ran:**
+
+   ```bash
+   docker compose logs app | grep -E "migration|Starting server"
+   # Should see: "Running database migrations..." then "Starting server..."
+   ```
+
+3. **Hit the health endpoint:**
+
+   ```bash
+   curl http://localhost:3000/api/health
+   # → {"ok":true,"timestamp":...}
+   ```
+
+4. **Open the app in a browser** (via your public domain or `http://localhost:3000`).
+
+5. **Create the first user account** — navigate to `/sign-up` and register. The first account created is the admin. There is no separate seed step required for a fresh production install.
+
+6. **Verify `BETTER_AUTH_URL` is correct** — sign out and back in. If auth redirects fail, this is the most common cause.
+
+> **Note:** Database migrations run automatically every time the container starts (via `start.sh`). You do not need to run them manually.
 
 ---
 
