@@ -34,15 +34,26 @@ import {
   useSyncPlaidConnection,
   useDisconnectPlaid,
   type PlaidConnection,
+  type PlaidAccount,
 } from "@/hooks/use-plaid";
 import { usePlaidLink } from "react-plaid-link";
-import type { Section } from "@/hooks/use-portfolio";
+import type { Sheet } from "@/hooks/use-portfolio";
 
 interface PlaidConnectDialogProps {
-  sections: Section[];
+  sheets: Sheet[];
 }
 
-export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
+// Returns the best default section ID for a given Plaid account type.
+// credit/loan → first section in a debts sheet; everything else → first section in an assets sheet.
+function getDefaultSectionId(accountType: string, sheets: Sheet[]): string {
+  const isDebt = accountType === "credit" || accountType === "loan";
+  const targetType = isDebt ? "debts" : "assets";
+  const targetSheets = sheets.filter((s) => s.type === targetType);
+  const fallback = sheets.flatMap((s) => s.sections)[0]?.id ?? "";
+  return targetSheets[0]?.sections[0]?.id ?? fallback;
+}
+
+export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
   const open = useUIStore((s) => s.plaidDialogOpen);
   const closePlaidDialog = useUIStore((s) => s.closePlaidDialog);
 
@@ -83,6 +94,7 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
                     <ConnectionCard
                       key={conn.id}
                       connection={conn}
+                      sheets={sheets}
                       onSync={() => syncConnection.mutate(conn.id)}
                       onDisconnect={() => disconnectPlaid.mutate(conn.id)}
                       isSyncing={syncConnection.isPending}
@@ -101,7 +113,7 @@ export function PlaidConnectDialog({ sections }: PlaidConnectDialogProps) {
           {newConnection && (
             <AccountSelector
               connection={newConnection}
-              sections={sections}
+              sheets={sheets}
               onDone={() => setNewConnection(null)}
             />
           )}
@@ -187,16 +199,23 @@ function PlaidLinkOpener({
 
 function ConnectionCard({
   connection,
+  sheets,
   onSync,
   onDisconnect,
   isSyncing,
 }: {
   connection: PlaidConnection;
+  sheets: Sheet[];
   onSync: () => void;
   onDisconnect: () => void;
   isSyncing: boolean;
 }) {
   const hasError = !!connection.errorCode;
+  const [relinkAccountId, setRelinkAccountId] = useState<string | null>(null);
+
+  const relinkAccount = relinkAccountId
+    ? connection.accounts.find((a) => a.plaidAccountId === relinkAccountId) ?? null
+    : null;
 
   return (
     <div className="border rounded-lg p-3 space-y-2">
@@ -258,17 +277,41 @@ function ConnectionCard({
       {connection.accounts.length > 0 && (
         <div className="text-xs text-muted-foreground space-y-0.5">
           {connection.accounts.map((a) => (
-            <div key={a.id} className="flex justify-between">
+            <div key={a.id} className="flex justify-between items-center">
               <span>
                 {a.name}
                 {a.mask ? ` (...${a.mask})` : ""}
               </span>
-              <span className="tabular-nums">
-                {a.isTracked ? "Tracked" : "Not tracked"}
-              </span>
+              {a.isTracked ? (
+                <span className="tabular-nums">Tracked</span>
+              ) : relinkAccountId === a.plaidAccountId ? (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setRelinkAccountId(null)}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={() => setRelinkAccountId(a.plaidAccountId)}
+                >
+                  Link
+                </Button>
+              )}
             </div>
           ))}
         </div>
+      )}
+
+      {relinkAccount && (
+        <AccountSelector
+          connection={{ ...connection, accounts: [relinkAccount] }}
+          sheets={sheets}
+          onDone={() => setRelinkAccountId(null)}
+        />
       )}
     </div>
   );
@@ -276,17 +319,25 @@ function ConnectionCard({
 
 function AccountSelector({
   connection,
-  sections,
+  sheets,
   onDone,
 }: {
   connection: PlaidConnection;
-  sections: Section[];
+  sheets: Sheet[];
   onDone: () => void;
 }) {
   const linkAccounts = useLinkPlaidAccounts();
-  const [selected, setSelected] = useState<
-    Map<string, string>
-  >(new Map());
+
+  // Bug 3: pre-check all untracked accounts with smart section defaults
+  const [selected, setSelected] = useState<Map<string, string>>(() => {
+    const map = new Map<string, string>();
+    for (const account of connection.accounts) {
+      if (!account.isTracked) {
+        map.set(account.plaidAccountId, getDefaultSectionId(account.type, sheets));
+      }
+    }
+    return map;
+  });
 
   function toggleAccount(plaidAccountId: string, sectionId: string) {
     setSelected((prev) => {
@@ -314,7 +365,17 @@ function AccountSelector({
     );
   }
 
-  const defaultSection = sections[0]?.id ?? "";
+  // Bug 1: filter sections shown in dropdown by account type
+  function getSectionsForAccount(account: PlaidAccount) {
+    const isDebt = account.type === "credit" || account.type === "loan";
+    const targetType = isDebt ? "debts" : "assets";
+    const targeted = sheets
+      .filter((s) => s.type === targetType)
+      .flatMap((s) => s.sections);
+    return targeted.length > 0 ? targeted : sheets.flatMap((s) => s.sections);
+  }
+
+  const allSections = sheets.flatMap((s) => s.sections);
 
   return (
     <div className="border rounded-lg p-3 space-y-3">
@@ -325,7 +386,9 @@ function AccountSelector({
         {connection.accounts.map((account) => {
           const isSelected = selected.has(account.plaidAccountId);
           const sectionId =
-            selected.get(account.plaidAccountId) ?? defaultSection;
+            selected.get(account.plaidAccountId) ??
+            getDefaultSectionId(account.type, sheets);
+          const relevantSections = getSectionsForAccount(account);
 
           return (
             <div
@@ -356,7 +419,7 @@ function AccountSelector({
                   })}
                 </span>
               )}
-              {isSelected && sections.length > 1 && (
+              {isSelected && allSections.length > 1 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
@@ -367,7 +430,7 @@ function AccountSelector({
                       />
                     }
                   >
-                    {sections.find((s) => s.id === sectionId)?.name ??
+                    {allSections.find((s) => s.id === sectionId)?.name ??
                       "Section"}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -377,7 +440,7 @@ function AccountSelector({
                         toggleAccount(account.plaidAccountId, v)
                       }
                     >
-                      {sections.map((s) => (
+                      {relevantSections.map((s) => (
                         <DropdownMenuRadioItem key={s.id} value={s.id}>
                           {s.name}
                         </DropdownMenuRadioItem>
