@@ -26,7 +26,7 @@ function nextBackoffMs(retryCount: number): number {
   return Math.min(ms, MAX_BACKOFF_MS);
 }
 
-async function refreshPrices() {
+export async function refreshPrices() {
   const ts = new Date().toISOString();
   console.log(`[cron] ${ts} Starting price refresh...`);
 
