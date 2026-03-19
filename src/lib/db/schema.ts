@@ -32,6 +32,11 @@ export const snapshotSourceEnum = pgEnum("snapshot_source", [
   "manual",
   "import",
 ]);
+export const taxStatusEnum = pgEnum("tax_status", [
+  "taxable",
+  "tax_deferred",
+  "tax_free",
+]);
 
 // ── Users (Better Auth manages this table) ──
 // Better Auth creates: user, session, account, verification tables.
@@ -165,6 +170,7 @@ export const assets = pgTable("assets", {
   metadata: jsonb("metadata").default({}),
   isArchived: boolean("is_archived").notNull().default(false),
   staleDays: integer("stale_days"),
+  taxStatus: taxStatusEnum("tax_status"),
   linkedDebtId: uuid("linked_debt_id"),
   lastSyncedAt: timestamp("last_synced_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
