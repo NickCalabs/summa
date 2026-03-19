@@ -22,6 +22,7 @@ export function SectionGroup({
   section,
   currency,
   portfolioId,
+  sections,
   isFirst,
   isLast,
   onMoveUp,
@@ -52,6 +53,7 @@ export function SectionGroup({
           currency={currency}
           portfolioId={portfolioId}
           sectionId={section.id}
+          sections={sections}
         />
       )}
     </div>
