@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,6 +20,7 @@ import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
 import { isAssetStale } from "@/lib/portfolio-utils";
 import type { Asset } from "@/hooks/use-portfolio";
+import { useUpdateAsset } from "@/hooks/use-assets";
 
 interface AssetTableProps {
   assets: Asset[];
@@ -21,9 +28,71 @@ interface AssetTableProps {
   portfolioId: string;
 }
 
-export function AssetTable({ assets }: AssetTableProps) {
+type EditField = "name" | "currentValue";
+type EditingCell = { assetId: string; field: EditField };
+
+function InlineInput({
+  initialValue,
+  onCommit,
+  onCancel,
+  align = "left",
+  inputMode = "text",
+}: {
+  initialValue: string;
+  onCommit: (v: string) => void;
+  onCancel: () => void;
+  align?: "left" | "right";
+  inputMode?: "text" | "decimal" | "numeric";
+}) {
+  const [value, setValue] = useState(initialValue);
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    ref.current?.focus();
+    ref.current?.select();
+  }, []);
+
+  function commit() {
+    onCommit(value.trim());
+  }
+
+  return (
+    <input
+      ref={ref}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          onCancel();
+        }
+        // Tab: allow default — blur fires commit via onBlur
+      }}
+      inputMode={inputMode}
+      className={`w-full bg-background border border-ring rounded px-1.5 py-0.5 text-sm outline-none focus:ring-1 focus:ring-ring ${
+        align === "right" ? "text-right tabular-nums" : ""
+      }`}
+    />
+  );
+}
+
+export function AssetTable({ assets, portfolioId }: AssetTableProps) {
   const openDetailPanel = useUIStore((s) => s.openDetailPanel);
   const { baseCurrency, toBase } = useCurrency();
+  const updateAsset = useUpdateAsset(portfolioId);
+
+  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Keep a stable ref to assets so commitEdit doesn't need assets in its deps
+  const assetsRef = useRef(assets);
+  useEffect(() => {
+    assetsRef.current = assets;
+  }, [assets]);
 
   const sectionTotal = useMemo(
     () =>
@@ -33,6 +102,34 @@ export function AssetTable({ assets }: AssetTableProps) {
     [assets, toBase]
   );
 
+  const startEdit = useCallback((assetId: string, field: EditField) => {
+    setEditingCell({ assetId, field });
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingCell(null);
+  }, []);
+
+  const commitEdit = useCallback(
+    (assetId: string, field: EditField, rawValue: string) => {
+      setEditingCell(null);
+      const asset = assetsRef.current.find((a) => a.id === assetId);
+      if (!asset) return;
+
+      if (field === "name") {
+        if (rawValue && rawValue !== asset.name) {
+          updateAsset.mutate({ id: assetId, name: rawValue });
+        }
+      } else if (field === "currentValue") {
+        const num = parseFloat(rawValue);
+        if (!isNaN(num) && rawValue !== "" && num !== Number(asset.currentValue)) {
+          updateAsset.mutate({ id: assetId, currentValue: String(num) });
+        }
+      }
+    },
+    [updateAsset]
+  );
+
   const columns = useMemo<ColumnDef<Asset>[]>(
     () => [
       {
@@ -40,18 +137,47 @@ export function AssetTable({ assets }: AssetTableProps) {
         header: "ASSET",
         cell: ({ row }) => {
           const asset = row.original;
+          const isEditing =
+            editingCell?.assetId === asset.id && editingCell?.field === "name";
           const stale = isAssetStale(asset);
           const isDisconnected = asset.providerType === "plaid" && stale;
+
+          if (isEditing) {
+            return (
+              <InlineInput
+                initialValue={asset.name}
+                onCommit={(v) => commitEdit(asset.id, "name", v)}
+                onCancel={cancelEdit}
+              />
+            );
+          }
+
           return (
             <div
-              className="cursor-pointer"
-              onClick={() => openDetailPanel(asset.id)}
+              className="select-none"
+              onClick={() => {
+                if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+                clickTimerRef.current = setTimeout(
+                  () => openDetailPanel(asset.id),
+                  200
+                );
+              }}
+              onDoubleClick={() => {
+                if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+                startEdit(asset.id, "name");
+              }}
             >
-              <span className={`font-medium ${isDisconnected ? "italic text-muted-foreground" : ""}`}>
+              <span
+                className={`font-medium cursor-pointer ${
+                  isDisconnected ? "italic text-muted-foreground" : ""
+                }`}
+              >
                 {asset.name}
               </span>
               {isDisconnected && (
-                <div className="text-xs text-muted-foreground">(disconnected)</div>
+                <div className="text-xs text-muted-foreground">
+                  (disconnected)
+                </div>
               )}
             </div>
           );
@@ -63,11 +189,30 @@ export function AssetTable({ assets }: AssetTableProps) {
         size: 130,
         cell: ({ row }) => {
           const asset = row.original;
+          const isEditing =
+            editingCell?.assetId === asset.id &&
+            editingCell?.field === "currentValue";
           const isForeign = asset.currency !== baseCurrency;
           const ownershipPct = Number(asset.ownershipPct ?? 100);
           const isPartialOwnership = ownershipPct < 100;
+
+          if (isEditing) {
+            return (
+              <InlineInput
+                initialValue={String(Number(asset.currentValue))}
+                onCommit={(v) => commitEdit(asset.id, "currentValue", v)}
+                onCancel={cancelEdit}
+                align="right"
+                inputMode="decimal"
+              />
+            );
+          }
+
           return (
-            <div className="text-right tabular-nums">
+            <div
+              className="text-right tabular-nums cursor-text hover:bg-muted/50 rounded -mx-1 px-1 py-0.5 -my-0.5"
+              onClick={() => startEdit(asset.id, "currentValue")}
+            >
               {isForeign ? (
                 <>
                   <MoneyDisplay
@@ -93,7 +238,10 @@ export function AssetTable({ assets }: AssetTableProps) {
                 <div className="text-xs text-muted-foreground">
                   Owned {asset.ownershipPct}%{" · "}
                   <MoneyDisplay
-                    amount={toBase(Number(asset.currentValue), asset.currency) * (ownershipPct / 100)}
+                    amount={
+                      toBase(Number(asset.currentValue), asset.currency) *
+                      (ownershipPct / 100)
+                    }
                     currency={baseCurrency}
                   />
                 </div>
@@ -117,7 +265,15 @@ export function AssetTable({ assets }: AssetTableProps) {
         ),
       },
     ],
-    [baseCurrency, toBase, openDetailPanel]
+    [
+      baseCurrency,
+      toBase,
+      openDetailPanel,
+      editingCell,
+      startEdit,
+      commitEdit,
+      cancelEdit,
+    ]
   );
 
   const table = useReactTable({
@@ -173,7 +329,11 @@ export function AssetTable({ assets }: AssetTableProps) {
                 key={row.id}
                 className={`border-b border-border/30 transition-colors hover:bg-muted/50 ${
                   i % 2 === 1 ? "bg-muted/20" : ""
-                } ${stale && row.original.providerType !== "plaid" ? "opacity-60" : ""}`}
+                } ${
+                  stale && row.original.providerType !== "plaid"
+                    ? "opacity-60"
+                    : ""
+                }`}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-3 py-2.5">
