@@ -117,7 +117,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           currency={portfolio.currency}
           sections={allSections}
         />
-        <PlaidConnectDialog sections={allSections} />
+        <PlaidConnectDialog sheets={portfolio.sheets} />
         <CsvImportDialog
           portfolioId={portfolioId}
           currency={portfolio.currency}
