@@ -64,6 +64,8 @@ export function AssetTable({ assets }: AssetTableProps) {
         cell: ({ row }) => {
           const asset = row.original;
           const isForeign = asset.currency !== baseCurrency;
+          const ownershipPct = Number(asset.ownershipPct ?? 100);
+          const isPartialOwnership = ownershipPct < 100;
           return (
             <div className="text-right tabular-nums">
               {isForeign ? (
@@ -86,6 +88,15 @@ export function AssetTable({ assets }: AssetTableProps) {
                   currency={baseCurrency}
                   className="font-medium"
                 />
+              )}
+              {isPartialOwnership && (
+                <div className="text-xs text-muted-foreground">
+                  Owned {asset.ownershipPct}%{" · "}
+                  <MoneyDisplay
+                    amount={toBase(Number(asset.currentValue), asset.currency) * (ownershipPct / 100)}
+                    currency={baseCurrency}
+                  />
+                </div>
               )}
             </div>
           );
