@@ -146,6 +146,23 @@ export function useSyncPlaidConnection() {
   });
 }
 
+export function useReconnectLinkToken() {
+  return useMutation({
+    mutationFn: async (connectionId: string) => {
+      const res = await fetch("/api/plaid/link-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectionId }),
+      });
+      if (!res.ok) throw new Error("Failed to create reconnect link token");
+      return res.json() as Promise<{ linkToken: string }>;
+    },
+    onError: () => {
+      toast.error("Failed to start reconnect flow");
+    },
+  });
+}
+
 export function useDisconnectPlaid() {
   const queryClient = useQueryClient();
 

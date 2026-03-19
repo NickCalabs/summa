@@ -287,6 +287,28 @@ export const transactions = pgTable("transactions", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ── Plaid Webhook Events (idempotency log) ──
+
+export const plaidWebhookEvents = pgTable(
+  "plaid_webhook_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    itemId: text("item_id").notNull(),
+    webhookType: text("webhook_type").notNull(),
+    webhookCode: text("webhook_code").notNull(),
+    webhookIat: integer("webhook_iat").notNull(),
+    processedAt: timestamp("processed_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("plaid_webhook_event_key_idx").on(
+      table.itemId,
+      table.webhookType,
+      table.webhookCode,
+      table.webhookIat
+    ),
+  ]
+);
+
 // ── Exchange Rates ──
 
 export const exchangeRates = pgTable("exchange_rates", {
