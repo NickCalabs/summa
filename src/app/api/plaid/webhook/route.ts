@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { plaidConnections, plaidAccounts, assets } from "@/lib/db/schema";
+import { plaidConnections, plaidAccounts, assets, plaidWebhookEvents } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
 import { getBalances, getPlaidClient } from "@/lib/providers/plaid";
@@ -16,9 +16,9 @@ function base64UrlDecode(str: string): Buffer {
 async function verifyPlaidSignature(
   token: string,
   rawBody: string
-): Promise<boolean> {
+): Promise<{ valid: boolean; iat: number | null }> {
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) return { valid: false, iat: null };
 
   const [headerB64, payloadB64, sigB64] = parts;
 
@@ -28,11 +28,11 @@ async function verifyPlaidSignature(
     header = JSON.parse(base64UrlDecode(headerB64).toString("utf8"));
     payload = JSON.parse(base64UrlDecode(payloadB64).toString("utf8"));
   } catch {
-    return false;
+    return { valid: false, iat: null };
   }
 
   const { kid } = header;
-  if (!kid) return false;
+  if (!kid) return { valid: false, iat: null };
 
   // Fetch JWK from Plaid for this key ID
   const plaid = getPlaidClient();
@@ -57,12 +57,13 @@ async function verifyPlaidSignature(
     signature,
     signingInput
   );
-  if (!valid) return false;
+  if (!valid) return { valid: false, iat: null };
 
   // Check token freshness — Plaid uses a 5-minute window
-  if (payload.iat != null) {
+  const iat = payload.iat ?? null;
+  if (iat != null) {
     const nowSec = Math.floor(Date.now() / 1000);
-    if (nowSec - payload.iat > 300) return false;
+    if (nowSec - iat > 300) return { valid: false, iat: null };
   }
 
   // Verify body hash included in the JWT payload
@@ -72,18 +73,29 @@ async function verifyPlaidSignature(
       new TextEncoder().encode(rawBody)
     );
     const bodyHashHex = Buffer.from(digest).toString("hex");
-    if (bodyHashHex !== payload.request_body_sha256) return false;
+    if (bodyHashHex !== payload.request_body_sha256) return { valid: false, iat: null };
   }
 
-  return true;
+  return { valid: true, iat };
 }
+
+// Auth error codes that require re-linking via Plaid Link update mode
+const REAUTH_ERROR_CODES = new Set([
+  "ITEM_LOGIN_REQUIRED",
+  "INVALID_ACCESS_TOKEN",
+  "INVALID_CREDENTIALS",
+  "MFA_NOT_SUPPORTED",
+  "OAUTH_STATE_ID_ALREADY_PROCESSED",
+]);
 
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text();
 
-    // Signature verification
+    // Signature verification — also extract iat for idempotency key
     const verificationToken = request.headers.get("Plaid-Verification");
+    let webhookIat: number | null = null;
+
     if (!("PLAID_WEBHOOK_SECRET" in process.env)) {
       // Env var not set at all — skip verification (local dev)
       console.warn(
@@ -96,13 +108,14 @@ export async function POST(request: Request) {
       return new Response("Unauthorized", { status: 401 });
     } else {
       try {
-        const valid = await verifyPlaidSignature(verificationToken, rawBody);
-        if (!valid) {
+        const result = await verifyPlaidSignature(verificationToken, rawBody);
+        if (!result.valid) {
           console.warn(
             "[plaid/webhook] Invalid Plaid webhook signature; rejecting request"
           );
           return new Response("Unauthorized", { status: 401 });
         }
+        webhookIat = result.iat;
       } catch (err) {
         console.error("[plaid/webhook] Signature verification error:", err);
         return new Response("Unauthorized", { status: 401 });
@@ -123,7 +136,24 @@ export async function POST(request: Request) {
 
     const { webhook_type, webhook_code, item_id } = body;
 
-    if (!item_id) {
+    if (!item_id || !webhook_type || !webhook_code) {
+      return new Response("OK", { status: 200 });
+    }
+
+    // Idempotency check — skip already-processed events
+    const iat = webhookIat ?? Math.floor(Date.now() / 1000);
+    try {
+      await db.insert(plaidWebhookEvents).values({
+        itemId: item_id,
+        webhookType: webhook_type,
+        webhookCode: webhook_code,
+        webhookIat: iat,
+      });
+    } catch {
+      // Unique constraint violation means this event was already processed
+      console.log(
+        `[plaid-webhook] Duplicate event skipped: ${webhook_type}/${webhook_code} for item ${item_id} iat=${iat}`
+      );
       return new Response("OK", { status: 200 });
     }
 
@@ -139,14 +169,20 @@ export async function POST(request: Request) {
 
     if (webhook_type === "ITEM" && webhook_code === "ERROR") {
       const errorInfo = body.error ?? {};
-      const errorExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const errorCode = errorInfo.error_code ?? "UNKNOWN";
+      const requiresReauth = REAUTH_ERROR_CODES.has(errorCode);
+      const errorExpiresAt = requiresReauth
+        ? null
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
       await db
         .update(plaidConnections)
         .set({
-          errorCode: errorInfo.error_code ?? "UNKNOWN",
-          errorMessage: errorInfo.error_message ?? "An error occurred",
+          errorCode,
+          errorMessage: requiresReauth
+            ? "Re-authentication required. Please reconnect your bank."
+            : (errorInfo.error_message ?? "An error occurred"),
           errorExpiresAt,
-          errorRetryCount: 1,
+          errorRetryCount: requiresReauth ? 0 : 1,
           updatedAt: new Date(),
         })
         .where(eq(plaidConnections.id, connection.id));
@@ -221,6 +257,16 @@ export async function POST(request: Request) {
           `[plaid-webhook] Balance refresh failed for connection ${connection.id}:`,
           error
         );
+        await db
+          .update(plaidConnections)
+          .set({
+            errorCode: "SYNC_FAILED",
+            errorMessage: "Balance sync failed. Will retry automatically.",
+            errorExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+            errorRetryCount: (connection.errorRetryCount ?? 0) + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(plaidConnections.id, connection.id));
       }
     }
 

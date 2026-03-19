@@ -25,6 +25,7 @@ import {
   BuildingIcon,
   AlertTriangleIcon,
   Loader2Icon,
+  LinkIcon,
 } from "lucide-react";
 import { useUIStore } from "@/stores/ui-store";
 import {
@@ -33,12 +34,23 @@ import {
   useExchangeToken,
   useLinkPlaidAccounts,
   useSyncPlaidConnection,
+  useReconnectLinkToken,
   useDisconnectPlaid,
   type PlaidConnection,
   type PlaidAccount,
 } from "@/hooks/use-plaid";
 import { usePlaidLink } from "react-plaid-link";
 import type { Sheet } from "@/hooks/use-portfolio";
+
+// Error codes that require re-authentication via Plaid Link update mode
+const REAUTH_ERROR_CODES = new Set([
+  "ITEM_LOGIN_REQUIRED",
+  "INVALID_ACCESS_TOKEN",
+  "INVALID_CREDENTIALS",
+  "MFA_NOT_SUPPORTED",
+  "OAUTH_STATE_ID_ALREADY_PROCESSED",
+  "PENDING_EXPIRATION",
+]);
 
 interface PlaidConnectDialogProps {
   sheets: Sheet[];
@@ -62,15 +74,25 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
   const createLinkToken = useCreateLinkToken();
   const exchangeToken = useExchangeToken();
   const syncConnection = useSyncPlaidConnection();
+  const reconnectLinkToken = useReconnectLinkToken();
   const disconnectPlaid = useDisconnectPlaid();
 
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [newConnection, setNewConnection] = useState<PlaidConnection | null>(null);
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; name: string } | null>(null);
+  const [reconnectState, setReconnectState] = useState<{
+    connectionId: string;
+    linkToken: string;
+  } | null>(null);
 
   async function handleConnectBank() {
     const result = await createLinkToken.mutateAsync();
     setLinkToken(result.linkToken);
+  }
+
+  async function handleReconnect(connectionId: string) {
+    const result = await reconnectLinkToken.mutateAsync(connectionId);
+    setReconnectState({ connectionId, linkToken: result.linkToken });
   }
 
   return (
@@ -100,7 +122,9 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
                       sheets={sheets}
                       onSync={() => syncConnection.mutate(conn.id)}
                       onDisconnect={() => setDisconnectTarget({ id: conn.id, name: conn.institutionName })}
+                      onReconnect={() => handleReconnect(conn.id)}
                       isSyncing={syncConnection.isPending}
+                      isReconnecting={reconnectLinkToken.isPending}
                     />
                   ))}
                 </div>
@@ -134,6 +158,7 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
           </Button>
         </DialogFooter>
 
+        {/* New connection flow */}
         {linkToken && (
           <PlaidLinkOpener
             linkToken={linkToken}
@@ -166,6 +191,19 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
               );
             }}
             onExit={() => setLinkToken(null)}
+          />
+        )}
+
+        {/* Reconnect (update mode) flow */}
+        {reconnectState && (
+          <PlaidLinkOpener
+            linkToken={reconnectState.linkToken}
+            onSuccess={() => {
+              const connectionId = reconnectState.connectionId;
+              setReconnectState(null);
+              syncConnection.mutate(connectionId);
+            }}
+            onExit={() => setReconnectState(null)}
           />
         )}
       </DialogContent>
@@ -223,13 +261,17 @@ function ConnectionCard({
   sheets,
   onSync,
   onDisconnect,
+  onReconnect,
   isSyncing,
+  isReconnecting,
 }: {
   connection: PlaidConnection;
   sheets: Sheet[];
   onSync: () => void;
   onDisconnect: () => void;
+  onReconnect: () => void;
   isSyncing: boolean;
+  isReconnecting: boolean;
 }) {
   const hasError = !!connection.errorCode;
   const [relinkAccountId, setRelinkAccountId] = useState<string | null>(null);
@@ -237,6 +279,8 @@ function ConnectionCard({
   const relinkAccount = relinkAccountId
     ? connection.accounts.find((a) => a.plaidAccountId === relinkAccountId) ?? null
     : null;
+  const needsReauth =
+    !!connection.errorCode && REAUTH_ERROR_CODES.has(connection.errorCode);
 
   return (
     <div className="border rounded-lg p-3 space-y-2">
@@ -249,9 +293,7 @@ function ConnectionCard({
           {hasError && (
             <Badge variant="destructive" className="text-[10px]">
               <AlertTriangleIcon className="size-3 mr-1" />
-              {connection.errorCode === "PENDING_EXPIRATION"
-                ? "Expiring"
-                : "Error"}
+              {needsReauth ? "Reconnect Required" : "Error"}
             </Badge>
           )}
         </div>
@@ -282,7 +324,24 @@ function ConnectionCard({
         <p className="text-xs text-destructive">{connection.errorMessage}</p>
       )}
 
-      {hasError && connection.errorExpiresAt && connection.errorCode !== "PENDING_EXPIRATION" && (
+      {needsReauth && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full text-xs"
+          onClick={onReconnect}
+          disabled={isReconnecting}
+        >
+          {isReconnecting ? (
+            <Loader2Icon className="size-3 mr-1.5 animate-spin" />
+          ) : (
+            <LinkIcon className="size-3 mr-1.5" />
+          )}
+          Reconnect Bank
+        </Button>
+      )}
+
+      {hasError && connection.errorExpiresAt && !needsReauth && (
         <p className="text-xs text-muted-foreground">
           Auto-retry at {new Date(connection.errorExpiresAt).toLocaleString()}
         </p>
