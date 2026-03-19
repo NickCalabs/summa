@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { LayoutGridIcon } from "lucide-react";
 import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -119,8 +120,10 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
         {portfolio.sheets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">
-              Add a sheet to get started
+            <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
+            <p className="font-medium text-sm mb-1">Create your first sheet</p>
+            <p className="text-xs text-muted-foreground">
+              Use the <span className="font-medium">+</span> button above to add an assets or debts sheet
             </p>
           </div>
         ) : activeSheet ? (

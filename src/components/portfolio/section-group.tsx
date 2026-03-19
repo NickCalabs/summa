@@ -51,6 +51,7 @@ export function SectionGroup({
           assets={section.assets}
           currency={currency}
           portfolioId={portfolioId}
+          sectionId={section.id}
         />
       )}
     </div>
