@@ -13,7 +13,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { PackageOpenIcon, Loader2 } from "lucide-react";
+import { PackageOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MoneyDisplay } from "./money-display";
 import { useUIStore } from "@/stores/ui-store";
@@ -26,6 +26,7 @@ interface AssetTableProps {
   assets: Asset[];
   currency: string;
   portfolioId: string;
+  sectionId: string;
 }
 
 type EditField = "name" | "currentValue";
@@ -80,8 +81,9 @@ function InlineInput({
   );
 }
 
-export function AssetTable({ assets, portfolioId }: AssetTableProps) {
+export function AssetTable({ assets, portfolioId, sectionId }: AssetTableProps) {
   const openDetailPanel = useUIStore((s) => s.openDetailPanel);
+  const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
   const { baseCurrency, toBase } = useCurrency();
   const updateAsset = useUpdateAsset(portfolioId);
 
@@ -305,12 +307,16 @@ export function AssetTable({ assets, portfolioId }: AssetTableProps) {
 
   if (assets.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <PackageOpenIcon className="size-10 text-muted-foreground/50 mb-3" />
-        <p className="font-medium text-sm">Add your first asset</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Click the &quot;Add&quot; button above to start tracking
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <PackageOpenIcon className="size-8 text-muted-foreground/40 mb-3" />
+        <p className="font-medium text-sm mb-1">No assets yet</p>
+        <p className="text-xs text-muted-foreground mb-4">
+          Click below to add your first asset to this section
         </p>
+        <Button size="sm" variant="outline" onClick={() => openAddAssetDialog(sectionId)}>
+          <PlusIcon className="size-3.5" data-icon="inline-start" />
+          Add Asset
+        </Button>
       </div>
     );
   }
