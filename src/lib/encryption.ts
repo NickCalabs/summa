@@ -4,10 +4,28 @@ const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 
+const HEX_64_RE = /^[0-9a-fA-F]{64}$/;
+
 function getKey(): Buffer {
   const envKey = process.env.ENCRYPTION_KEY;
-  if (envKey && envKey.length === 64) {
+
+  if (envKey !== undefined && envKey !== "") {
+    if (!HEX_64_RE.test(envKey)) {
+      throw new Error(
+        "ENCRYPTION_KEY must be a 64-character hex string (32 bytes). " +
+          "Generate one with: openssl rand -hex 32"
+      );
+    }
     return Buffer.from(envKey, "hex");
+  }
+
+  // ENCRYPTION_KEY not set — fall back to BETTER_AUTH_SECRET
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction) {
+    throw new Error(
+      "ENCRYPTION_KEY must be set in production. " +
+        "Generate one with: openssl rand -hex 32"
+    );
   }
 
   const secret = process.env.BETTER_AUTH_SECRET;
@@ -16,6 +34,12 @@ function getKey(): Buffer {
       "ENCRYPTION_KEY or BETTER_AUTH_SECRET must be set for encryption"
     );
   }
+
+  console.warn(
+    "[encryption] WARN: ENCRYPTION_KEY is not set. " +
+      "Deriving key from BETTER_AUTH_SECRET — this is unsafe for production. " +
+      "Set ENCRYPTION_KEY to a 64-character hex string (openssl rand -hex 32)."
+  );
 
   // Derive a 32-byte key from the auth secret using HMAC-SHA256
   return createHmac("sha256", "summa-encryption-key").update(secret).digest();
