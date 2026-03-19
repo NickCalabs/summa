@@ -18,7 +18,8 @@ export function recomputeAggregates(portfolio: Portfolio): Portfolio {
   for (const sheet of portfolio.sheets) {
     for (const section of sheet.sections) {
       for (const asset of section.assets) {
-        const rawVal = Number(asset.currentValue);
+        const ownership = Number(asset.ownershipPct ?? 100) / 100;
+        const rawVal = Number(asset.currentValue) * ownership;
         const val =
           asset.currency !== portfolio.currency
             ? convertToBase(rawVal, asset.currency, portfolio.currency, rates)

@@ -57,7 +57,8 @@ export function computeInvestableTotal(portfolio: Portfolio): number {
     for (const section of sheet.sections) {
       for (const asset of section.assets) {
         if (asset.isInvestable && !asset.isArchived) {
-          const value = Number(asset.currentValue);
+          const ownership = Number(asset.ownershipPct ?? 100) / 100;
+          const value = Number(asset.currentValue) * ownership;
           total += convertToBase(value, asset.currency, portfolio.currency, portfolio.rates);
         }
       }

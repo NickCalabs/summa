@@ -98,8 +98,9 @@ export async function GET(
     for (const sheet of tree) {
       for (const section of sheet.sections) {
         for (const asset of section.assets) {
+          const ownership = Number(asset.ownershipPct ?? 100) / 100;
           const val = convertToBase(
-            Number(asset.currentValue),
+            Number(asset.currentValue) * ownership,
             asset.currency,
             portfolio.currency,
             rates
