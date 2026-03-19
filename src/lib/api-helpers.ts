@@ -64,6 +64,25 @@ export async function requireAssetOwnership(assetId: string, userId: string) {
 
 export function handleError(error: unknown) {
   if (error instanceof Response) return error;
+
+  // Detect Plaid/Axios errors and return structured, user-friendly responses
+  const axiosErr = error as any;
+  if (axiosErr?.isAxiosError && axiosErr?.response?.data) {
+    const data = axiosErr.response.data;
+    if (data.error_type || data.error_code) {
+      const message =
+        data.display_message ||
+        data.error_message ||
+        "Could not connect to bank — please check your configuration";
+      console.error("Plaid API error:", data);
+      const status = axiosErr.response.status >= 500 ? 502 : axiosErr.response.status;
+      return errorResponse(message, status, {
+        errorType: data.error_type,
+        errorCode: data.error_code,
+      });
+    }
+  }
+
   console.error("Unhandled API error:", error);
   return errorResponse("Internal server error", 500);
 }

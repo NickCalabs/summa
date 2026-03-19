@@ -8,6 +8,23 @@ import {
 
 let client: PlaidApi | null = null;
 
+const DEFAULT_PRODUCTS: Products[] = [
+  Products.Balance,
+  Products.Investments,
+  Products.Liabilities,
+  Products.Transactions,
+];
+
+function getPlaidProducts(): Products[] {
+  const env = process.env.PLAID_PRODUCTS;
+  if (!env) return DEFAULT_PRODUCTS;
+  const parsed = env
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p): p is Products => Object.values(Products).includes(p as Products));
+  return parsed.length > 0 ? parsed : DEFAULT_PRODUCTS;
+}
+
 export function isPlaidConfigured(): boolean {
   return !!(process.env.PLAID_CLIENT_ID && process.env.PLAID_SECRET);
 }
@@ -54,7 +71,7 @@ export async function createLinkToken(
     // Update mode
     request.access_token = accessToken;
   } else {
-    request.products = [Products.Auth, Products.Transactions];
+    request.products = getPlaidProducts();
   }
 
   const response = await plaid.linkTokenCreate(request);
