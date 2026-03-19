@@ -9,10 +9,9 @@ import {
 let client: PlaidApi | null = null;
 
 const DEFAULT_PRODUCTS: Products[] = [
-  Products.Balance,
+  Products.Transactions,
   Products.Investments,
   Products.Liabilities,
-  Products.Transactions,
 ];
 
 function getPlaidProducts(): Products[] {
