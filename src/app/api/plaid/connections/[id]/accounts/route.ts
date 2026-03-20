@@ -15,7 +15,7 @@ import {
   requireAuth,
 } from "@/lib/api-helpers";
 import { parseBody, plaidLinkAccounts } from "@/types";
-import { plaidTypeToAssetType, isDepositoryAccount } from "@/lib/providers/plaid";
+import { plaidTypeToAssetType, isDepositoryAccount, isLiabilityAccount } from "@/lib/providers/plaid";
 
 export async function POST(
   request: Request,
@@ -56,9 +56,18 @@ export async function POST(
 
       if (!plaidAccount) continue;
 
-      // Verify section belongs to user
-      const sectionCheck = await db
-        .select({ portfolioUserId: portfolios.userId })
+      // If already tracked with an asset, skip
+      if (plaidAccount.assetId) continue;
+
+      let targetSectionId = item.sectionId;
+
+      // Verify section belongs to user and get the sheet type
+      const sectionInfo = await db
+        .select({
+          portfolioUserId: portfolios.userId,
+          portfolioId: portfolios.id,
+          sheetType: sheets.type,
+        })
         .from(sections)
         .innerJoin(sheets, eq(sections.sheetId, sheets.id))
         .innerJoin(portfolios, eq(sheets.portfolioId, portfolios.id))
@@ -67,10 +76,58 @@ export async function POST(
         )
         .limit(1);
 
-      if (sectionCheck.length === 0) continue;
+      if (sectionInfo.length === 0) continue;
 
-      // If already tracked with an asset, skip
-      if (plaidAccount.assetId) continue;
+      // If this is a liability account (credit card, loan) but the target
+      // section is in an assets sheet, find or create a debts sheet + section
+      if (
+        isLiabilityAccount(plaidAccount.type) &&
+        sectionInfo[0].sheetType === "assets"
+      ) {
+        const pid = sectionInfo[0].portfolioId;
+
+        // Find existing debts sheet
+        let [debtsSheet] = await db
+          .select()
+          .from(sheets)
+          .where(
+            and(eq(sheets.portfolioId, pid), eq(sheets.type, "debts"))
+          )
+          .limit(1);
+
+        // Create debts sheet if none exists
+        if (!debtsSheet) {
+          [debtsSheet] = await db
+            .insert(sheets)
+            .values({
+              portfolioId: pid,
+              name: "Debts",
+              type: "debts",
+              sortOrder: 1,
+            })
+            .returning();
+        }
+
+        // Find or create a section in the debts sheet
+        let [debtsSection] = await db
+          .select()
+          .from(sections)
+          .where(eq(sections.sheetId, debtsSheet.id))
+          .limit(1);
+
+        if (!debtsSection) {
+          [debtsSection] = await db
+            .insert(sections)
+            .values({
+              sheetId: debtsSheet.id,
+              name: "Liabilities",
+              sortOrder: 0,
+            })
+            .returning();
+        }
+
+        targetSectionId = debtsSection.id;
+      }
 
       const assetType = plaidTypeToAssetType(
         plaidAccount.type,
@@ -82,7 +139,7 @@ export async function POST(
       const [newAsset] = await db
         .insert(assets)
         .values({
-          sectionId: item.sectionId,
+          sectionId: targetSectionId,
           name: plaidAccount.officialName ?? plaidAccount.name,
           type: assetType,
           currency: plaidAccount.isoCurrencyCode ?? "USD",

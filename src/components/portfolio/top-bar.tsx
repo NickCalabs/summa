@@ -49,7 +49,7 @@ export function TopBar({
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 flex-wrap">
       {isEditing ? (
         <form
           onSubmit={(e) => {

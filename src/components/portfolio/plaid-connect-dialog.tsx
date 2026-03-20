@@ -40,7 +40,8 @@ import {
   type PlaidAccount,
 } from "@/hooks/use-plaid";
 import { usePlaidLink } from "react-plaid-link";
-import type { Sheet } from "@/hooks/use-portfolio";
+import type { Section, Sheet } from "@/hooks/use-portfolio";
+import { isLiabilityAccount } from "@/lib/providers/plaid";
 
 // Error codes that require re-authentication via Plaid Link update mode
 const REAUTH_ERROR_CODES = new Set([
@@ -419,6 +420,17 @@ function AccountSelector({
     return map;
   });
 
+  const assetsSections = sheets
+    .filter((s) => s.type === "assets")
+    .flatMap((s) => s.sections);
+  const debtsSections = sheets
+    .filter((s) => s.type === "debts")
+    .flatMap((s) => s.sections);
+
+  function sectionsForAccount(accountType: string): Section[] {
+    return isLiabilityAccount(accountType) ? debtsSections : assetsSections;
+  }
+
   function toggleAccount(plaidAccountId: string, sectionId: string) {
     setSelected((prev) => {
       const next = new Map(prev);
@@ -445,30 +457,29 @@ function AccountSelector({
     );
   }
 
-  // Bug 1: filter sections shown in dropdown by account type
-  function getSectionsForAccount(account: PlaidAccount) {
-    const isDebt = account.type === "credit" || account.type === "loan";
-    const targetType = isDebt ? "debts" : "assets";
-    const targeted = sheets
-      .filter((s) => s.type === targetType)
-      .flatMap((s) => s.sections);
-    return targeted.length > 0 ? targeted : sheets.flatMap((s) => s.sections);
-  }
-
-  const allSections = sheets.flatMap((s) => s.sections);
+  const hasDebtsSheet = debtsSections.length > 0;
 
   return (
     <div className="border rounded-lg p-3 space-y-3">
       <h4 className="text-sm font-medium">
         Select accounts to track from {connection.institutionName}
       </h4>
+
+      {!hasDebtsSheet && connection.accounts.some((a) => isLiabilityAccount(a.type)) && (
+        <p className="text-xs text-amber-500">
+          Create a &quot;Debts&quot; sheet first to track credit cards and loans.
+        </p>
+      )}
+
       <div className="space-y-2">
         {connection.accounts.map((account) => {
           const isSelected = selected.has(account.plaidAccountId);
+          const availableSections = sectionsForAccount(account.type);
+          const defaultSection = availableSections[0]?.id ?? "";
           const sectionId =
-            selected.get(account.plaidAccountId) ??
-            getDefaultSectionId(account.type, sheets);
-          const relevantSections = getSectionsForAccount(account);
+            selected.get(account.plaidAccountId) ?? defaultSection;
+          const isLiability = isLiabilityAccount(account.type);
+          const noTargetSheet = isLiability && debtsSections.length === 0;
 
           return (
             <div
@@ -478,6 +489,7 @@ function AccountSelector({
               <input
                 type="checkbox"
                 checked={isSelected}
+                disabled={noTargetSheet}
                 onChange={() =>
                   toggleAccount(account.plaidAccountId, sectionId)
                 }
@@ -490,6 +502,11 @@ function AccountSelector({
                   {account.type}
                   {account.subtype ? `/${account.subtype}` : ""}
                 </span>
+                {isLiability && (
+                  <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">
+                    debt
+                  </Badge>
+                )}
               </span>
               {account.currentBalance != null && (
                 <span className="tabular-nums text-muted-foreground">
@@ -499,7 +516,7 @@ function AccountSelector({
                   })}
                 </span>
               )}
-              {isSelected && allSections.length > 1 && (
+              {isSelected && availableSections.length > 1 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
@@ -510,7 +527,7 @@ function AccountSelector({
                       />
                     }
                   >
-                    {allSections.find((s) => s.id === sectionId)?.name ??
+                    {availableSections.find((s) => s.id === sectionId)?.name ??
                       "Section"}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -520,7 +537,7 @@ function AccountSelector({
                         toggleAccount(account.plaidAccountId, v)
                       }
                     >
-                      {relevantSections.map((s) => (
+                      {availableSections.map((s) => (
                         <DropdownMenuRadioItem key={s.id} value={s.id}>
                           {s.name}
                         </DropdownMenuRadioItem>
@@ -540,7 +557,7 @@ function AccountSelector({
         <Button
           size="sm"
           onClick={handleConfirm}
-          disabled={linkAccounts.isPending}
+          disabled={linkAccounts.isPending || selected.size === 0}
         >
           {linkAccounts.isPending
             ? "Linking..."

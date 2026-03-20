@@ -174,3 +174,7 @@ export function plaidTypeToAssetType(
 export function isDepositoryAccount(type: string): boolean {
   return type === "depository";
 }
+
+export function isLiabilityAccount(type: string): boolean {
+  return type === "credit" || type === "loan";
+}
