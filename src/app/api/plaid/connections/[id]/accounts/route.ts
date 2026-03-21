@@ -13,6 +13,7 @@ import {
   errorResponse,
   handleError,
   requireAuth,
+  validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, plaidLinkAccounts } from "@/types";
 import { plaidTypeToAssetType, isDepositoryAccount, isLiabilityAccount } from "@/lib/providers/plaid";
@@ -24,6 +25,7 @@ export async function POST(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "connection ID");
 
     // Verify connection ownership
     const [connection] = await db

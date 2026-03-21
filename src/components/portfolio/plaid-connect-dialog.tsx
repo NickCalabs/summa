@@ -63,6 +63,7 @@ function getDefaultSectionId(accountType: string, sheets: Sheet[]): string {
   const isDebt = accountType === "credit" || accountType === "loan";
   const targetType = isDebt ? "debts" : "assets";
   const targetSheets = sheets.filter((s) => s.type === targetType);
+  if (isDebt) return targetSheets[0]?.sections[0]?.id ?? "";
   const fallback = sheets.flatMap((s) => s.sections)[0]?.id ?? "";
   return targetSheets[0]?.sections[0]?.id ?? fallback;
 }
@@ -466,8 +467,8 @@ function AccountSelector({
       </h4>
 
       {!hasDebtsSheet && connection.accounts.some((a) => isLiabilityAccount(a.type)) && (
-        <p className="text-xs text-amber-500">
-          Create a &quot;Debts&quot; sheet first to track credit cards and loans.
+        <p className="text-xs text-muted-foreground">
+          A &quot;Debts&quot; sheet will be created automatically for credit cards and loans.
         </p>
       )}
 
@@ -489,7 +490,6 @@ function AccountSelector({
               <input
                 type="checkbox"
                 checked={isSelected}
-                disabled={noTargetSheet}
                 onChange={() =>
                   toggleAccount(account.plaidAccountId, sectionId)
                 }
@@ -514,6 +514,11 @@ function AccountSelector({
                     style: "currency",
                     currency: account.isoCurrencyCode ?? "USD",
                   })}
+                </span>
+              )}
+              {isSelected && noTargetSheet && (
+                <span className="text-xs text-muted-foreground italic">
+                  Debts sheet created automatically
                 </span>
               )}
               {isSelected && availableSections.length > 1 && (
