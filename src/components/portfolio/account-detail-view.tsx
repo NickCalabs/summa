@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronDownIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
-import { usePortfolio, type Asset } from "@/hooks/use-portfolio";
+import { usePortfolio, type Asset, type Portfolio } from "@/hooks/use-portfolio";
 import { useUpdateAsset } from "@/hooks/use-assets";
 import {
   useAssetSnapshots,
@@ -21,6 +27,7 @@ import {
 } from "@/hooks/use-transactions";
 import {
   findAssetLocation,
+  findLinkedAssetForDebt,
   getAccountDetailKind,
   getOwnedAssetValue,
 } from "@/lib/portfolio-utils";
@@ -74,6 +81,7 @@ interface BrokerageAnalytics {
   periodChange: number | null;
   periodChangePct: number | null;
   benchmarks: BenchmarkRow[];
+  totalCommissions: number;
 }
 
 const BENCHMARKS = [
@@ -224,6 +232,7 @@ export function AccountDetailView({
               <DebtTab
                 key={`${asset.id}-${asset.currentValue}`}
                 asset={asset}
+                portfolio={portfolio}
                 updateAsset={updateAsset}
               />
             </TabsContent>
@@ -289,10 +298,18 @@ export function AccountDetailView({
         ) : (
           <>
             <TabsContent value="value">
-              <ValueTab asset={asset} updateAsset={updateAsset} />
+              <ValueTab
+                asset={asset}
+                detailKind={resolvedDetailKind}
+                updateAsset={updateAsset}
+              />
             </TabsContent>
             <TabsContent value="reporting">
-              <ReportingTab asset={asset} updateAsset={updateAsset} />
+              <ReportingTab
+                asset={asset}
+                detailKind={resolvedDetailKind}
+                updateAsset={updateAsset}
+              />
             </TabsContent>
             <TabsContent value="assorted">
               <OwnershipTab
@@ -434,12 +451,15 @@ function AccountHero({
 
 function ValueTab({
   asset,
+  detailKind,
   updateAsset,
 }: {
   asset: AccountAsset;
+  detailKind: Exclude<DetailKind, "brokerage" | "debt">;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [value, setValue] = useState("");
+  const isCashAccount = detailKind === "cash";
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -452,13 +472,53 @@ function ValueTab({
 
   return (
     <div className="space-y-6">
-      <HistoryTab assetId={asset.id} currency={asset.currency} />
-      <Surface title="Manual override" description="Update the latest marked value.">
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricSurface
+          label={isCashAccount ? "Balance" : "Current value"}
+          value={<MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />}
+          detail={isCashAccount ? "Ledger balance" : "Latest account mark"}
+        />
+        <MetricSurface
+          label="Owned value"
+          value={<MoneyDisplay amount={getOwnedAssetValue(asset)} currency={asset.currency} />}
+          detail={`Ownership ${Number(asset.ownershipPct ?? 100).toFixed(2).replace(/\.00$/, "")}%`}
+        />
+        <MetricSurface
+          label="Treatment"
+          value={isCashAccount ? "Cash ledger" : "Tracked asset"}
+          detail={asset.isInvestable ? "Included in investable totals" : "Excluded from investable totals"}
+        />
+      </div>
+
+      <HistoryTab
+        assetId={asset.id}
+        currency={asset.currency}
+        title={isCashAccount ? "Balance history" : "Value history"}
+      />
+
+      <StatementSurface
+        title={isCashAccount ? "Account posture" : "Account facts"}
+        rows={[
+          { label: "Provider", value: getProviderLabel(asset.providerType) },
+          { label: "Type", value: asset.type },
+          { label: "Cash equivalent", value: asset.isCashEquivalent ? "Yes" : "No" },
+          { label: "Investable", value: asset.isInvestable ? "Yes" : "No" },
+        ]}
+      />
+
+      <Surface
+        title={isCashAccount ? "Manual balance update" : "Manual value update"}
+        description={
+          isCashAccount
+            ? "Use this for checking, savings, and other balance-ledger accounts."
+            : "Update the latest marked value when this account is tracked as a single line item."
+        }
+      >
         <form onSubmit={handleSubmit} className="flex max-w-xl gap-3">
           <Input
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder="Update value"
+            placeholder={isCashAccount ? "Update balance" : "Update value"}
             inputMode="decimal"
           />
           <Button type="submit">Save</Button>
@@ -539,13 +599,14 @@ function BrokerageHoldingsTab({
           <Skeleton className="h-48 rounded-xl" />
         ) : analytics.transactions.length > 0 ? (
           <LedgerTable
-            columns={["Date", "Type", "Qty", "Price", "Cash flow", "Notes"]}
+            columns={["Date", "Type", "Qty", "Price", "Commission", "Cash flow", "Notes"]}
             rows={analytics.transactions.map((tx) => [
               formatShortDate(tx.date),
               TRANSACTION_TYPE_LABELS[tx.type],
               formatQuantity(toNumberOrNull(tx.quantity)),
               renderMoneyValue(toNumberOrNull(tx.price), asset.currency),
-              renderSignedMoneyValue(getNetCashFlow(tx), asset.currency),
+              renderMoneyValue(getCommissionAmount(tx), asset.currency),
+              renderSignedMoneyValue(getContributionAmount(tx), asset.currency),
               tx.notes || "—",
             ])}
           />
@@ -642,6 +703,10 @@ function BrokerageReturnsTab({
                 value={renderMoneyValue(analytics.netContributions, asset.currency)}
               />
               <MetricInline
+                label="Commissions"
+                value={renderMoneyValue(analytics.totalCommissions, asset.currency)}
+              />
+              <MetricInline
                 label="Unrealized gain"
                 value={renderSignedMoneyValue(analytics.unrealizedGain, asset.currency)}
               />
@@ -663,6 +728,10 @@ function BrokerageReturnsTab({
             {
               label: "Estimated tax",
               value: renderMoneyValue(analytics.estimatedTax, asset.currency),
+            },
+            {
+              label: "Commissions paid",
+              value: renderMoneyValue(analytics.totalCommissions, asset.currency),
             },
             {
               label: "Held since",
@@ -831,7 +900,7 @@ function BrokerageAssortedTab({
                     parsed.amount || nextValue.trim() === "0"
                       ? parsed.amount.toString()
                       : null,
-                } as never);
+                });
               }}
               placeholder="0.00"
               inputMode="decimal"
@@ -913,6 +982,10 @@ function BrokerageAssortedTab({
             label: "Realized outflows",
             value: renderMoneyValue(analytics.realizedOutflows, asset.currency),
           },
+          {
+            label: "Commissions paid",
+            value: renderMoneyValue(analytics.totalCommissions, asset.currency),
+          },
         ]}
       />
     </div>
@@ -921,23 +994,92 @@ function BrokerageAssortedTab({
 
 function DebtTab({
   asset,
+  portfolio,
   updateAsset,
 }: {
   asset: AccountAsset;
+  portfolio: Portfolio;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [balance, setBalance] = useState(String(Number(asset.currentValue)));
+  const linkedAssetLocation = useMemo(
+    () => findLinkedAssetForDebt(portfolio, asset.id),
+    [portfolio, asset.id]
+  );
+  const linkableAssets = useMemo(
+    () =>
+      portfolio.sheets
+        .filter((sheet) => sheet.type === "assets")
+        .flatMap((sheet) =>
+          sheet.sections.flatMap((section) =>
+            section.assets.map((candidate) => ({
+              sheetName: sheet.name,
+              sectionName: section.name,
+              asset: candidate,
+            }))
+          )
+        )
+        .filter(
+          (candidate) =>
+            candidate.asset.linkedDebtId == null ||
+            candidate.asset.linkedDebtId === asset.id
+        )
+        .sort((left, right) => left.asset.name.localeCompare(right.asset.name)),
+    [asset.id, portfolio]
+  );
+
+  async function assignLinkedAsset(nextAssetId: string | null) {
+    const currentLinkedAssetId = linkedAssetLocation?.asset.id ?? null;
+    if (currentLinkedAssetId === nextAssetId) return;
+
+    if (currentLinkedAssetId) {
+      await updateAsset.mutateAsync({
+        id: currentLinkedAssetId,
+        linkedDebtId: null,
+      });
+    }
+
+    if (nextAssetId) {
+      await updateAsset.mutateAsync({
+        id: nextAssetId,
+        linkedDebtId: asset.id,
+      });
+    }
+  }
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricSurface
+          label="Outstanding balance"
+          value={<MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />}
+          detail="Current liability"
+        />
+        <MetricSurface
+          label="Owned balance"
+          value={<MoneyDisplay amount={getOwnedAssetValue(asset)} currency={asset.currency} />}
+          detail={`Ownership ${Number(asset.ownershipPct ?? 100).toFixed(2).replace(/\.00$/, "")}%`}
+        />
+        <MetricSurface
+          label="Secured by"
+          value={linkedAssetLocation?.asset.name ?? "Standalone debt"}
+          detail={
+            linkedAssetLocation
+              ? `${linkedAssetLocation.sheet.name} / ${linkedAssetLocation.section.name}`
+              : "Not linked to an asset"
+          }
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
       <Surface
-        title="Debt workflow"
-        description="Track the liability directly and update it over time."
+        title="Debt balance"
+        description="Track the liability directly and refresh the current balance over time."
       >
         <div className="space-y-4 text-sm text-muted-foreground">
           <p>
             Enter the current balance manually and refresh it whenever the debt
-            changes. This keeps the account quiet and spreadsheet-like.
+            changes. This keeps the account dense, quiet, and spreadsheet-like.
           </p>
           <Input
             value={balance}
@@ -952,34 +1094,132 @@ function DebtTab({
             className="h-16 text-2xl"
             inputMode="decimal"
           />
+          <div className="grid gap-4 md:grid-cols-2">
+            <MetricInline
+              label="Ownership"
+              value={`${Number(asset.ownershipPct ?? 100).toFixed(2).replace(/\.00$/, "")}%`}
+            />
+            <MetricInline
+              label="Linked asset ownership"
+              value={
+                linkedAssetLocation
+                  ? `${Number(linkedAssetLocation.asset.ownershipPct ?? 100)
+                      .toFixed(2)
+                      .replace(/\.00$/, "")}%`
+                  : "—"
+              }
+            />
+          </div>
         </div>
       </Surface>
+
+      <div className="space-y-6">
+        <Surface
+          title="Debt rule"
+          description="Link this debt to the asset it belongs to so ownership has a real anchor."
+        >
+          <div className="space-y-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" className="w-full justify-between" />
+                }
+              >
+                {linkedAssetLocation?.asset.name ?? "Select linked asset"}
+                <ChevronDownIcon className="size-4 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-80 w-72 overflow-y-auto">
+                <DropdownMenuItem onSelect={() => void assignLinkedAsset(null)}>
+                  No linked asset
+                </DropdownMenuItem>
+                {linkableAssets.map((candidate) => (
+                  <DropdownMenuItem
+                    key={candidate.asset.id}
+                    onSelect={() => void assignLinkedAsset(candidate.asset.id)}
+                  >
+                    <div className="flex flex-col">
+                      <span>{candidate.asset.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {candidate.sheetName} / {candidate.sectionName}
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <StatementSurface
+              title="Debt behavior"
+              rows={[
+                {
+                  label: "Counting rule",
+                  value: "Balance counts according to debt ownership",
+                },
+                {
+                  label: "Linked asset",
+                  value: linkedAssetLocation?.asset.name ?? "None",
+                },
+                {
+                  label: "Ownership parity",
+                  value:
+                    linkedAssetLocation &&
+                    linkedAssetLocation.asset.ownershipPct === asset.ownershipPct
+                      ? "Matched"
+                      : linkedAssetLocation
+                        ? "Different"
+                        : "Not applicable",
+                },
+              ]}
+            />
+          </div>
+        </Surface>
+      </div>
+      </div>
     </div>
   );
 }
 
 function ReportingTab({
   asset,
+  detailKind,
   updateAsset,
 }: {
   asset: AccountAsset;
+  detailKind: Exclude<DetailKind, "brokerage" | "debt">;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
+  const isCashAccount = detailKind === "cash";
+
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="grid gap-6 lg:grid-cols-2">
       <Surface
-        title="Investable classification"
-        description="Mark whether the account should be treated as liquid and investable."
+        title={isCashAccount ? "Cash treatment" : "Reporting treatment"}
+        description={
+          isCashAccount
+            ? "Decide whether this balance behaves like spendable cash or just another tracked line."
+            : "Mark whether the account should be treated as liquid and investable."
+        }
       >
         <div className="space-y-3 pt-1">
           <RadioRow
             active={asset.isInvestable && asset.isCashEquivalent}
-            label="Investable cash"
+            label={isCashAccount ? "Cash on hand" : "Investable cash"}
             onClick={() =>
               updateAsset.mutate({
                 id: asset.id,
                 isInvestable: true,
                 isCashEquivalent: true,
+              })
+            }
+          />
+          <RadioRow
+            active={asset.isInvestable && !asset.isCashEquivalent}
+            label={isCashAccount ? "Investable, but not cash-on-hand" : "Investable, not cash-equivalent"}
+            onClick={() =>
+              updateAsset.mutate({
+                id: asset.id,
+                isInvestable: true,
+                isCashEquivalent: false,
               })
             }
           />
@@ -996,6 +1236,16 @@ function ReportingTab({
           />
         </div>
       </Surface>
+
+      <StatementSurface
+        title="Current reporting state"
+        rows={[
+          { label: "Account type", value: isCashAccount ? "Cash account" : "Tracked asset" },
+          { label: "Investable", value: asset.isInvestable ? "Yes" : "No" },
+          { label: "Cash equivalent", value: asset.isCashEquivalent ? "Yes" : "No" },
+          { label: "Provider", value: getProviderLabel(asset.providerType) },
+        ]}
+      />
     </div>
   );
 }
@@ -1047,7 +1297,7 @@ function NotesTab({
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         onBlur={() =>
-          updateAsset.mutate({ id: asset.id, notes: notes.trim() || null } as never)
+          updateAsset.mutate({ id: asset.id, notes: notes.trim() || null })
         }
         className="min-h-[240px] text-base"
         placeholder="Add notes about this account..."
@@ -1434,23 +1684,16 @@ function BlurCommitInput({
   placeholder?: string;
   inputMode?: "decimal" | "numeric" | "text";
 }) {
-  const [value, setValue] = useState(initialValue);
-
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  function handleBlur() {
-    if (value.trim() !== initialValue) {
-      onCommit(value.trim());
-    }
-  }
-
   return (
     <Input
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={handleBlur}
+      key={initialValue}
+      defaultValue={initialValue}
+      onBlur={(e) => {
+        const nextValue = e.target.value.trim();
+        if (nextValue !== initialValue) {
+          onCommit(nextValue);
+        }
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -1504,6 +1747,7 @@ function useBrokerageAnalytics(asset: Asset | null): BrokerageAnalytics {
       yearsHeld: 0,
       periodChange: null,
       periodChangePct: null,
+      totalCommissions: 0,
       benchmarks: BENCHMARKS.map((benchmark) => ({
         label: benchmark.label,
         rate: benchmark.rate,
@@ -1535,8 +1779,16 @@ function useBrokerageAnalytics(asset: Asset | null): BrokerageAnalytics {
       (sum, tx) => sum + getContributionAmount(tx),
       0
     );
+    const totalCommissions = sortedTransactions.reduce(
+      (sum, tx) => sum + getCommissionAmount(tx),
+      0
+    );
     const realizedOutflows = sortedTransactions.reduce(
-      (sum, tx) => sum + (tx.type === "sell" || tx.type === "withdraw" ? Number(tx.total) : 0),
+      (sum, tx) =>
+        sum +
+        (tx.type === "sell" || tx.type === "withdraw"
+          ? Math.abs(getContributionAmount(tx))
+          : 0),
       0
     );
     const manualCostBasis = asset.costBasis !== null ? Number(asset.costBasis) : null;
@@ -1629,6 +1881,7 @@ function useBrokerageAnalytics(asset: Asset | null): BrokerageAnalytics {
       yearsHeld,
       periodChange,
       periodChangePct,
+      totalCommissions,
       benchmarks,
     };
   }, [asset, snapshots, snapshotsLoading, transactions, transactionsLoading]);
@@ -1663,12 +1916,14 @@ function getProviderLabel(providerType: string) {
 
 function getContributionAmount(tx: Transaction) {
   const total = Number(tx.total);
-  return tx.type === "buy" || tx.type === "deposit" ? total : -total;
+  const commission = getCommissionAmount(tx);
+  return tx.type === "buy" || tx.type === "deposit"
+    ? total + commission
+    : -(total - commission);
 }
 
-function getNetCashFlow(tx: Transaction) {
-  const total = Number(tx.total);
-  return tx.type === "buy" || tx.type === "deposit" ? total : -total;
+function getCommissionAmount(tx: Transaction) {
+  return toNumberOrNull(tx.commission) ?? 0;
 }
 
 function deriveQuantityFromTransactions(transactions: Transaction[]) {
@@ -1695,11 +1950,8 @@ function calculateBenchmarkValue(
   if (transactions.length > 0) {
     const value = transactions.reduce((sum, tx) => {
       const years = yearDiff(tx.date, today);
-      const total = Number(tx.total);
-      const compounded = total * Math.pow(1 + rate, years);
-      return tx.type === "buy" || tx.type === "deposit"
-        ? sum + compounded
-        : sum - compounded;
+      const compounded = Math.abs(getContributionAmount(tx)) * Math.pow(1 + rate, years);
+      return getContributionAmount(tx) >= 0 ? sum + compounded : sum - compounded;
     }, 0);
     return value > 0 ? value : 0;
   }
@@ -1715,10 +1967,7 @@ function estimateIrr(
   fallbackDate: string | null
 ) {
   const cashflows = transactions.map((tx) => ({
-    amount:
-      tx.type === "buy" || tx.type === "deposit"
-        ? -Number(tx.total)
-        : Number(tx.total),
+    amount: -getContributionAmount(tx),
     date: toDate(tx.date),
   }));
 

@@ -49,6 +49,7 @@ export async function POST(
         quantity: body.quantity ?? null,
         price: body.price ?? null,
         total: body.total,
+        commission: body.commission ?? null,
         date: body.date,
         notes: body.notes ?? null,
       })

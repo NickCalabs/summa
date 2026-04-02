@@ -89,6 +89,7 @@ export const createAsset = z.object({
     .optional(),
   providerConfig: z.record(z.string(), z.unknown()).optional(),
   ownershipPct: z.string().optional(),
+  taxStatus: z.enum(["taxable", "tax_deferred", "tax_free"]).nullable().optional(),
   notes: z.string().optional(),
   sortOrder: z.number().int().nonnegative().optional(),
 });
@@ -119,6 +120,7 @@ export const updateAsset = z.object({
     .optional(),
   providerConfig: z.record(z.string(), z.unknown()).optional(),
   ownershipPct: z.string().optional(),
+  taxStatus: z.enum(["taxable", "tax_deferred", "tax_free"]).nullable().optional(),
   notes: z.string().nullable().optional(),
   staleDays: z.number().int().nonnegative().nullable().optional(),
   linkedDebtId: z.string().uuid().nullable().optional(),
@@ -140,6 +142,7 @@ export const createTransaction = z.object({
   quantity: z.string().optional(),
   price: z.string().optional(),
   total: z.string(),
+  commission: z.string().optional(),
   date: z.string().date(),
   notes: z.string().optional(),
 });

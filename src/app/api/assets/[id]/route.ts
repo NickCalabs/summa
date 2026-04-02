@@ -53,7 +53,7 @@ export async function PATCH(
     // Copy simple fields
     const simpleFields = [
       "name", "type", "currency", "isInvestable", "isCashEquivalent",
-      "providerType", "providerConfig", "ownershipPct", "notes",
+      "providerType", "providerConfig", "ownershipPct", "taxStatus", "notes",
       "staleDays", "linkedDebtId", "costBasis",
     ] as const;
 

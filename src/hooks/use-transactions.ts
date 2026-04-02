@@ -8,6 +8,7 @@ export interface Transaction {
   quantity: string | null;
   price: string | null;
   total: string;
+  commission: string | null;
   date: string;
   notes: string | null;
   createdAt: string;
@@ -35,6 +36,7 @@ export function useCreateTransaction(assetId: string) {
       quantity?: string;
       price?: string;
       total: string;
+      commission?: string;
       date: string;
       notes?: string;
     }) => {

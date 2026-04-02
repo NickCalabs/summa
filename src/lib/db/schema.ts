@@ -281,6 +281,7 @@ export const transactions = pgTable("transactions", {
   quantity: numeric("quantity", { precision: 20, scale: 8 }),
   price: numeric("price", { precision: 20, scale: 8 }),
   total: numeric("total", { precision: 20, scale: 2 }).notNull(),
+  commission: numeric("commission", { precision: 20, scale: 2 }),
   date: date("date").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -147,6 +147,7 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
 
               <TabsContent value="notes" className="pt-4">
                 <NotesTab
+                  key={`${asset.id}-${asset.updatedAt}-notes`}
                   asset={asset}
                   updateAsset={updateAsset}
                 />
@@ -156,8 +157,6 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
                 <SettingsTab
                   asset={asset}
                   updateAsset={updateAsset}
-                  archiveAsset={archiveAsset}
-                  closeDetailPanel={closeDetailPanel}
                   onDeleteClick={() => setDeleteOpen(true)}
                   onArchiveClick={() => setArchiveOpen(true)}
                 />
@@ -371,16 +370,11 @@ function NotesTab({
 }) {
   const [notes, setNotes] = useState(asset.notes ?? "");
 
-  // Sync when asset changes externally
-  useEffect(() => {
-    setNotes(asset.notes ?? "");
-  }, [asset.notes]);
-
   function handleBlur() {
     const trimmed = notes.trim();
     const current = asset.notes?.trim() ?? "";
     if (trimmed !== current) {
-      updateAsset.mutate({ id: asset.id, notes: trimmed || null } as any);
+      updateAsset.mutate({ id: asset.id, notes: trimmed || null });
     }
   }
 
@@ -398,15 +392,11 @@ function NotesTab({
 function SettingsTab({
   asset,
   updateAsset,
-  archiveAsset,
-  closeDetailPanel,
   onDeleteClick,
   onArchiveClick,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
   updateAsset: ReturnType<typeof useUpdateAsset>;
-  archiveAsset: ReturnType<typeof useArchiveAsset>;
-  closeDetailPanel: () => void;
   onDeleteClick: () => void;
   onArchiveClick: () => void;
 }) {
@@ -443,12 +433,12 @@ function SettingsTab({
       {asset.providerType === "ticker" && (
         <SettingRow label="Ticker symbol">
           <BlurCommitInput
-            value={(config?.ticker as string) ?? ""}
+            value={typeof config?.ticker === "string" ? config.ticker : ""}
             onCommit={(ticker) =>
               updateAsset.mutate({
                 id: asset.id,
                 providerConfig: { ...config, ticker },
-              } as any)
+              })
             }
             placeholder="e.g. AAPL"
           />
@@ -481,7 +471,7 @@ function SettingsTab({
             updateAsset.mutate({
               id: asset.id,
               staleDays: isNaN(num) ? null : num,
-            } as any);
+            });
           }}
           placeholder="e.g. 30"
           inputMode="numeric"
@@ -526,7 +516,7 @@ function SettingsTab({
             updateAsset.mutate({
               id: asset.id,
               costBasis: parsed.amount ? parsed.amount.toString() : null,
-            } as any);
+            });
           }}
           placeholder="0.00"
           inputMode="decimal"
@@ -563,7 +553,9 @@ function PlaidAssetSettings({
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const syncConnection = useSyncPlaidConnection();
-  const connectionId = (asset.providerConfig as any)?.connectionId;
+  const config = asset.providerConfig as Record<string, unknown> | null;
+  const connectionId =
+    typeof config?.connectionId === "string" ? config.connectionId : null;
   const [disconnectOpen, setDisconnectOpen] = useState(false);
 
   return (
@@ -607,7 +599,7 @@ function PlaidAssetSettings({
         isPending={updateAsset.isPending}
         onConfirm={() =>
           updateAsset.mutate(
-            { id: asset.id, providerType: "manual", providerConfig: {} } as any,
+            { id: asset.id, providerType: "manual", providerConfig: {} },
             { onSuccess: () => setDisconnectOpen(false) }
           )
         }
@@ -693,6 +685,7 @@ function TransactionsTab({
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [total, setTotal] = useState("");
+  const [commission, setCommission] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
 
@@ -706,6 +699,7 @@ function TransactionsTab({
         quantity: quantity || undefined,
         price: price || undefined,
         total,
+        commission: commission || undefined,
         date,
         notes: notes || undefined,
       },
@@ -714,6 +708,7 @@ function TransactionsTab({
           setQuantity("");
           setPrice("");
           setTotal("");
+          setCommission("");
           setNotes("");
           setDate(new Date().toISOString().split("T")[0]);
         },
@@ -774,6 +769,13 @@ function TransactionsTab({
             className="h-8 text-sm"
           />
           <Input
+            placeholder="Commission"
+            value={commission}
+            onChange={(e) => setCommission(e.target.value)}
+            inputMode="decimal"
+            className="h-8 text-sm"
+          />
+          <Input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
@@ -823,6 +825,8 @@ function TransactionRow({
   currency: string;
 }) {
   const isBuy = tx.type === "buy" || tx.type === "deposit";
+  const commission = tx.commission ? Number(tx.commission) : 0;
+  const netAmount = isBuy ? Number(tx.total) + commission : Number(tx.total) - commission;
 
   return (
     <div className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50">
@@ -846,6 +850,16 @@ function TransactionRow({
             {currency}
           </span>
         )}
+        {tx.commission && Number(tx.commission) > 0 && (
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Commission{" "}
+            {Number(tx.commission).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            {currency}
+          </span>
+        )}
         {tx.notes && (
           <span className="text-xs text-muted-foreground truncate max-w-[180px]">
             {tx.notes}
@@ -856,7 +870,7 @@ function TransactionRow({
         className={`tabular-nums font-medium text-sm ${isBuy ? "text-green-600" : "text-red-500"}`}
       >
         {isBuy ? "+" : "-"}
-        {Number(tx.total).toLocaleString(undefined, {
+        {netAmount.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}{" "}
