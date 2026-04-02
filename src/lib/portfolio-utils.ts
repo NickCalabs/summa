@@ -1,5 +1,17 @@
-import type { Portfolio, Asset } from "@/hooks/use-portfolio";
+import type { Portfolio, Asset, Sheet } from "@/hooks/use-portfolio";
 import { convertToBase } from "@/lib/currency";
+
+export type AccountDetailKind = "cash" | "brokerage" | "debt" | "asset";
+
+const CASH_ACCOUNT_TYPES = new Set(["cash", "checking", "savings"]);
+const BROKERAGE_ACCOUNT_TYPES = new Set([
+  "investment",
+  "brokerage",
+  "stock",
+  "etf",
+  "fund",
+  "crypto",
+]);
 
 export function isAssetStale(asset: Asset): boolean {
   if (asset.providerType === "manual") return false;
@@ -72,6 +84,61 @@ export function findAssetLocation(portfolio: Portfolio, assetId: string) {
     }
   }
   return null;
+}
+
+export function findLinkedAssetForDebt(portfolio: Portfolio, debtId: string) {
+  for (const sheet of portfolio.sheets) {
+    if (sheet.type !== "assets") continue;
+    for (const section of sheet.sections) {
+      const asset = section.assets.find((candidate) => candidate.linkedDebtId === debtId);
+      if (asset) {
+        return { sheet, section, asset };
+      }
+    }
+  }
+  return null;
+}
+
+export function getAccountDetailKind(
+  sheet: Pick<Sheet, "type">,
+  asset: Pick<
+    Asset,
+    | "type"
+    | "isCashEquivalent"
+    | "providerType"
+    | "quantity"
+    | "currentPrice"
+    | "costBasis"
+  >
+): AccountDetailKind {
+  if (sheet.type === "debts") return "debt";
+
+  if (
+    asset.isCashEquivalent ||
+    CASH_ACCOUNT_TYPES.has(asset.type) ||
+    (asset.providerType === "plaid" && asset.type === "cash")
+  ) {
+    return "cash";
+  }
+
+  if (
+    BROKERAGE_ACCOUNT_TYPES.has(asset.type) ||
+    asset.providerType === "ticker" ||
+    asset.quantity !== null ||
+    asset.currentPrice !== null ||
+    asset.costBasis !== null
+  ) {
+    return "brokerage";
+  }
+
+  return "asset";
+}
+
+export function getOwnedAssetValue(
+  asset: Pick<Asset, "currentValue" | "ownershipPct">
+): number {
+  const ownership = Number(asset.ownershipPct ?? 100) / 100;
+  return Number(asset.currentValue) * ownership;
 }
 
 export function updateAssetInTree(

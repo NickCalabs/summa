@@ -25,6 +25,9 @@ export interface Asset {
   staleDays: number | null;
   lastSyncedAt: string | null;
   ownershipPct: string;
+  taxStatus?: "taxable" | "tax_deferred" | "tax_free" | null;
+  linkedDebtId?: string | null;
+  metadata?: Record<string, unknown> | null;
   notes: string | null;
   isArchived: boolean;
   createdAt: string;
