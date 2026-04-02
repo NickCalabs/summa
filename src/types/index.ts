@@ -164,6 +164,27 @@ export const plaidLinkAccounts = z.object({
   ),
 });
 
+// ── SimpleFIN schemas ──
+
+export const simplefinCreateConnection = z
+  .object({
+    setupToken: z.string().trim().min(1).optional(),
+    accessUrl: z.string().trim().min(1).optional(),
+  })
+  .refine((value) => !!(value.setupToken || value.accessUrl), {
+    message: "Provide a setup token or access URL",
+    path: ["setupToken"],
+  });
+
+export const simplefinLinkAccounts = z.object({
+  accounts: z.array(
+    z.object({
+      simplefinAccountId: z.string().min(1),
+      sectionId: z.string().uuid(),
+    })
+  ),
+});
+
 // ── CSV schemas ──
 
 export const csvImportConfirm = z.object({

@@ -161,6 +161,7 @@ export const assets = pgTable("assets", {
       walletAddress?: string;
       connectionId?: string;
       plaidAccountId?: string;
+      simplefinAccountId?: string;
     }>()
     .default({}),
   ownershipPct: numeric("ownership_pct", { precision: 5, scale: 2 })
@@ -262,6 +263,55 @@ export const plaidAccounts = pgTable("plaid_accounts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// ── SimpleFIN Connections ──
+
+export const simplefinConnections = pgTable("simplefin_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  serverUrl: text("server_url").notNull(),
+  label: text("label").notNull().default("SimpleFIN"),
+  accessUrlEnc: text("access_url_enc").notNull(),
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  lastSyncedAt: timestamp("last_synced_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ── SimpleFIN Accounts ──
+
+export const simplefinAccounts = pgTable(
+  "simplefin_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    connectionId: uuid("connection_id")
+      .notNull()
+      .references(() => simplefinConnections.id, { onDelete: "cascade" }),
+    simplefinAccountId: text("simplefin_account_id").notNull(),
+    assetId: uuid("asset_id").references(() => assets.id, {
+      onDelete: "set null",
+    }),
+    connectionName: text("connection_name"),
+    institutionName: text("institution_name"),
+    accountName: text("account_name").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    balance: numeric("balance", { precision: 20, scale: 2 }),
+    availableBalance: numeric("available_balance", { precision: 20, scale: 2 }),
+    balanceDate: timestamp("balance_date"),
+    isTracked: boolean("is_tracked").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("simplefin_account_connection_unique").on(
+      table.connectionId,
+      table.simplefinAccountId
+    ),
+  ]
+);
 
 // ── Transactions ──
 

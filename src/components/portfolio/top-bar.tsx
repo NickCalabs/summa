@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUpdatePortfolio } from "@/hooks/use-portfolio-mutations";
 import { useUIStore } from "@/stores/ui-store";
-import { usePlaidStatus } from "@/hooks/use-plaid";
 
 interface TopBarProps {
   portfolioId: string;
@@ -30,7 +29,6 @@ export function TopBar({
   const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
   const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
   const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
-  const { data: plaidStatus } = usePlaidStatus();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -89,12 +87,10 @@ export function TopBar({
         />
       </div>
 
-      {plaidStatus?.configured && (
-        <Button variant="outline" size="sm" onClick={openPlaidDialog}>
-          <BuildingIcon className="size-3.5" data-icon="inline-start" />
-          Connect Bank
-        </Button>
-      )}
+      <Button variant="outline" size="sm" onClick={openPlaidDialog}>
+        <BuildingIcon className="size-3.5" data-icon="inline-start" />
+        Connect Bank
+      </Button>
 
       <Button variant="outline" size="sm" onClick={openCsvImportDialog}>
         <UploadIcon className="size-3.5" data-icon="inline-start" />

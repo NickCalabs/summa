@@ -57,6 +57,13 @@
       "when": 1775153748678,
       "tag": "0007_absent_invaders",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775356800000,
+      "tag": "0008_simplefin_connections",
+      "breakpoints": true
     }
   ]
 }

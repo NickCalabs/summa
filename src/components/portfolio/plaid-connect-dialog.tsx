@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   RefreshCwIcon,
   Trash2Icon,
@@ -30,6 +31,7 @@ import {
 import { useUIStore } from "@/stores/ui-store";
 import {
   usePlaidConnections,
+  usePlaidStatus,
   useCreateLinkToken,
   useExchangeToken,
   useLinkPlaidAccounts,
@@ -42,6 +44,7 @@ import {
 import { usePlaidLink } from "react-plaid-link";
 import type { Section, Sheet } from "@/hooks/use-portfolio";
 import { isLiabilityAccount } from "@/lib/providers/plaid";
+import { SimpleFINConnectPanel } from "./simplefin-connect-panel";
 
 // Error codes that require re-authentication via Plaid Link update mode
 const REAUTH_ERROR_CODES = new Set([
@@ -72,6 +75,7 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
   const open = useUIStore((s) => s.plaidDialogOpen);
   const closePlaidDialog = useUIStore((s) => s.closePlaidDialog);
 
+  const { data: plaidStatus } = usePlaidStatus();
   const { data: connections, isLoading } = usePlaidConnections();
   const createLinkToken = useCreateLinkToken();
   const exchangeToken = useExchangeToken();
@@ -109,34 +113,47 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
+          <SimpleFINConnectPanel sheets={sheets} />
+
+          <Separator />
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">Plaid</h3>
+              <p className="text-xs text-muted-foreground">
+                Use Plaid Link for institutions you prefer to connect directly through Plaid.
+              </p>
             </div>
-          ) : (
-            <>
-              {connections && connections.length > 0 ? (
-                <div className="space-y-3">
-                  {connections.map((conn) => (
-                    <ConnectionCard
-                      key={conn.id}
-                      connection={conn}
-                      sheets={sheets}
-                      onSync={() => syncConnection.mutate(conn.id)}
-                      onDisconnect={() => setDisconnectTarget({ id: conn.id, name: conn.institutionName })}
-                      onReconnect={() => handleReconnect(conn.id)}
-                      isSyncing={syncConnection.isPending}
-                      isReconnecting={reconnectLinkToken.isPending}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  No bank connections yet.
-                </div>
-              )}
-            </>
-          )}
+
+            {!plaidStatus?.configured ? (
+              <div className="text-xs text-muted-foreground border rounded-lg p-3">
+                Plaid is not configured in this environment.
+              </div>
+            ) : isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : connections && connections.length > 0 ? (
+              <div className="space-y-3">
+                {connections.map((conn) => (
+                  <ConnectionCard
+                    key={conn.id}
+                    connection={conn}
+                    sheets={sheets}
+                    onSync={() => syncConnection.mutate(conn.id)}
+                    onDisconnect={() => setDisconnectTarget({ id: conn.id, name: conn.institutionName })}
+                    onReconnect={() => handleReconnect(conn.id)}
+                    isSyncing={syncConnection.isPending}
+                    isReconnecting={reconnectLinkToken.isPending}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground text-sm border rounded-lg">
+                No Plaid connections yet.
+              </div>
+            )}
+          </div>
 
           {/* Account selection for newly connected bank */}
           {newConnection && (
@@ -152,12 +169,14 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
           <Button variant="outline" onClick={closePlaidDialog}>
             Close
           </Button>
-          <Button
-            onClick={handleConnectBank}
-            disabled={createLinkToken.isPending}
-          >
-            {createLinkToken.isPending ? "Loading..." : "Connect New Bank"}
-          </Button>
+          {plaidStatus?.configured && (
+            <Button
+              onClick={handleConnectBank}
+              disabled={createLinkToken.isPending}
+            >
+              {createLinkToken.isPending ? "Loading..." : "Connect with Plaid"}
+            </Button>
+          )}
         </DialogFooter>
 
         {/* New connection flow */}
