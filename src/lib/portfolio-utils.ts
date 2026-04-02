@@ -62,6 +62,18 @@ export function findAssetInTree(
   return undefined;
 }
 
+export function findAssetLocation(portfolio: Portfolio, assetId: string) {
+  for (const sheet of portfolio.sheets) {
+    for (const section of sheet.sections) {
+      const asset = section.assets.find((a) => a.id === assetId);
+      if (asset) {
+        return { sheet, section, asset };
+      }
+    }
+  }
+  return null;
+}
+
 export function updateAssetInTree(
   portfolio: Portfolio,
   assetId: string,

@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { usePortfolio } from "@/hooks/use-portfolio";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
 import { computeInvestableTotal } from "@/lib/snapshot-utils";
 import { getFromDate, type DateRangeKey } from "@/lib/chart-utils";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
+import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,7 +56,55 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
   return (
     <div className="p-6 md:p-8 space-y-6">
-      <h1 className="text-2xl font-bold">Hello, {userName}</h1>
+      <section className="rounded-[28px] border border-border/70 bg-card px-6 py-6 shadow-sm md:px-8 md:py-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-3">
+            <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
+              Net Worth
+            </p>
+            <div className="space-y-2">
+              <MoneyDisplay
+                amount={portfolio.aggregates.netWorth}
+                currency={portfolio.currency}
+                className="text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl"
+              />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <span>
+                  Investable{" "}
+                  <span className="font-medium text-foreground">
+                    <MoneyDisplay amount={investableTotal} currency={portfolio.currency} />
+                  </span>
+                </span>
+                <span>
+                  Assets{" "}
+                  <span className="font-medium text-foreground">
+                    <MoneyDisplay
+                      amount={portfolio.aggregates.totalAssets}
+                      currency={portfolio.currency}
+                    />
+                  </span>
+                </span>
+                <span>
+                  Debts{" "}
+                  <span className="font-medium text-foreground">
+                    <MoneyDisplay
+                      amount={portfolio.aggregates.totalDebts}
+                      currency={portfolio.currency}
+                    />
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start gap-3 lg:items-end">
+            <p className="text-sm text-muted-foreground">Hi, {userName}</p>
+            <Button asChild size="sm">
+              <Link href={`/portfolio/${portfolioId}`}>Open Assets & Debts</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       <StatsCards
         portfolio={portfolio}
@@ -64,7 +114,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Net Worth</CardTitle>
+          <CardTitle>Net Worth Trend</CardTitle>
           <div className="flex gap-1">
             {DATE_RANGES.map((range) => (
               <Button
@@ -90,7 +140,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Allocation</CardTitle>
+          <CardTitle>Money Map</CardTitle>
         </CardHeader>
         <CardContent>
           <AllocationChart portfolio={portfolio} />

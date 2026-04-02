@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   useReactTable,
   getCoreRowModel,
@@ -99,8 +100,8 @@ function InlineInput({
 }
 
 export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTableProps) {
-  const openDetailPanel = useUIStore((s) => s.openDetailPanel);
   const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
+  const router = useRouter();
   const { baseCurrency, toBase } = useCurrency();
   const updateAsset = useUpdateAsset(portfolioId);
   const archiveAsset = useArchiveAsset(portfolioId);
@@ -186,7 +187,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
               onClick={() => {
                 if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
                 clickTimerRef.current = setTimeout(
-                  () => openDetailPanel(asset.id),
+                  () => router.push(`/portfolio/${portfolioId}/asset/${asset.id}`),
                   200
                 );
               }}
@@ -313,8 +314,10 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
                 <MoreHorizontalIcon />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => openDetailPanel(asset.id)}>
-                  Edit details
+                <DropdownMenuItem
+                  onSelect={() => router.push(`/portfolio/${portfolioId}/asset/${asset.id}`)}
+                >
+                  Open account
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => archiveAsset.mutate({ id: asset.id })}
@@ -356,7 +359,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
     [
       baseCurrency,
       toBase,
-      openDetailPanel,
+      router,
       editingCell,
       startEdit,
       commitEdit,
@@ -364,6 +367,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
       updateAsset.isPending,
       updateAsset.variables,
       sections,
+      portfolioId,
       archiveAsset,
       moveAsset,
     ]
@@ -395,15 +399,15 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
 
   return (
     <>
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto border border-border/60 bg-background">
       <table className="w-full text-sm">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border/50">
+            <tr key={headerGroup.id} className="border-b border-border/40">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-3 py-2 text-left font-medium text-muted-foreground text-xs tracking-wide"
+                  className="px-6 py-6 text-left text-[11px] font-medium tracking-[0.18em] text-muted-foreground"
                   style={{
                     width: header.column.columnDef.size
                       ? `${header.column.columnDef.size}px`
@@ -427,8 +431,8 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
             return (
               <tr
                 key={row.id}
-                className={`border-b border-border/30 transition-colors hover:bg-muted/50 ${
-                  i % 2 === 1 ? "bg-muted/20" : ""
+                className={`border-b border-border/30 transition-colors hover:bg-muted/35 ${
+                  i % 2 === 1 ? "bg-muted/10" : ""
                 } ${
                   stale && row.original.providerType !== "plaid"
                     ? "opacity-60"
@@ -436,7 +440,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
                 }`}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2.5">
+                  <td key={cell.id} className="px-6 py-3.5 align-middle">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -445,12 +449,12 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
           })}
         </tbody>
         <tfoot>
-          <tr className="bg-muted/40 border-t border-border/50">
-            <td className="px-3 py-2" />
-            <td className="px-3 py-2 text-right tabular-nums font-medium">
+          <tr className="border-t border-border/50 bg-[#6a6a6a] text-white">
+            <td className="px-6 py-3" />
+            <td className="px-6 py-3 text-right font-medium tabular-nums">
               <MoneyDisplay amount={sectionTotal} currency={baseCurrency} />
             </td>
-            <td className="px-3 py-2" />
+            <td className="px-6 py-3" />
           </tr>
         </tfoot>
       </table>
@@ -498,4 +502,3 @@ function MoreHorizontalIcon() {
     </svg>
   );
 }
-

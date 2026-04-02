@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
@@ -14,23 +14,33 @@ export default function DashboardPage() {
   const { data: portfolioList, isLoading } = usePortfolios();
   const session = authClient.useSession();
   const router = useRouter();
-  const onboardingRef = useRef(false);
+  const [isOnboarding, setIsOnboarding] = useState(false);
 
-  const shouldOnboard = !isLoading && portfolioList && portfolioList.length === 0 && !onboardingRef.current;
+  useEffect(() => {
+    const shouldOnboard =
+      !isLoading &&
+      portfolioList &&
+      portfolioList.length === 0 &&
+      !isOnboarding;
 
-  if (shouldOnboard) {
-    onboardingRef.current = true;
+    if (!shouldOnboard) return;
+
+    Promise.resolve().then(() => setIsOnboarding(true));
     fetch("/api/portfolios/onboard", { method: "POST" })
       .then((res) => res.json())
       .then((data) => {
         if (data.portfolioId) {
           router.push(`/portfolio/${data.portfolioId}`);
+          return;
         }
+        setIsOnboarding(false);
       })
-      .catch(() => { onboardingRef.current = false; });
-  }
+      .catch(() => {
+        setIsOnboarding(false);
+      });
+  }, [isLoading, portfolioList, isOnboarding, router]);
 
-  if (isLoading || onboardingRef.current) {
+  if (isLoading || isOnboarding) {
     return (
       <div className="p-8 space-y-4">
         <Skeleton className="h-8 w-48" />

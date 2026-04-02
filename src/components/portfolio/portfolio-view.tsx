@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { LayoutGridIcon } from "lucide-react";
 import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { useUIStore } from "@/stores/ui-store";
@@ -24,15 +25,27 @@ interface PortfolioViewProps {
 
 export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   const { data: portfolio, isLoading, error } = usePortfolio(portfolioId);
+  const searchParams = useSearchParams();
   const activeSheetId = useUIStore((s) => s.activeSheetId);
   const setActiveSheet = useUIStore((s) => s.setActiveSheet);
 
-  // Set active sheet to first sheet if null
   useEffect(() => {
-    if (portfolio && !activeSheetId && portfolio.sheets.length > 0) {
+    if (!portfolio || portfolio.sheets.length === 0) return;
+
+    const requestedSheetId = searchParams.get("sheet");
+    const requestedSheet = requestedSheetId
+      ? portfolio.sheets.find((sheet) => sheet.id === requestedSheetId)
+      : null;
+
+    if (requestedSheet && requestedSheet.id !== activeSheetId) {
+      setActiveSheet(requestedSheet.id);
+      return;
+    }
+
+    if (!activeSheetId) {
       setActiveSheet(portfolio.sheets[0].id);
     }
-  }, [portfolio, activeSheetId, setActiveSheet]);
+  }, [portfolio, searchParams, activeSheetId, setActiveSheet]);
 
   if (isLoading) {
     return (

@@ -82,6 +82,7 @@ export class ApiError extends Error {
 export function usePortfolio(id: string) {
   return useQuery<Portfolio>({
     queryKey: ["portfolio", id],
+    enabled: !!id,
     queryFn: async () => {
       const res = await fetch(`/api/portfolios/${id}`);
       if (!res.ok) throw new ApiError("Failed to fetch portfolio", res.status);

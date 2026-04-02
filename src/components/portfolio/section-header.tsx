@@ -71,55 +71,51 @@ export function SectionHeader({
 
   return (
     <>
-      <div className="flex items-center gap-2 py-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 shrink-0"
+      <div className="flex items-center gap-2 py-1">
+        <button
+          type="button"
+          className="flex items-center text-muted-foreground hover:text-foreground"
           onClick={onToggle}
         >
           <ChevronIcon collapsed={isCollapsed} />
-        </Button>
+        </button>
 
-        {isRenaming ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleRename();
-            }}
-            className="flex items-center gap-2"
-          >
-            <Input
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              className="h-7 w-40 text-sm"
-              autoFocus
-              onBlur={() => setIsRenaming(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") setIsRenaming(false);
+        <div className="min-w-0 flex-1">
+          {isRenaming ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleRename();
               }}
-            />
-          </form>
-        ) : (
-          <span
-            className="font-semibold cursor-pointer"
-            onDoubleClick={startRenaming}
-          >
-            {section.name}
-          </span>
-        )}
+              className="flex items-center gap-2"
+            >
+              <Input
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                className="h-8 w-48 text-base font-semibold"
+                autoFocus
+                onBlur={() => setIsRenaming(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setIsRenaming(false);
+                }}
+              />
+            </form>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span
+                className="cursor-pointer text-lg font-semibold tracking-tight"
+                onDoubleClick={startRenaming}
+              >
+                {section.name}
+              </span>
+              <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+                {section.assets.length}
+              </Badge>
+            </div>
+          )}
+        </div>
 
-        <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-          {section.assets.length}
-        </Badge>
-
-        <MoneyDisplay
-          amount={sectionTotal}
-          currency={currency}
-          className="ml-auto tabular-nums text-sm font-medium"
-        />
-
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5 opacity-60">
           <Button
             variant="ghost"
             size="icon"
@@ -171,6 +167,12 @@ export function SectionHeader({
         </DropdownMenu>
       </div>
 
+      {!isCollapsed && (
+        <div className="pb-1 text-right text-sm font-semibold tabular-nums">
+          <MoneyDisplay amount={sectionTotal} currency={currency} />
+        </div>
+      )}
+
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
@@ -194,8 +196,8 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
+      width="12"
+      height="12"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

@@ -33,8 +33,8 @@ export function SectionGroup({
   const isCollapsed = collapsedSections.has(section.id);
 
   return (
-    <div className="rounded-lg border border-border/50 bg-card">
-      <div className="px-3">
+    <div className="space-y-2">
+      <div>
         <SectionHeader
           section={section}
           currency={currency}
