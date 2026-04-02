@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Portfolio } from "@/hooks/use-portfolio";
 import {
+  buildPortfolioRecapFlow,
   findLinkedAssetForDebt,
   getAccountDetailKind,
   recomputeAggregates,
@@ -198,5 +199,70 @@ describe("recomputeAggregates", () => {
     expect(recomputed.aggregates.totalAssets).toBe(10000);
     expect(recomputed.aggregates.totalDebts).toBe(2500);
     expect(recomputed.aggregates.netWorth).toBe(7500);
+  });
+});
+
+describe("buildPortfolioRecapFlow", () => {
+  it("routes misplaced liability balances onto the debt rail", () => {
+    const portfolio: Portfolio = {
+      ...basePortfolio,
+      sheets: [
+        {
+          ...basePortfolio.sheets[0],
+          sections: [
+            {
+              ...basePortfolio.sheets[0].sections[0],
+              name: "Accounts",
+              assets: [
+                {
+                  ...basePortfolio.sheets[0].sections[0].assets[0],
+                  id: "brokerage",
+                  name: "Brokerage",
+                  type: "investment",
+                  currentValue: "8000",
+                  ownershipPct: "100",
+                  linkedDebtId: null,
+                  isCashEquivalent: false,
+                  isInvestable: true,
+                },
+                {
+                  ...basePortfolio.sheets[0].sections[0].assets[0],
+                  id: "card",
+                  name: "Visa",
+                  type: "credit_card",
+                  currentValue: "1200",
+                  ownershipPct: "100",
+                  linkedDebtId: null,
+                  isCashEquivalent: false,
+                  isInvestable: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      aggregates: {
+        totalAssets: 8000,
+        totalDebts: 1200,
+        netWorth: 6800,
+        cashOnHand: 0,
+      },
+    };
+
+    const recap = buildPortfolioRecapFlow(portfolio);
+
+    const assetRollup = recap.nodes.find((node) => node.id === "rollup:investments");
+    const debtRollup = recap.nodes.find((node) => node.id === "rollup:debts");
+    const netWorthNode = recap.nodes.find((node) => node.id === "final:netWorth");
+    const debtSource = recap.links.find(
+      (link) =>
+        link.targetId === "rollup:debts" &&
+        link.sourceId === "assets-sheet:assets-section:debts"
+    );
+
+    expect(assetRollup?.value).toBe(8000);
+    expect(debtRollup?.value).toBe(1200);
+    expect(netWorthNode?.value).toBe(6800);
+    expect(debtSource?.value).toBe(1200);
   });
 });

@@ -4,9 +4,12 @@ import { useMemo } from "react";
 import {
   AreaChart,
   Area,
+  CartesianGrid,
+  Line,
   XAxis,
   Tooltip,
   ResponsiveContainer,
+  YAxis,
 } from "recharts";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
 import { formatChartDate } from "@/lib/chart-utils";
@@ -56,25 +59,20 @@ export function NetWorthChart({
   return (
     <div className={containerClassName}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 8, right: 6, bottom: 0, left: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 4 }}>
           <defs>
             <linearGradient id="netWorthGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--chart-net-worth)" stopOpacity={0.24} />
-              <stop offset="75%" stopColor="var(--chart-net-worth)" stopOpacity={0.08} />
-              <stop offset="100%" stopColor="var(--chart-net-worth)" stopOpacity={0.01} />
+              <stop offset="0%" stopColor="#6b8ef7" stopOpacity={0.34} />
+              <stop offset="72%" stopColor="#6b8ef7" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="#6b8ef7" stopOpacity={0.03} />
             </linearGradient>
-            <filter id="netWorthGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.384
-                        0 0 0 0 0.525
-                        0 0 0 0 1
-                        0 0 0 0.18 0"
-              />
-            </filter>
           </defs>
+          <CartesianGrid
+            vertical={false}
+            stroke="color-mix(in srgb, var(--border) 78%, transparent)"
+            strokeDasharray="0"
+          />
+          <YAxis hide domain={["dataMin", "dataMax"]} />
           <XAxis
             dataKey="date"
             tickFormatter={formatChartDate}
@@ -88,16 +86,22 @@ export function NetWorthChart({
           <Area
             type="natural"
             dataKey="netWorth"
-            stroke="var(--chart-net-worth)"
-            strokeWidth={3}
+            stroke="none"
             fill="url(#netWorthGradient)"
-            filter="url(#netWorthGlow)"
+            dot={false}
+            activeDot={false}
+          />
+          <Line
+            type="natural"
+            dataKey="netWorth"
+            stroke="#5c7ef0"
+            strokeWidth={2.5}
             dot={false}
             activeDot={{
-              r: 5,
+              r: 4,
               stroke: "var(--background)",
               strokeWidth: 2,
-              fill: "var(--chart-net-worth)",
+              fill: "#5c7ef0",
             }}
           />
         </AreaChart>
@@ -119,7 +123,7 @@ function NetWorthTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-border/80 bg-background/95 px-3 py-2 text-sm text-foreground shadow-lg">
+    <div className="rounded-xl border border-border/80 bg-background/95 px-3 py-2 text-sm text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.10)]">
       <p className="text-muted-foreground">{label ? formatChartDate(label) : ""}</p>
       <p className="font-medium">
         {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
