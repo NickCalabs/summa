@@ -1,13 +1,18 @@
 "use client";
 
 import { useId, useMemo } from "react";
+import {
+  sankey,
+  sankeyLinkHorizontal,
+  type SankeyGraph,
+  type SankeyLink,
+  type SankeyNode,
+} from "d3-sankey";
 import { ChartEmpty } from "@/components/charts/chart-empty";
-import { MoneyDisplay } from "@/components/portfolio/money-display";
 import type { Portfolio } from "@/hooks/use-portfolio";
 import { formatCompactCurrency } from "@/lib/chart-utils";
 import {
   buildPortfolioRecapFlow,
-  type PortfolioRecapFlow,
   type PortfolioRecapLink,
   type PortfolioRecapNode,
   type RecapFlowTone,
@@ -19,45 +24,41 @@ interface RecapSankeyChartProps {
   className?: string;
 }
 
-interface LayoutNode extends PortfolioRecapNode {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+type SankeyNodeDatum = PortfolioRecapNode;
+
+interface SankeyLinkDatum extends Omit<PortfolioRecapLink, "sourceId" | "targetId"> {
+  source: string;
+  target: string;
 }
 
-interface LayoutLink extends PortfolioRecapLink {
-  source: LayoutNode;
-  target: LayoutNode;
-  sourceY: number;
-  targetY: number;
-  height: number;
-}
+type RecapSankeyNode = SankeyNode<SankeyNodeDatum, SankeyLinkDatum>;
+type RecapSankeyLink = SankeyLink<SankeyNodeDatum, SankeyLinkDatum>;
+type RecapSankeyGraph = SankeyGraph<SankeyNodeDatum, SankeyLinkDatum>;
 
 const VIEWBOX_WIDTH = 1180;
-const VIEWBOX_HEIGHT = 430;
-const CHART_TOP = 42;
-const CHART_BOTTOM = 22;
-const NODE_GAP = 14;
-
-const COLUMN_ORDER: Array<PortfolioRecapNode["column"]> = [
-  "source",
-  "rollup",
-  "summary",
-  "final",
-];
-
-const COLUMN_LAYOUT: Record<
-  PortfolioRecapNode["column"],
-  { x: number; width: number; label: string }
-> = {
-  source: { x: 24, width: 176, label: "Account groups" },
-  rollup: { x: 306, width: 156, label: "Rollups" },
-  summary: { x: 582, width: 166, label: "Balance sheet" },
-  final: { x: 918, width: 238, label: "Outcome" },
+const VIEWBOX_HEIGHT = 420;
+const CHART_EXTENT = {
+  left: 210,
+  top: 54,
+  right: VIEWBOX_WIDTH - 170,
+  bottom: VIEWBOX_HEIGHT - 26,
 };
 
-const NODE_ORDER = new Map<string, number>([
+const COLUMN_INDEX: Record<PortfolioRecapNode["column"], number> = {
+  source: 0,
+  rollup: 1,
+  summary: 2,
+  final: 3,
+};
+
+const COLUMN_LABELS: Record<PortfolioRecapNode["column"], string> = {
+  source: "Account groups",
+  rollup: "Rollups",
+  summary: "Balance sheet",
+  final: "Outcome",
+};
+
+const NODE_SORT_ORDER = new Map<string, number>([
   ["rollup:cash", 0],
   ["rollup:investments", 1],
   ["rollup:realAssets", 2],
@@ -75,74 +76,74 @@ const TONE_STYLES: Record<
     nodeFill: string;
     nodeStroke: string;
     text: string;
-    subtleText: string;
+    mutedText: string;
     linkStart: string;
     linkEnd: string;
-    linkOpacity: number;
+    badgeFill?: string;
+    badgeStroke?: string;
   }
 > = {
   cash: {
-    nodeFill: "#dcebd5",
-    nodeStroke: "#8cb17b",
-    text: "#22331d",
-    subtleText: "#496144",
-    linkStart: "#b9d9ad",
-    linkEnd: "#dcebd5",
-    linkOpacity: 0.82,
+    nodeFill: "#8fc681",
+    nodeStroke: "#78b06a",
+    text: "#e3f1dc",
+    mutedText: "#9ac88f",
+    linkStart: "#87bf79",
+    linkEnd: "#b6dca8",
   },
   investment: {
-    nodeFill: "#d7e3ff",
-    nodeStroke: "#6b8ef7",
-    text: "#10203f",
-    subtleText: "#405680",
-    linkStart: "#8aa9ff",
-    linkEnd: "#d7e3ff",
-    linkOpacity: 0.84,
+    nodeFill: "#5db9c4",
+    nodeStroke: "#4298a3",
+    text: "#d9fbff",
+    mutedText: "#97dde4",
+    linkStart: "#4ea8b4",
+    linkEnd: "#8fd1d8",
   },
   realAsset: {
-    nodeFill: "#e7ddcf",
-    nodeStroke: "#b79361",
-    text: "#372716",
-    subtleText: "#6b543b",
-    linkStart: "#c7ab82",
-    linkEnd: "#e7ddcf",
-    linkOpacity: 0.82,
+    nodeFill: "#c59a62",
+    nodeStroke: "#b1834f",
+    text: "#f9ecd8",
+    mutedText: "#e1bf93",
+    linkStart: "#c18f50",
+    linkEnd: "#dcc19b",
   },
   otherAsset: {
-    nodeFill: "#e2e6ee",
-    nodeStroke: "#93a1b7",
-    text: "#1f2837",
-    subtleText: "#4d5a6c",
-    linkStart: "#b4bfce",
-    linkEnd: "#e2e6ee",
-    linkOpacity: 0.8,
+    nodeFill: "#7f93ae",
+    nodeStroke: "#697d98",
+    text: "#ebf1fb",
+    mutedText: "#a9b7cb",
+    linkStart: "#788ca7",
+    linkEnd: "#bcc7d6",
   },
   asset: {
-    nodeFill: "#172033",
-    nodeStroke: "#2b3b5d",
-    text: "#f6f8fb",
-    subtleText: "#9dabc5",
-    linkStart: "#506382",
-    linkEnd: "#172033",
-    linkOpacity: 0.86,
+    nodeFill: "#9db5d1",
+    nodeStroke: "#6f89a8",
+    text: "#ecf4ff",
+    mutedText: "#b9cae0",
+    linkStart: "#88a4c4",
+    linkEnd: "#a9bfd8",
+    badgeFill: "#172133",
+    badgeStroke: "#31496f",
   },
   debt: {
-    nodeFill: "#fde0dd",
-    nodeStroke: "#d96b68",
-    text: "#4a1718",
-    subtleText: "#8a4546",
-    linkStart: "#eb908d",
-    linkEnd: "#fde0dd",
-    linkOpacity: 0.88,
+    nodeFill: "#f28e89",
+    nodeStroke: "#e36e69",
+    text: "#fff4f3",
+    mutedText: "#f3b6b2",
+    linkStart: "#e47f7b",
+    linkEnd: "#f2c2be",
+    badgeFill: "#2b1719",
+    badgeStroke: "#965754",
   },
   netWorth: {
-    nodeFill: "#101a2f",
-    nodeStroke: "#3e5ca9",
-    text: "#f7f9fc",
-    subtleText: "#99acdd",
-    linkStart: "#678dff",
-    linkEnd: "#101a2f",
-    linkOpacity: 0.9,
+    nodeFill: "#4f79d8",
+    nodeStroke: "#4168bf",
+    text: "#eef3ff",
+    mutedText: "#a9bee9",
+    linkStart: "#6087e1",
+    linkEnd: "#33518f",
+    badgeFill: "#121c33",
+    badgeStroke: "#3658aa",
   },
 };
 
@@ -151,10 +152,10 @@ export function RecapSankeyChart({
   className,
 }: RecapSankeyChartProps) {
   const flow = useMemo(() => buildPortfolioRecapFlow(portfolio), [portfolio]);
-  const layout = useMemo(() => buildLayout(flow), [flow]);
+  const chart = useMemo(() => buildChart(flow.nodes, flow.links), [flow]);
   const gradientPrefix = useId().replace(/:/g, "");
 
-  if (layout.nodes.length === 0 || layout.links.length === 0) {
+  if (chart.nodes.length === 0 || chart.links.length === 0) {
     return (
       <div className={cn("h-[420px]", className)}>
         <ChartEmpty />
@@ -162,27 +163,32 @@ export function RecapSankeyChart({
     );
   }
 
+  const headings = buildHeadings(chart.nodes);
+  const linkPath = sankeyLinkHorizontal<SankeyNodeDatum, SankeyLinkDatum>();
+
   return (
-    <div className={cn("space-y-5", className)}>
-      <div className="overflow-hidden rounded-[24px] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.64))] px-3 py-3 dark:bg-[linear-gradient(180deg,rgba(21,26,36,0.94),rgba(16,20,28,0.92))]">
+    <div className={cn("space-y-3", className)}>
+      <div className="overflow-x-auto rounded-[24px] border border-[#202938] bg-[#11161f] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
         <svg
           viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
-          className="h-[420px] w-full"
+          className="h-[420px] min-w-[1040px] w-full"
           role="img"
-          aria-label="Recap flow chart showing account groups feeding assets, debts, and net worth"
+          aria-label="Recap flow chart showing account groups feeding rollups, balance sheet, and outcome"
         >
           <defs>
-            {layout.links.map((link, index) => {
+            {chart.links.map((link, index) => {
               const gradientId = `${gradientPrefix}-link-${index}`;
-              const style = TONE_STYLES[link.tone];
+              const style = resolveLinkStyle(link);
+              const sourceNode = getSourceNode(link);
+              const targetNode = getTargetNode(link);
               return (
                 <linearGradient
                   key={gradientId}
                   id={gradientId}
                   gradientUnits="userSpaceOnUse"
-                  x1={link.source.x + link.source.width}
+                  x1={sourceNode.x1 ?? 0}
                   y1={0}
-                  x2={link.target.x}
+                  x2={targetNode.x0 ?? 0}
                   y2={0}
                 >
                   <stop offset="0%" stopColor={style.linkStart} />
@@ -192,369 +198,278 @@ export function RecapSankeyChart({
             })}
           </defs>
 
-          {COLUMN_ORDER.map((column) => {
-            const meta = COLUMN_LAYOUT[column];
-            return (
-              <g key={column}>
-                <text
-                  x={meta.x}
-                  y={18}
-                  fill="var(--muted-foreground)"
-                  fontSize="11"
-                  fontWeight="600"
-                  letterSpacing="0.18em"
-                >
-                  {meta.label.toUpperCase()}
-                </text>
-              </g>
-            );
-          })}
+          {headings.map((heading) => (
+            <text
+              key={heading.column}
+              x={heading.x}
+              y={20}
+              fill="#8a93a3"
+              fontSize="11"
+              fontWeight="600"
+              letterSpacing="0.18em"
+            >
+              {heading.label.toUpperCase()}
+            </text>
+          ))}
 
-          <g>
-            {layout.links.map((link, index) => {
+          <g fill="none">
+            {chart.links.map((link, index) => {
               const gradientId = `${gradientPrefix}-link-${index}`;
               return (
                 <path
-                  key={link.id}
-                  d={buildLinkPath(link)}
-                  fill={`url(#${gradientId})`}
-                  fillOpacity={TONE_STYLES[link.tone].linkOpacity}
+                  key={link.index ?? link.id}
+                  d={linkPath(link) ?? ""}
+                  stroke={`url(#${gradientId})`}
+                  strokeOpacity={link.opacity}
+                  strokeWidth={Math.max(1.5, link.width ?? 1.5)}
                 />
               );
             })}
           </g>
 
           <g>
-            {layout.nodes.map((node) => (
-              <RecapNode
-                key={node.id}
-                node={node}
-                portfolio={portfolio}
-                debtDrag={
-                  node.id === "summary:assets" ? flow.totals.debtDrag : undefined
-                }
-                scale={layout.scale}
-              />
+            {chart.nodes.map((node) => (
+              <g key={node.id}>
+                <rect
+                  x={node.x0}
+                  y={node.y0}
+                  width={(node.x1 ?? 0) - (node.x0 ?? 0)}
+                  height={Math.max(2, (node.y1 ?? 0) - (node.y0 ?? 0))}
+                  rx={4}
+                  fill={TONE_STYLES[node.tone].nodeFill}
+                  stroke={TONE_STYLES[node.tone].nodeStroke}
+                  strokeWidth={1}
+                />
+                <NodeLabel node={node} currency={portfolio.currency} />
+              </g>
             ))}
           </g>
         </svg>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-3">
-        <MetricCard
-          label="Assets"
-          value={flow.totals.totalAssets}
-          currency={portfolio.currency}
-          detail="Gross positive holdings flowing through the recap."
-        />
-        <MetricCard
-          label="Debts"
-          value={flow.totals.totalDebts}
-          currency={portfolio.currency}
-          detail="Liabilities stay on the debt rail even when miscategorized."
-          tone="debt"
-        />
-        <MetricCard
-          label="Net worth"
-          value={flow.totals.netWorth}
-          currency={portfolio.currency}
-          detail="Assets after subtracting debt load."
-          tone="netWorth"
-        />
-      </div>
-
-      {flow.totals.netWorth <= 0 ? (
-        <div className="rounded-2xl border border-[#d96b68]/40 bg-[#fde0dd]/35 px-4 py-3 text-sm text-[#5d2325] dark:bg-[#5d2325]/15 dark:text-[#f3c6c5]">
-          Debts currently exceed assets by{" "}
-          <span className="font-medium tabular-nums">
-            <MoneyDisplay
-              amount={Math.abs(flow.totals.netWorth)}
-              currency={portfolio.currency}
-            />
-          </span>
-          . The recap keeps liabilities separated on the debt rail so the shortfall is
-          visible instead of inflating assets.
-        </div>
-      ) : null}
+      <p className="px-1 text-xs text-muted-foreground">
+        Liabilities remain on their own debt rail even when they were entered in
+        asset sheets, so recap flow and net worth stay aligned.
+      </p>
     </div>
   );
 }
 
-function RecapNode({
+function NodeLabel({
   node,
-  portfolio,
-  debtDrag,
-  scale,
-}: {
-  node: LayoutNode;
-  portfolio: Portfolio;
-  debtDrag?: number;
-  scale: number;
-}) {
-  const style = TONE_STYLES[node.tone];
-  const labelY = node.y + 18;
-  const compactValue = formatCompactCurrency(node.value, portfolio.currency);
-  const canShowValue = node.height >= 46;
-  const canShowDetail = node.height >= 64 && !!node.detail;
-  const useExternalLabel = node.height < 30;
-
-  return (
-    <g>
-      <rect
-        x={node.x}
-        y={node.y}
-        width={node.width}
-        height={Math.max(node.height, 2)}
-        rx={14}
-        fill={style.nodeFill}
-        stroke={style.nodeStroke}
-        strokeWidth={1.2}
-      />
-
-      {node.id === "summary:assets" && debtDrag && debtDrag > 0 ? (
-        <DebtDragInset node={node} debtDrag={debtDrag} scale={scale} currency={portfolio.currency} />
-      ) : null}
-
-      {useExternalLabel ? (
-        <g>
-          <text
-            x={node.x + node.width + 10}
-            y={node.y + node.height / 2 - 2}
-            fill={style.text}
-            fontSize="11"
-            fontWeight="600"
-          >
-            {node.label}
-          </text>
-          <text
-            x={node.x + node.width + 10}
-            y={node.y + node.height / 2 + 12}
-            fill={style.subtleText}
-            fontSize="10"
-          >
-            {compactValue}
-          </text>
-        </g>
-      ) : (
-        <g>
-          <text x={node.x + 12} y={labelY} fill={style.text} fontSize="11" fontWeight="600">
-            {node.label}
-          </text>
-          {canShowValue ? (
-            <text
-              x={node.x + 12}
-              y={labelY + 16}
-              fill={style.text}
-              fontSize="12"
-              fontWeight="700"
-            >
-              {compactValue}
-            </text>
-          ) : null}
-          {canShowDetail ? (
-            <text
-              x={node.x + 12}
-              y={labelY + 32}
-              fill={style.subtleText}
-              fontSize="10.5"
-            >
-              {node.detail}
-            </text>
-          ) : null}
-        </g>
-      )}
-    </g>
-  );
-}
-
-function DebtDragInset({
-  node,
-  debtDrag,
-  scale,
   currency,
 }: {
-  node: LayoutNode;
-  debtDrag: number;
-  scale: number;
+  node: RecapSankeyNode;
   currency: string;
 }) {
-  const height = Math.max(Math.min(debtDrag * scale, node.height - 6), 10);
-  const y = node.y + node.height - height;
-  const canShowLabel = height >= 24;
+  const x0 = node.x0 ?? 0;
+  const x1 = node.x1 ?? 0;
+  const y0 = node.y0 ?? 0;
+  const y1 = node.y1 ?? 0;
+  const centerY = (y0 + y1) / 2;
+  const amount = formatCompactCurrency(node.value ?? 0, currency);
+
+  if (node.column === "final") {
+    return (
+      <BadgeLabel
+        x={x1 + 14}
+        y={centerY - 20}
+        label={node.label}
+        value={amount}
+        tone={node.tone}
+      />
+    );
+  }
+
+  if (node.column === "summary") {
+    return (
+      <BadgeLabel
+        x={x0 + 18}
+        y={y0 + 12}
+        label={node.label}
+        value={amount}
+        tone={node.tone}
+        compact
+      />
+    );
+  }
+
+  const labelX = x0 - 12;
+  const style = TONE_STYLES[node.tone];
 
   return (
     <g>
-      <rect
-        x={node.x + 2}
-        y={y}
-        width={node.width - 4}
-        height={height - 2}
-        rx={12}
-        fill="#f7cdcb"
-        fillOpacity={0.9}
-      />
-      {canShowLabel ? (
-        <text
-          x={node.x + 12}
-          y={y + Math.min(height - 8, 18)}
-          fill="#6b2325"
-          fontSize="10.5"
-          fontWeight="600"
-        >
-          Debt drag {formatCompactCurrency(debtDrag, currency)}
-        </text>
-      ) : null}
+      <text
+        x={labelX}
+        y={centerY - 5}
+        fill={style.text}
+        fontSize="11"
+        fontWeight="600"
+        textAnchor="end"
+      >
+        {node.label}
+      </text>
+      <text
+        x={labelX}
+        y={centerY + 11}
+        fill={style.mutedText}
+        fontSize="10.5"
+        textAnchor="end"
+      >
+        {amount}
+      </text>
     </g>
   );
 }
 
-function MetricCard({
+function BadgeLabel({
+  x,
+  y,
   label,
   value,
-  currency,
-  detail,
-  tone = "asset",
+  tone,
+  compact = false,
 }: {
+  x: number;
+  y: number;
   label: string;
-  value: number;
-  currency: string;
-  detail: string;
-  tone?: "asset" | "debt" | "netWorth";
+  value: string;
+  tone: RecapFlowTone;
+  compact?: boolean;
 }) {
-  const accents = {
-    asset: "border-border/70 bg-background/75",
-    debt: "border-[#d96b68]/35 bg-[#fde0dd]/35 dark:bg-[#5d2325]/10",
-    netWorth: "border-[#3e5ca9]/35 bg-[#e6eeff]/45 dark:bg-[#101a2f]/40",
-  }[tone];
+  const style = TONE_STYLES[tone];
+  const width = estimateBadgeWidth(Math.max(label.length, value.length), compact);
+  const height = compact ? 42 : 56;
 
   return (
-    <div className={cn("rounded-2xl border px-4 py-3", accents)}>
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={12}
+        fill={style.badgeFill ?? "#151b25"}
+        stroke={style.badgeStroke ?? style.nodeStroke}
+        strokeWidth={1}
+      />
+      <text x={x + 12} y={y + 20} fill={style.text} fontSize="11" fontWeight="600">
         {label}
-      </div>
-      <div className="mt-2 text-xl font-semibold tracking-tight tabular-nums">
-        <MoneyDisplay amount={value} currency={currency} />
-      </div>
-      <div className="mt-1 text-xs text-muted-foreground">{detail}</div>
-    </div>
+      </text>
+      <text x={x + 12} y={y + 38} fill={style.text} fontSize="12.5" fontWeight="700">
+        {value}
+      </text>
+    </g>
   );
 }
 
-function buildLayout(flow: PortfolioRecapFlow) {
-  const columns = new Map<
-    PortfolioRecapNode["column"],
-    PortfolioRecapNode[]
-  >();
-  for (const column of COLUMN_ORDER) columns.set(column, []);
+function buildChart(
+  nodes: PortfolioRecapNode[],
+  links: PortfolioRecapLink[]
+): { nodes: RecapSankeyNode[]; links: Array<RecapSankeyLink & { id: string; opacity: number }> } {
+  const graphNodes = nodes.map((node) => ({ ...node }));
+  const graphLinks = links.map((link) => ({
+    id: link.id,
+    source: link.sourceId,
+    target: link.targetId,
+    value: link.value,
+    tone: link.tone,
+  }));
 
-  for (const node of flow.nodes) {
-    columns.get(node.column)?.push(node);
-  }
+  const layout = sankey<SankeyNodeDatum, SankeyLinkDatum>()
+    .nodeId((node: SankeyNodeDatum) => node.id)
+    .nodeWidth(16)
+    .nodePadding(22)
+    .nodeAlign((node: SankeyNodeDatum, depth: number) =>
+      Math.min(COLUMN_INDEX[node.column], depth - 1)
+    )
+    .nodeSort((left: SankeyNodeDatum, right: SankeyNodeDatum) =>
+      compareNodes(left, right)
+    )
+    .iterations(64)
+    .extent([
+      [CHART_EXTENT.left, CHART_EXTENT.top],
+      [CHART_EXTENT.right, CHART_EXTENT.bottom],
+    ]);
 
-  for (const [column, nodes] of columns) {
-    nodes.sort((left, right) => {
-      const leftOrder = NODE_ORDER.get(left.id);
-      const rightOrder = NODE_ORDER.get(right.id);
-      if (leftOrder !== undefined || rightOrder !== undefined) {
-        return (leftOrder ?? 99) - (rightOrder ?? 99);
-      }
-      if (column === "source") {
-        if (left.tone === "debt" && right.tone !== "debt") return 1;
-        if (right.tone === "debt" && left.tone !== "debt") return -1;
-      }
-      return right.value - left.value;
-    });
-  }
-
-  const chartHeight = VIEWBOX_HEIGHT - CHART_TOP - CHART_BOTTOM;
-  const scale = Math.min(
-    ...COLUMN_ORDER.map((column) => {
-      const nodes = columns.get(column) ?? [];
-      if (nodes.length === 0) return Infinity;
-      const total = nodes.reduce((sum, node) => sum + node.value, 0);
-      if (total <= 0) return Infinity;
-      return (chartHeight - NODE_GAP * (nodes.length - 1)) / total;
-    }).filter((value) => Number.isFinite(value))
-  );
-
-  const layoutNodes = new Map<string, LayoutNode>();
-
-  for (const column of COLUMN_ORDER) {
-    const nodes = columns.get(column) ?? [];
-    if (nodes.length === 0) continue;
-
-    const totalHeight =
-      nodes.reduce((sum, node) => sum + node.value * scale, 0) +
-      NODE_GAP * (nodes.length - 1);
-    let y = CHART_TOP + Math.max((chartHeight - totalHeight) / 2, 0);
-
-    for (const node of nodes) {
-      const meta = COLUMN_LAYOUT[column];
-      const height = Math.max(node.value * scale, 2);
-      layoutNodes.set(node.id, {
-        ...node,
-        x: meta.x,
-        y,
-        width: meta.width,
-        height,
-      });
-      y += height + NODE_GAP;
-    }
-  }
-
-  const outgoingOffsets = new Map<string, number>();
-  const incomingOffsets = new Map<string, number>();
-  const links = [...flow.links].sort((left, right) => {
-    const leftSource = layoutNodes.get(left.sourceId);
-    const rightSource = layoutNodes.get(right.sourceId);
-    if (!leftSource || !rightSource) return 0;
-    return leftSource.y - rightSource.y;
-  });
-
-  const layoutLinks: LayoutLink[] = [];
-  for (const link of links) {
-    const source = layoutNodes.get(link.sourceId);
-    const target = layoutNodes.get(link.targetId);
-    if (!source || !target) continue;
-
-    const height = Math.max(link.value * scale, 1.5);
-    const sourceY = source.y + (outgoingOffsets.get(source.id) ?? 0);
-    const targetY = target.y + (incomingOffsets.get(target.id) ?? 0);
-
-    outgoingOffsets.set(source.id, (outgoingOffsets.get(source.id) ?? 0) + height);
-    incomingOffsets.set(target.id, (incomingOffsets.get(target.id) ?? 0) + height);
-
-    layoutLinks.push({
-      ...link,
-      source,
-      target,
-      sourceY,
-      targetY,
-      height,
-    });
-  }
+  const graph = layout({
+    nodes: graphNodes,
+    links: graphLinks,
+  } as RecapSankeyGraph);
 
   return {
-    nodes: [...layoutNodes.values()],
-    links: layoutLinks,
-    scale,
+    nodes: graph.nodes,
+    links: graph.links.map((link: RecapSankeyLink) => ({
+      ...link,
+      id: link.id,
+      opacity: resolveLinkOpacity(link),
+    })),
   };
 }
 
-function buildLinkPath(link: LayoutLink) {
-  const x0 = link.source.x + link.source.width;
-  const x1 = link.target.x;
-  const y0 = link.sourceY;
-  const y1 = link.targetY;
-  const y0Bottom = y0 + link.height;
-  const y1Bottom = y1 + link.height;
-  const curve = Math.min(120, (x1 - x0) * 0.45);
+function buildHeadings(nodes: RecapSankeyNode[]) {
+  return (
+    Object.entries(COLUMN_LABELS) as Array<
+      [PortfolioRecapNode["column"], string]
+    >
+  ).map(([column, label]) => {
+    const columnNodes = nodes.filter((node) => node.column === column);
+    const minX =
+      columnNodes.length > 0
+        ? Math.min(...columnNodes.map((node) => node.x0 ?? CHART_EXTENT.left))
+        : CHART_EXTENT.left;
 
-  return [
-    `M ${x0} ${y0}`,
-    `C ${x0 + curve} ${y0} ${x1 - curve} ${y1} ${x1} ${y1}`,
-    `L ${x1} ${y1Bottom}`,
-    `C ${x1 - curve} ${y1Bottom} ${x0 + curve} ${y0Bottom} ${x0} ${y0Bottom}`,
-    "Z",
-  ].join(" ");
+    return {
+      column,
+      label,
+      x: minX - (column === "final" ? 4 : 0),
+    };
+  });
+}
+
+function compareNodes(left: SankeyNodeDatum, right: SankeyNodeDatum) {
+  const leftColumn = COLUMN_INDEX[left.column];
+  const rightColumn = COLUMN_INDEX[right.column];
+  if (leftColumn !== rightColumn) return leftColumn - rightColumn;
+
+  const leftOrder = NODE_SORT_ORDER.get(left.id);
+  const rightOrder = NODE_SORT_ORDER.get(right.id);
+  if (leftOrder !== undefined || rightOrder !== undefined) {
+    return (leftOrder ?? 99) - (rightOrder ?? 99);
+  }
+
+  if (left.column === "source") {
+    if (left.tone === "debt" && right.tone !== "debt") return 1;
+    if (right.tone === "debt" && left.tone !== "debt") return -1;
+  }
+
+  return (right.value ?? 0) - (left.value ?? 0);
+}
+
+function resolveLinkStyle(link: RecapSankeyLink) {
+  const sourceTone = getSourceNode(link).tone;
+  const targetTone = getTargetNode(link).tone;
+  return {
+    linkStart: TONE_STYLES[sourceTone].linkStart,
+    linkEnd: TONE_STYLES[targetTone].linkEnd,
+  };
+}
+
+function resolveLinkOpacity(link: RecapSankeyLink) {
+  if (link.tone === "debt") return 0.72;
+  if (link.tone === "netWorth") return 0.8;
+  if (getTargetNode(link).column === "summary") return 0.62;
+  return 0.55;
+}
+
+function estimateBadgeWidth(charCount: number, compact: boolean) {
+  return Math.max(compact ? 112 : 132, charCount * (compact ? 7.4 : 8.2) + 34);
+}
+
+function getSourceNode(link: RecapSankeyLink) {
+  return link.source as RecapSankeyNode;
+}
+
+function getTargetNode(link: RecapSankeyLink) {
+  return link.target as RecapSankeyNode;
 }
