@@ -12,6 +12,17 @@ const BROKERAGE_ACCOUNT_TYPES = new Set([
   "fund",
   "crypto",
 ]);
+const LIABILITY_ACCOUNT_TYPES = new Set([
+  "credit_card",
+  "loan",
+]);
+
+export function isLiabilityAsset(
+  sheet: Pick<Sheet, "type">,
+  asset: Pick<Asset, "type">
+) {
+  return sheet.type === "debts" || LIABILITY_ACCOUNT_TYPES.has(asset.type);
+}
 
 export function isAssetStale(asset: Asset): boolean {
   if (asset.providerType === "manual") return false;
@@ -36,7 +47,7 @@ export function recomputeAggregates(portfolio: Portfolio): Portfolio {
           asset.currency !== portfolio.currency
             ? convertToBase(rawVal, asset.currency, portfolio.currency, rates)
             : rawVal;
-        if (sheet.type === "debts") {
+        if (isLiabilityAsset(sheet, asset)) {
           totalDebts += val;
         } else {
           totalAssets += val;

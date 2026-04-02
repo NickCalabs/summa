@@ -19,6 +19,15 @@ export function errorResponse(message: string, status: number, details?: unknown
   });
 }
 
+export function validateUuid(value: string, label = "ID") {
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(value)) {
+    throw errorResponse(`Invalid ${label}`, 400);
+  }
+}
+
 export async function requireAuth(request: Request) {
   const session = await auth.api.getSession({
     headers: request.headers,

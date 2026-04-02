@@ -84,7 +84,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <MoneyDisplay
                       amount={portfolio.aggregates.netWorth}
                       currency={portfolio.currency}
-                      className="text-6xl font-semibold tracking-tight sm:text-7xl xl:text-8xl"
+                      className="text-5xl font-semibold tracking-tight sm:text-6xl xl:text-7xl"
                     />
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                       <ChangeIndicator

@@ -2,6 +2,7 @@ import { subDays, differenceInCalendarDays, parseISO } from "date-fns";
 import type { PortfolioSnapshot } from "@/hooks/use-snapshots";
 import type { Portfolio } from "@/hooks/use-portfolio";
 import { convertToBase } from "@/lib/currency";
+import { isLiabilityAsset } from "@/lib/portfolio-utils";
 
 type SnapshotField = "netWorth" | "totalAssets" | "totalDebts" | "cashOnHand";
 
@@ -53,10 +54,13 @@ export function getChangeFromSnapshots(
 export function computeInvestableTotal(portfolio: Portfolio): number {
   let total = 0;
   for (const sheet of portfolio.sheets) {
-    if (sheet.type !== "assets") continue;
     for (const section of sheet.sections) {
       for (const asset of section.assets) {
-        if (asset.isInvestable && !asset.isArchived) {
+        if (
+          asset.isInvestable &&
+          !asset.isArchived &&
+          !isLiabilityAsset(sheet, asset)
+        ) {
           const ownership = Number(asset.ownershipPct ?? 100) / 100;
           const value = Number(asset.currentValue) * ownership;
           total += convertToBase(value, asset.currency, portfolio.currency, portfolio.rates);

@@ -3,6 +3,7 @@ import type { Portfolio } from "@/hooks/use-portfolio";
 import {
   findLinkedAssetForDebt,
   getAccountDetailKind,
+  recomputeAggregates,
 } from "@/lib/portfolio-utils";
 
 const basePortfolio: Portfolio = {
@@ -149,5 +150,53 @@ describe("findLinkedAssetForDebt", () => {
     const linked = findLinkedAssetForDebt(basePortfolio, "mortgage");
     expect(linked?.asset.id).toBe("house");
     expect(linked?.section.name).toBe("Property");
+  });
+});
+
+describe("recomputeAggregates", () => {
+  it("subtracts misplaced credit-card balances from net worth", () => {
+    const portfolio: Portfolio = {
+      ...basePortfolio,
+      sheets: [
+        {
+          ...basePortfolio.sheets[0],
+          sections: [
+            {
+              ...basePortfolio.sheets[0].sections[0],
+              assets: [
+                {
+                  ...basePortfolio.sheets[0].sections[0].assets[0],
+                  id: "cash",
+                  name: "Cash",
+                  type: "cash",
+                  currentValue: "10000",
+                  ownershipPct: "100",
+                  linkedDebtId: null,
+                  isCashEquivalent: true,
+                  isInvestable: true,
+                },
+                {
+                  ...basePortfolio.sheets[0].sections[0].assets[0],
+                  id: "card",
+                  name: "Visa",
+                  type: "credit_card",
+                  currentValue: "2500",
+                  ownershipPct: "100",
+                  linkedDebtId: null,
+                  isCashEquivalent: false,
+                  isInvestable: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const recomputed = recomputeAggregates(portfolio);
+
+    expect(recomputed.aggregates.totalAssets).toBe(10000);
+    expect(recomputed.aggregates.totalDebts).toBe(2500);
+    expect(recomputed.aggregates.netWorth).toBe(7500);
   });
 });

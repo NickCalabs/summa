@@ -200,4 +200,51 @@ describe("computeInvestableTotal", () => {
     // 920 EUR / 0.92 = 1000 USD
     expect(computeInvestableTotal(portfolio)).toBe(1000);
   });
+
+  it("ignores misplaced liability balances inside asset sheets", () => {
+    const portfolio: Portfolio = {
+      ...basePortfolio,
+      sheets: [
+        {
+          id: "s1",
+          portfolioId: "p1",
+          name: "Assets",
+          type: "assets",
+          sortOrder: 0,
+          createdAt: "2026-01-01",
+          sections: [
+            {
+              id: "sec1",
+              sheetId: "s1",
+              name: "Accounts",
+              sortOrder: 0,
+              createdAt: "2026-01-01",
+              assets: [
+                {
+                  id: "a1", sectionId: "sec1", name: "Brokerage", type: "investment",
+                  sortOrder: 0, currency: "USD", quantity: null, costBasis: null,
+                  currentValue: "5000", currentPrice: null, isInvestable: true,
+                  isCashEquivalent: false, providerType: "manual", providerConfig: null,
+                  staleDays: null, lastSyncedAt: null, ownershipPct: "100",
+                  notes: null, isArchived: false, createdAt: "2026-01-01", updatedAt: "2026-01-01",
+                  taxStatus: null, linkedDebtId: null, metadata: null,
+                },
+                {
+                  id: "a2", sectionId: "sec1", name: "Card", type: "credit_card",
+                  sortOrder: 1, currency: "USD", quantity: null, costBasis: null,
+                  currentValue: "1200", currentPrice: null, isInvestable: true,
+                  isCashEquivalent: false, providerType: "manual", providerConfig: null,
+                  staleDays: null, lastSyncedAt: null, ownershipPct: "100",
+                  notes: null, isArchived: false, createdAt: "2026-01-01", updatedAt: "2026-01-01",
+                  taxStatus: null, linkedDebtId: null, metadata: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(computeInvestableTotal(portfolio)).toBe(5000);
+  });
 });

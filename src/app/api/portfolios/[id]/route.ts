@@ -15,6 +15,7 @@ import {
 import { parseBody, updatePortfolio } from "@/types";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
 import { convertToBase } from "@/lib/currency";
+import { isLiabilityAsset } from "@/lib/portfolio-utils";
 
 export async function GET(
   request: Request,
@@ -105,7 +106,7 @@ export async function GET(
             portfolio.currency,
             rates
           );
-          if (sheet.type === "debts") {
+          if (isLiabilityAsset(sheet, asset)) {
             totalDebts += val;
           } else {
             totalAssets += val;

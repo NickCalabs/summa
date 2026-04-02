@@ -4,14 +4,12 @@ import { useMemo } from "react";
 import {
   AreaChart,
   Area,
-  CartesianGrid,
   XAxis,
-  YAxis,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
-import { formatChartDate, formatCompactCurrency } from "@/lib/chart-utils";
+import { formatChartDate } from "@/lib/chart-utils";
 import { ChartEmpty } from "./chart-empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -61,11 +59,22 @@ export function NetWorthChart({
         <AreaChart data={chartData} margin={{ top: 8, right: 6, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="netWorthGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--chart-net-worth)" stopOpacity={0.2} />
-              <stop offset="100%" stopColor="var(--chart-net-worth)" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="var(--chart-net-worth)" stopOpacity={0.24} />
+              <stop offset="75%" stopColor="var(--chart-net-worth)" stopOpacity={0.08} />
+              <stop offset="100%" stopColor="var(--chart-net-worth)" stopOpacity={0.01} />
             </linearGradient>
+            <filter id="netWorthGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feColorMatrix
+                in="blur"
+                type="matrix"
+                values="0 0 0 0 0.384
+                        0 0 0 0 0.525
+                        0 0 0 0 1
+                        0 0 0 0.18 0"
+              />
+            </filter>
           </defs>
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 6" />
           <XAxis
             dataKey="date"
             tickFormatter={formatChartDate}
@@ -73,21 +82,23 @@ export function NetWorthChart({
             tickLine={false}
             axisLine={false}
             minTickGap={40}
-          />
-          <YAxis
-            tickFormatter={(v) => formatCompactCurrency(v, currency)}
-            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-            tickLine={false}
-            axisLine={false}
-            width={70}
+            dy={10}
           />
           <Tooltip content={<NetWorthTooltip currency={currency} />} />
           <Area
-            type="monotone"
+            type="natural"
             dataKey="netWorth"
             stroke="var(--chart-net-worth)"
-            strokeWidth={2.2}
+            strokeWidth={3}
             fill="url(#netWorthGradient)"
+            filter="url(#netWorthGlow)"
+            dot={false}
+            activeDot={{
+              r: 5,
+              stroke: "var(--background)",
+              strokeWidth: 2,
+              fill: "var(--chart-net-worth)",
+            }}
           />
         </AreaChart>
       </ResponsiveContainer>

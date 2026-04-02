@@ -10,6 +10,7 @@ import {
 import { eq, and, inArray } from "drizzle-orm";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
 import { convertToBase } from "@/lib/currency";
+import { isLiabilityAsset } from "@/lib/portfolio-utils";
 
 export async function takePortfolioSnapshot(portfolioId: string) {
   const today = new Date().toISOString().split("T")[0];
@@ -112,8 +113,9 @@ export async function takePortfolioSnapshot(portfolioId: string) {
     );
     const sheetId = sectionSheetMap.get(asset.sectionId);
     const sheetType = sheetId ? sheetTypeMap.get(sheetId) : "assets";
+    const sheet = { type: sheetType ?? "assets" };
 
-    if (sheetType === "debts") {
+    if (isLiabilityAsset(sheet, asset)) {
       totalDebts += val;
     } else {
       totalAssets += val;

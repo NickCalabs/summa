@@ -5,6 +5,7 @@ import type { Portfolio } from "@/hooks/use-portfolio";
 import { computeInvestableTotal } from "@/lib/snapshot-utils";
 import { convertToBase } from "@/lib/currency";
 import { DONUT_COLORS, formatCompactCurrency } from "@/lib/chart-utils";
+import { isLiabilityAsset } from "@/lib/portfolio-utils";
 import { ChartEmpty } from "@/components/charts/chart-empty";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { useUIStore } from "@/stores/ui-store";
@@ -34,32 +35,44 @@ export function AllocationChart({ portfolio }: AllocationChartProps) {
     const debts: Omit<SheetTotal, "share">[] = [];
 
     portfolio.sheets.forEach((sheet, index) => {
-      let total = 0;
+      let assetTotalForSheet = 0;
+      let debtTotalForSheet = 0;
       for (const section of sheet.sections) {
         for (const asset of section.assets) {
           if (asset.isArchived) continue;
           const ownedValue =
             Number(asset.currentValue) * (Number(asset.ownershipPct ?? 100) / 100);
-          total += convertToBase(
+          const convertedValue = convertToBase(
             ownedValue,
             asset.currency,
             portfolio.currency,
             portfolio.rates
           );
+          if (isLiabilityAsset(sheet, asset)) {
+            debtTotalForSheet += convertedValue;
+          } else {
+            assetTotalForSheet += convertedValue;
+          }
         }
       }
 
-      if (total <= 0) return;
+      if (assetTotalForSheet > 0) {
+        assets.push({
+          id: sheet.id,
+          name: sheet.name,
+          total: assetTotalForSheet,
+          color: DONUT_COLORS[index % DONUT_COLORS.length],
+        });
+      }
 
-      const entry = {
-        id: sheet.id,
-        name: sheet.name,
-        total,
-        color: DONUT_COLORS[index % DONUT_COLORS.length],
-      };
-
-      if (sheet.type === "assets") assets.push(entry);
-      else debts.push(entry);
+      if (debtTotalForSheet > 0) {
+        debts.push({
+          id: sheet.id,
+          name: sheet.name,
+          total: debtTotalForSheet,
+          color: DONUT_COLORS[index % DONUT_COLORS.length],
+        });
+      }
     });
 
     assets.sort((left, right) => right.total - left.total);
