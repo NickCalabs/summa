@@ -3,20 +3,20 @@ import {
   plaidConnections,
   plaidAccounts,
   assets,
-  sections,
-  sheets,
-  portfolios,
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
   jsonResponse,
   errorResponse,
   handleError,
+  requirePortfolioOwnership,
   requireAuth,
   validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, plaidLinkAccounts } from "@/types";
 import { plaidTypeToAssetType, isDepositoryAccount, isLiabilityAccount } from "@/lib/providers/plaid";
+import { getInstitutionSectionName } from "@/lib/provider-account-grouping";
+import { ensurePortfolioInstitutionSection } from "@/lib/provider-section-routing";
 
 export async function POST(
   request: Request,
@@ -41,6 +41,7 @@ export async function POST(
     }
 
     const body = await parseBody(request, plaidLinkAccounts);
+    await requirePortfolioOwnership(body.portfolioId, user.id);
     const created: string[] = [];
 
     for (const item of body.accounts) {
@@ -61,75 +62,12 @@ export async function POST(
       // If already tracked with an asset, skip
       if (plaidAccount.assetId) continue;
 
-      let targetSectionId = item.sectionId;
-
-      // Verify section belongs to user and get the sheet type
-      const sectionInfo = await db
-        .select({
-          portfolioUserId: portfolios.userId,
-          portfolioId: portfolios.id,
-          sheetType: sheets.type,
-        })
-        .from(sections)
-        .innerJoin(sheets, eq(sections.sheetId, sheets.id))
-        .innerJoin(portfolios, eq(sheets.portfolioId, portfolios.id))
-        .where(
-          and(eq(sections.id, item.sectionId), eq(portfolios.userId, user.id))
-        )
-        .limit(1);
-
-      if (sectionInfo.length === 0) continue;
-
-      // If this is a liability account (credit card, loan) but the target
-      // section is in an assets sheet, find or create a debts sheet + section
-      if (
-        isLiabilityAccount(plaidAccount.type) &&
-        sectionInfo[0].sheetType === "assets"
-      ) {
-        const pid = sectionInfo[0].portfolioId;
-
-        // Find existing debts sheet
-        let [debtsSheet] = await db
-          .select()
-          .from(sheets)
-          .where(
-            and(eq(sheets.portfolioId, pid), eq(sheets.type, "debts"))
-          )
-          .limit(1);
-
-        // Create debts sheet if none exists
-        if (!debtsSheet) {
-          [debtsSheet] = await db
-            .insert(sheets)
-            .values({
-              portfolioId: pid,
-              name: "Debts",
-              type: "debts",
-              sortOrder: 1,
-            })
-            .returning();
-        }
-
-        // Find or create a section in the debts sheet
-        let [debtsSection] = await db
-          .select()
-          .from(sections)
-          .where(eq(sections.sheetId, debtsSheet.id))
-          .limit(1);
-
-        if (!debtsSection) {
-          [debtsSection] = await db
-            .insert(sections)
-            .values({
-              sheetId: debtsSheet.id,
-              name: "Liabilities",
-              sortOrder: 0,
-            })
-            .returning();
-        }
-
-        targetSectionId = debtsSection.id;
-      }
+      const sheetType = isLiabilityAccount(plaidAccount.type) ? "debts" : "assets";
+      const targetSection = await ensurePortfolioInstitutionSection({
+        portfolioId: body.portfolioId,
+        sheetType,
+        institutionName: getInstitutionSectionName(connection.institutionName),
+      });
 
       const assetType = plaidTypeToAssetType(
         plaidAccount.type,
@@ -141,7 +79,7 @@ export async function POST(
       const [newAsset] = await db
         .insert(assets)
         .values({
-          sectionId: targetSectionId,
+          sectionId: targetSection.id,
           name: plaidAccount.officialName ?? plaidAccount.name,
           type: assetType,
           currency: plaidAccount.isoCurrencyCode ?? "USD",

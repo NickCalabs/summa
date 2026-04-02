@@ -156,10 +156,11 @@ export const plaidExchangeToken = z.object({
 });
 
 export const plaidLinkAccounts = z.object({
+  portfolioId: z.string().uuid(),
   accounts: z.array(
     z.object({
       plaidAccountId: z.string().min(1),
-      sectionId: z.string().uuid(),
+      sectionId: z.string().uuid().optional(),
     })
   ),
 });
@@ -177,10 +178,11 @@ export const simplefinCreateConnection = z
   });
 
 export const simplefinLinkAccounts = z.object({
+  portfolioId: z.string().uuid(),
   accounts: z.array(
     z.object({
       simplefinAccountId: z.string().min(1),
-      sectionId: z.string().uuid(),
+      sectionId: z.string().uuid().optional(),
     })
   ),
 });

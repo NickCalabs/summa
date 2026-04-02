@@ -4,6 +4,11 @@ import {
   getSimpleFINServerUrl,
   normalizeSimpleFINAccessUrl,
 } from "@/lib/providers/simplefin";
+import {
+  getInstitutionSectionName,
+  inferSimpleFINAssetType,
+  inferSimpleFINSheetType,
+} from "@/lib/provider-account-grouping";
 
 describe("SimpleFIN helpers", () => {
   it("decodes a setup token into a claim URL", () => {
@@ -36,5 +41,26 @@ describe("SimpleFIN helpers", () => {
         "http://demo:secret@bridge.simplefin.org/simplefin"
       )
     ).toThrow(/HTTPS/);
+  });
+
+  it("derives a readable institution label from domains", () => {
+    expect(getInstitutionSectionName("www.coinbase.com")).toBe("Coinbase");
+    expect(getInstitutionSectionName("https://www.chase.com")).toBe("Chase");
+  });
+
+  it("routes cards to debts and wallets to assets", () => {
+    expect(
+      inferSimpleFINSheetType({
+        accountName: "Travel Rewards Visa Platinum Plus",
+        balance: "-1200.50",
+      })
+    ).toBe("debts");
+
+    expect(
+      inferSimpleFINAssetType({
+        accountName: "DOGE Wallet",
+        balance: "100.00",
+      })
+    ).toBe("crypto");
   });
 });

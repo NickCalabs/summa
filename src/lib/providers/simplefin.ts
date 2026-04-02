@@ -1,3 +1,5 @@
+import { inferSimpleFINInstitutionName } from "@/lib/provider-account-grouping";
+
 const SIMPLEFIN_API_VERSION = "2";
 
 export class SimpleFINProviderError extends Error {
@@ -102,11 +104,6 @@ function describeConnection(payload: SimpleFINConnectionPayload | undefined): st
   return payload.name ?? payload.domain ?? payload.url ?? payload["sfin-url"] ?? payload.id ?? null;
 }
 
-function describeOrg(payload: SimpleFINOrgPayload | undefined): string | null {
-  if (!payload) return null;
-  return payload.name ?? payload.domain ?? payload.url ?? payload["sfin-url"] ?? null;
-}
-
 function normalizeCurrency(value: string | undefined): string {
   const trimmed = value?.trim().toUpperCase();
   if (trimmed && /^[A-Z]{3}$/.test(trimmed)) {
@@ -181,11 +178,15 @@ function normalizeAccountSet(
       connectionName: describeConnection(
         account.conn_id ? connectionsById.get(account.conn_id) : undefined
       ),
-      institutionName:
-        describeOrg(account.org) ??
-        describeConnection(
+      institutionName: inferSimpleFINInstitutionName({
+        orgName: account.org?.name ?? null,
+        orgDomain: account.org?.domain ?? null,
+        orgUrl: account.org?.url ?? null,
+        orgSimplefinUrl: account.org?.["sfin-url"] ?? null,
+        connectionName: describeConnection(
           account.conn_id ? connectionsById.get(account.conn_id) : undefined
         ),
+      }),
       accountName: account.name,
       currency: normalizeCurrency(account.currency),
       balance: normalizeDecimalString(account.balance),

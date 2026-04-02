@@ -1,11 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Building2Icon, Loader2Icon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import {
+  Building2Icon,
+  Loader2Icon,
+  RefreshCwIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ConfirmDialog } from "./confirm-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { MoneyDisplay } from "./money-display";
 import {
@@ -14,28 +18,66 @@ import {
   useLinkSimpleFINAccounts,
   useSimpleFINConnections,
   useSyncSimpleFINConnection,
+  type SimpleFINAccount,
   type SimpleFINConnection,
 } from "@/hooks/use-simplefin";
-import type { Section, Sheet } from "@/hooks/use-portfolio";
+import {
+  getInstitutionSectionName,
+  inferSimpleFINAssetType,
+  inferSimpleFINSheetType,
+} from "@/lib/provider-account-grouping";
 
 const SIMPLEFIN_BRIDGE_CREATE_URL = "https://bridge.simplefin.org/simplefin/create";
 
-function getAllSections(sheets: Sheet[]): Section[] {
-  return sheets.flatMap((sheet) => sheet.sections);
+function getAccountTarget(connection: SimpleFINConnection, account: SimpleFINAccount) {
+  const sheetType = inferSimpleFINSheetType({
+    accountName: account.accountName,
+    balance: account.balance,
+  });
+
+  return {
+    institution: getInstitutionSectionName(
+      account.institutionName ?? connection.label
+    ),
+    sheetType,
+    assetType: inferSimpleFINAssetType({
+      accountName: account.accountName,
+      balance: account.balance,
+    }),
+  };
 }
 
-function getDefaultSectionId(sheets: Sheet[]): string {
-  return getAllSections(sheets)[0]?.id ?? "";
+function groupAccountsByInstitution(connection: SimpleFINConnection) {
+  const groups = new Map<string, SimpleFINAccount[]>();
+
+  for (const account of connection.accounts) {
+    const institution = getInstitutionSectionName(
+      account.institutionName ?? connection.label
+    );
+    const list = groups.get(institution) ?? [];
+    list.push(account);
+    groups.set(institution, list);
+  }
+
+  return [...groups.entries()]
+    .sort((left, right) => left[0].localeCompare(right[0]))
+    .map(([institution, accounts]) => ({ institution, accounts }));
 }
 
-export function SimpleFINConnectPanel({ sheets }: { sheets: Sheet[] }) {
+export function SimpleFINConnectPanel({
+  portfolioId,
+}: {
+  portfolioId: string;
+}) {
   const { data: connections, isLoading } = useSimpleFINConnections();
   const createConnection = useCreateSimpleFINConnection();
   const syncConnection = useSyncSimpleFINConnection();
   const disconnectSimpleFIN = useDisconnectSimpleFIN();
 
   const [credential, setCredential] = useState("");
-  const [newConnection, setNewConnection] = useState<SimpleFINConnection | null>(null);
+  const [newConnection, setNewConnection] = useState<SimpleFINConnection | null>(
+    null
+  );
   const [disconnectTarget, setDisconnectTarget] = useState<{
     id: string;
     name: string;
@@ -76,7 +118,8 @@ export function SimpleFINConnectPanel({ sheets }: { sheets: Sheet[] }) {
             <h3 className="text-sm font-medium">SimpleFIN</h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Open the SimpleFIN Bridge, copy the setup token or access URL, then paste it here to import accounts.
+            Open the SimpleFIN Bridge, copy the setup token or access URL, then
+            paste it here to import accounts.
           </p>
         </div>
 
@@ -111,9 +154,11 @@ export function SimpleFINConnectPanel({ sheets }: { sheets: Sheet[] }) {
 
       {newConnection && (
         <SimpleFINAccountSelector
+          portfolioId={portfolioId}
           connection={newConnection}
-          sheets={sheets}
-          defaultSelectedIds={newConnection.accounts.map((account) => account.simplefinAccountId)}
+          defaultSelectedIds={newConnection.accounts.map(
+            (account) => account.simplefinAccountId
+          )}
           onDone={() => setNewConnection(null)}
         />
       )}
@@ -133,7 +178,7 @@ export function SimpleFINConnectPanel({ sheets }: { sheets: Sheet[] }) {
               <SimpleFINConnectionCard
                 key={connection.id}
                 connection={connection}
-                sheets={sheets}
+                portfolioId={portfolioId}
                 onSync={() => syncConnection.mutate(connection.id)}
                 onDisconnect={() =>
                   setDisconnectTarget({ id: connection.id, name: connection.label })
@@ -172,13 +217,13 @@ export function SimpleFINConnectPanel({ sheets }: { sheets: Sheet[] }) {
 
 function SimpleFINConnectionCard({
   connection,
-  sheets,
+  portfolioId,
   onSync,
   onDisconnect,
   isSyncing,
 }: {
   connection: SimpleFINConnection;
-  sheets: Sheet[];
+  portfolioId: string;
   onSync: () => void;
   onDisconnect: () => void;
   isSyncing: boolean;
@@ -217,7 +262,9 @@ function SimpleFINConnectionCard({
             disabled={isSyncing}
             title="Sync now"
           >
-            <RefreshCwIcon className={`size-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+            <RefreshCwIcon
+              className={`size-3.5 ${isSyncing ? "animate-spin" : ""}`}
+            />
           </Button>
           <Button
             variant="ghost"
@@ -242,36 +289,45 @@ function SimpleFINConnectionCard({
 
       {connection.accounts.length > 0 && (
         <div className="text-xs text-muted-foreground space-y-1">
-          {connection.accounts.map((account) => (
-            <div key={account.id} className="flex items-center justify-between gap-3">
-              <span className="min-w-0 flex-1 truncate">
-                {account.institutionName ? `${account.institutionName} - ` : ""}
-                {account.accountName}
-              </span>
-              {account.isTracked ? (
-                <span className="tabular-nums">Tracked</span>
-              ) : relinkAccountId === account.simplefinAccountId ? (
-                <Button variant="ghost" size="xs" onClick={() => setRelinkAccountId(null)}>
-                  Cancel
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => setRelinkAccountId(account.simplefinAccountId)}
-                >
-                  Link
-                </Button>
-              )}
-            </div>
-          ))}
+          {connection.accounts.map((account) => {
+            const target = getAccountTarget(connection, account);
+
+            return (
+              <div key={account.id} className="flex items-center justify-between gap-3">
+                <span className="min-w-0 flex-1 truncate">
+                  {target.institution} - {account.accountName}
+                </span>
+                {account.isTracked ? (
+                  <span className="tabular-nums">
+                    {target.sheetType === "debts" ? "Debt" : "Tracked"}
+                  </span>
+                ) : relinkAccountId === account.simplefinAccountId ? (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => setRelinkAccountId(null)}
+                  >
+                    Cancel
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={() => setRelinkAccountId(account.simplefinAccountId)}
+                  >
+                    Link
+                  </Button>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
       {relinkAccount && (
         <SimpleFINAccountSelector
+          portfolioId={portfolioId}
           connection={{ ...connection, accounts: [relinkAccount] }}
-          sheets={sheets}
           defaultSelectedIds={[relinkAccount.simplefinAccountId]}
           onDone={() => setRelinkAccountId(null)}
         />
@@ -281,57 +337,42 @@ function SimpleFINConnectionCard({
 }
 
 function SimpleFINAccountSelector({
+  portfolioId,
   connection,
-  sheets,
   defaultSelectedIds,
   onDone,
 }: {
+  portfolioId: string;
   connection: SimpleFINConnection;
-  sheets: Sheet[];
   defaultSelectedIds?: string[];
   onDone: () => void;
 }) {
   const linkAccounts = useLinkSimpleFINAccounts();
-  const sections = useMemo(() => getAllSections(sheets), [sheets]);
-  const defaultSectionId = getDefaultSectionId(sheets);
-  const hasSections = sections.length > 0;
+  const groupedAccounts = useMemo(
+    () => groupAccountsByInstitution(connection),
+    [connection]
+  );
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(defaultSelectedIds ?? [])
+  );
 
-  const [selected, setSelected] = useState<Map<string, string>>(() => {
-    const initial = new Map<string, string>();
-    for (const accountId of defaultSelectedIds ?? []) {
-      if (defaultSectionId) {
-        initial.set(accountId, defaultSectionId);
-      }
-    }
-    return initial;
-  });
-
-  function toggleAccount(simplefinAccountId: string, sectionId: string) {
+  function toggleAccount(simplefinAccountId: string) {
     setSelected((previous) => {
-      const next = new Map(previous);
+      const next = new Set(previous);
       if (next.has(simplefinAccountId)) {
         next.delete(simplefinAccountId);
       } else {
-        next.set(simplefinAccountId, sectionId);
-      }
-      return next;
-    });
-  }
-
-  function setSection(simplefinAccountId: string, sectionId: string) {
-    setSelected((previous) => {
-      const next = new Map(previous);
-      if (next.has(simplefinAccountId)) {
-        next.set(simplefinAccountId, sectionId);
+        next.add(simplefinAccountId);
       }
       return next;
     });
   }
 
   function handleConfirm() {
-    const accounts = Array.from(selected.entries()).map(
-      ([simplefinAccountId, sectionId]) => ({ simplefinAccountId, sectionId })
-    );
+    const accounts = Array.from(selected.values()).map((simplefinAccountId) => ({
+      simplefinAccountId,
+    }));
+
     if (accounts.length === 0) {
       onDone();
       return;
@@ -340,6 +381,7 @@ function SimpleFINAccountSelector({
     linkAccounts.mutate(
       {
         connectionId: connection.id,
+        portfolioId,
         accounts,
       },
       {
@@ -355,76 +397,69 @@ function SimpleFINAccountSelector({
       </h4>
 
       <p className="text-xs text-muted-foreground">
-        Phase one keeps this manual: pick the accounts you want and choose the right section so we do not auto-create duplicates.
+        Accounts are grouped automatically by institution. Checking and savings
+        stay in assets, while cards and loans are routed to debts.
       </p>
 
       <div className="space-y-2">
-        {connection.accounts.map((account) => {
-          const isSelected = selected.has(account.simplefinAccountId);
-          const sectionId = selected.get(account.simplefinAccountId) ?? defaultSectionId;
-
-          return (
-            <div key={account.id} className="flex items-center gap-3 text-sm">
-              <input
-                type="checkbox"
-                checked={isSelected}
-                disabled={!hasSections}
-                onChange={() => toggleAccount(account.simplefinAccountId, sectionId)}
-                className="rounded"
-              />
-
-              <div className="flex-1 min-w-0">
-                <div className="truncate">
-                  {account.institutionName ? `${account.institutionName} - ` : ""}
-                  {account.accountName}
-                </div>
-                {(account.connectionName || account.balanceDate) && (
-                  <div className="text-xs text-muted-foreground truncate">
-                    {account.connectionName ?? "SimpleFIN"}
-                    {account.balanceDate
-                      ? ` • ${new Date(account.balanceDate).toLocaleDateString()}`
-                      : ""}
-                  </div>
-                )}
+        {groupedAccounts.map((group) => (
+          <div key={group.institution} className="rounded-md border border-border/60">
+            <div className="px-3 py-2 border-b border-border/60 bg-muted/30">
+              <div className="font-medium text-sm">{group.institution}</div>
+              <div className="text-xs text-muted-foreground">
+                Imported accounts will land under the {group.institution} section.
               </div>
-
-              {account.balance != null && (
-                <MoneyDisplay
-                  amount={Number(account.balance)}
-                  currency={account.currency}
-                  className="tabular-nums text-muted-foreground"
-                />
-              )}
-
-              {isSelected && sections.length > 1 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button variant="outline" size="xs" className="text-xs" />
-                    }
-                  >
-                    {sections.find((section) => section.id === sectionId)?.name ??
-                      "Section"}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuRadioGroup
-                      value={sectionId}
-                      onValueChange={(value) =>
-                        setSection(account.simplefinAccountId, value)
-                      }
-                    >
-                      {sections.map((section) => (
-                        <DropdownMenuRadioItem key={section.id} value={section.id}>
-                          {section.name}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
-          );
-        })}
+
+            <div className="divide-y divide-border/40">
+              {group.accounts.map((account) => {
+                const isSelected = selected.has(account.simplefinAccountId);
+                const target = getAccountTarget(connection, account);
+
+                return (
+                  <div key={account.id} className="flex items-center gap-3 p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleAccount(account.simplefinAccountId)}
+                      className="rounded"
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate">{account.accountName}</div>
+                      <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
+                        <span>
+                          {target.sheetType === "debts" ? "Debts" : "Assets"} /{" "}
+                          {target.institution}
+                        </span>
+                        <span>•</span>
+                        <span>{target.assetType}</span>
+                        {account.balanceDate ? (
+                          <>
+                            <span>•</span>
+                            <span>
+                              {new Date(account.balanceDate).toLocaleDateString()}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {target.sheetType === "debts" && <Badge variant="outline">Debt</Badge>}
+
+                    {account.balance != null && (
+                      <MoneyDisplay
+                        amount={Number(account.balance)}
+                        currency={account.currency}
+                        className="tabular-nums text-muted-foreground"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="flex justify-end gap-2">
@@ -434,19 +469,13 @@ function SimpleFINAccountSelector({
         <Button
           size="sm"
           onClick={handleConfirm}
-          disabled={linkAccounts.isPending || selected.size === 0 || !hasSections}
+          disabled={linkAccounts.isPending || selected.size === 0}
         >
           {linkAccounts.isPending
             ? "Linking..."
             : `Link ${selected.size} Account${selected.size !== 1 ? "s" : ""}`}
         </Button>
       </div>
-
-      {!hasSections && (
-        <p className="text-xs text-muted-foreground">
-          Add a section to this portfolio before linking imported accounts.
-        </p>
-      )}
     </div>
   );
 }

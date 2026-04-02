@@ -57,6 +57,7 @@ const REAUTH_ERROR_CODES = new Set([
 ]);
 
 interface PlaidConnectDialogProps {
+  portfolioId: string;
   sheets: Sheet[];
 }
 
@@ -71,7 +72,7 @@ function getDefaultSectionId(accountType: string, sheets: Sheet[]): string {
   return targetSheets[0]?.sections[0]?.id ?? fallback;
 }
 
-export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
+export function PlaidConnectDialog({ portfolioId, sheets }: PlaidConnectDialogProps) {
   const open = useUIStore((s) => s.plaidDialogOpen);
   const closePlaidDialog = useUIStore((s) => s.closePlaidDialog);
 
@@ -113,7 +114,7 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          <SimpleFINConnectPanel sheets={sheets} />
+          <SimpleFINConnectPanel portfolioId={portfolioId} />
 
           <Separator />
 
@@ -139,6 +140,7 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
                   <ConnectionCard
                     key={conn.id}
                     connection={conn}
+                    portfolioId={portfolioId}
                     sheets={sheets}
                     onSync={() => syncConnection.mutate(conn.id)}
                     onDisconnect={() => setDisconnectTarget({ id: conn.id, name: conn.institutionName })}
@@ -158,6 +160,7 @@ export function PlaidConnectDialog({ sheets }: PlaidConnectDialogProps) {
           {/* Account selection for newly connected bank */}
           {newConnection && (
             <AccountSelector
+              portfolioId={portfolioId}
               connection={newConnection}
               sheets={sheets}
               onDone={() => setNewConnection(null)}
@@ -279,6 +282,7 @@ function PlaidLinkOpener({
 
 function ConnectionCard({
   connection,
+  portfolioId,
   sheets,
   onSync,
   onDisconnect,
@@ -287,6 +291,7 @@ function ConnectionCard({
   isReconnecting,
 }: {
   connection: PlaidConnection;
+  portfolioId: string;
   sheets: Sheet[];
   onSync: () => void;
   onDisconnect: () => void;
@@ -409,6 +414,7 @@ function ConnectionCard({
 
       {relinkAccount && (
         <AccountSelector
+          portfolioId={portfolioId}
           connection={{ ...connection, accounts: [relinkAccount] }}
           sheets={sheets}
           onDone={() => setRelinkAccountId(null)}
@@ -419,10 +425,12 @@ function ConnectionCard({
 }
 
 function AccountSelector({
+  portfolioId,
   connection,
   sheets,
   onDone,
 }: {
+  portfolioId: string;
   connection: PlaidConnection;
   sheets: Sheet[];
   onDone: () => void;
@@ -472,7 +480,7 @@ function AccountSelector({
       return;
     }
     linkAccounts.mutate(
-      { connectionId: connection.id, accounts },
+      { connectionId: connection.id, portfolioId, accounts },
       { onSuccess: () => onDone() }
     );
   }
@@ -487,7 +495,7 @@ function AccountSelector({
 
       {!hasDebtsSheet && connection.accounts.some((a) => isLiabilityAccount(a.type)) && (
         <p className="text-xs text-muted-foreground">
-          A &quot;Debts&quot; sheet will be created automatically for credit cards and loans.
+          Accounts are grouped under {connection.institutionName}. Credit cards and loans are routed into the debts sheet automatically.
         </p>
       )}
 
