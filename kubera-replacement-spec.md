@@ -256,6 +256,9 @@ interface PriceProvider {
 - [ ] CAGR calculation
 - [ ] Investable assets metric (auto-classify + manual toggle)
 - [ ] Tax estimate on unrealized gains (configurable rate)
+- [ ] Refine the dashboard recap Sankey to match Kubera more closely:
+  thinner rails, better column spacing, lighter labels, and a more faithful
+  Assets -> Net Worth / Debts split.
 - [ ] Recap section with full chart suite:
   - Net worth, assets, debts over time
   - By sheet, by section breakdowns

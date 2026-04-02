@@ -151,6 +151,9 @@ export function RecapSankeyChart({
   portfolio,
   className,
 }: RecapSankeyChartProps) {
+  // TODO: Bring this much closer to Kubera's actual recap flow treatment:
+  // slimmer bars, better whitespace, subtler labels, and a more faithful
+  // Assets -> Net Worth / Debts split on the right side.
   const flow = useMemo(() => buildPortfolioRecapFlow(portfolio), [portfolio]);
   const chart = useMemo(() => buildChart(flow.nodes, flow.links), [flow]);
   const gradientPrefix = useId().replace(/:/g, "");
