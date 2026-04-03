@@ -12,6 +12,7 @@ import {
   handleError,
   jsonResponse,
   requireAuth,
+  validateUuid,
 } from "@/lib/api-helpers";
 import { decrypt } from "@/lib/encryption";
 import {
@@ -33,6 +34,7 @@ export async function POST(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "connection ID");
 
     const [connection] = await db
       .select()

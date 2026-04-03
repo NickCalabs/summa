@@ -6,6 +6,7 @@ import {
   requirePortfolioOwnership,
   jsonResponse,
   handleError,
+  validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, createAsset } from "@/types";
 
@@ -16,6 +17,7 @@ export async function POST(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "portfolio ID");
     await requirePortfolioOwnership(id, user.id);
 
     const body = await parseBody(request, createAsset);

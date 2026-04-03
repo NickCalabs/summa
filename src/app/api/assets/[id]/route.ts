@@ -6,6 +6,7 @@ import {
   requireAssetOwnership,
   jsonResponse,
   handleError,
+  validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, updateAsset } from "@/types";
 
@@ -16,6 +17,7 @@ export async function GET(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "asset ID");
     const { asset } = await requireAssetOwnership(id, user.id);
 
     // Last 30 days of snapshots
@@ -44,6 +46,7 @@ export async function PATCH(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "asset ID");
     const { asset } = await requireAssetOwnership(id, user.id);
 
     const body = await parseBody(request, updateAsset);
@@ -109,6 +112,7 @@ export async function DELETE(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "asset ID");
     await requireAssetOwnership(id, user.id);
 
     // Soft delete

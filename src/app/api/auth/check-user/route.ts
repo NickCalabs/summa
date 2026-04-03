@@ -2,35 +2,25 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
+import { TtlCache } from "@/lib/providers/rate-limit-cache";
 
-// Rate limit: 5 requests per 5 minutes per IP
-const checkUserRateLimit = new Map<string, { count: number; resetAt: number }>();
-
-function cleanExpiredEntries() {
-  const now = Date.now();
-  for (const [key, entry] of checkUserRateLimit.entries()) {
-    if (now > entry.resetAt) {
-      checkUserRateLimit.delete(key);
-    }
-  }
-}
+const MAX_CHECKS = 5;
+const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const checkUserRateLimit = new TtlCache<{ count: number }>(500);
 
 export async function GET(request: Request) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-  const now = Date.now();
-  const windowMs = 5 * 60 * 1000; // 5 minutes
-
-  cleanExpiredEntries();
 
   const limit = checkUserRateLimit.get(ip);
 
-  if (limit && now < limit.resetAt) {
-    if (limit.count >= 5) {
+  if (limit) {
+    if (limit.count >= MAX_CHECKS) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
     limit.count++;
+    checkUserRateLimit.set(ip, limit, WINDOW_MS);
   } else {
-    checkUserRateLimit.set(ip, { count: 1, resetAt: now + windowMs });
+    checkUserRateLimit.set(ip, { count: 1 }, WINDOW_MS);
   }
 
   const result = await db

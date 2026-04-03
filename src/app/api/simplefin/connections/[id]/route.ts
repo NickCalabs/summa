@@ -10,6 +10,7 @@ import {
   handleError,
   jsonResponse,
   requireAuth,
+  validateUuid,
 } from "@/lib/api-helpers";
 
 export async function DELETE(
@@ -19,6 +20,7 @@ export async function DELETE(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "connection ID");
 
     const [connection] = await db
       .select()

@@ -11,11 +11,30 @@ const QUOTE_TYPE_MAP: Record<string, SearchResult["type"]> = {
   MUTUALFUND: "mutualfund",
 };
 
+async function fetchWithRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+  delayMs = 1000
+): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const status = error?.response?.status ?? error?.statusCode;
+      const isRetryable = status === 502 || status === 503 || status === 429;
+      if (!isRetryable || attempt === retries) throw error;
+      console.warn(`[yahoo] Retrying after ${status} (attempt ${attempt + 1}/${retries})`);
+      await new Promise((r) => setTimeout(r, delayMs * 2 ** attempt));
+    }
+  }
+  throw new Error("unreachable");
+}
+
 export const yahooProvider: PriceProvider = {
   type: "yahoo",
 
   async getPrice(symbol: string, currency: string): Promise<PriceResult> {
-    const quote = await yf.quote(symbol);
+    const quote: any = await fetchWithRetry(() => yf.quote(symbol));
     return {
       price: quote.regularMarketPrice ?? 0,
       currency: quote.currency ?? currency,
@@ -27,10 +46,9 @@ export const yahooProvider: PriceProvider = {
   },
 
   async search(query: string): Promise<SearchResult[]> {
-    const result = await yf.search(query, {
-      quotesCount: 20,
-      newsCount: 0,
-    });
+    const result: any = await fetchWithRetry(() =>
+      yf.search(query, { quotesCount: 20, newsCount: 0 })
+    );
 
     return (result.quotes ?? [])
       .filter((q: any) => q.isYahooFinance !== false)
@@ -54,7 +72,7 @@ export async function getYahooBatchPrices(
   for (let i = 0; i < symbols.length; i += chunkSize) {
     const chunk = symbols.slice(i, i + chunkSize);
     try {
-      const quotes = await yf.quote(chunk);
+      const quotes = await fetchWithRetry(() => yf.quote(chunk));
       const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
       for (const q of quoteArray) {
         if (q?.symbol && q.regularMarketPrice != null) {

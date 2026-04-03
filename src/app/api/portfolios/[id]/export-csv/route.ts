@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { assets, sections, sheets } from "@/lib/db/schema";
 import { eq, inArray, asc } from "drizzle-orm";
-import { requireAuth, requirePortfolioOwnership, handleError, errorResponse } from "@/lib/api-helpers";
+import { requireAuth, requirePortfolioOwnership, handleError, errorResponse, validateUuid } from "@/lib/api-helpers";
 import { sanitizeCsvValue } from "@/lib/csv-utils";
 import Papa from "papaparse";
 
@@ -12,6 +12,7 @@ export async function GET(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "portfolio ID");
     const portfolio = await requirePortfolioOwnership(id, user.id);
 
     const url = new URL(request.url);

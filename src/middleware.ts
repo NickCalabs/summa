@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { TtlCache } from "@/lib/providers/rate-limit-cache";
 
 const publicPaths = ["/login", "/register", "/api/auth", "/api/health", "/api/plaid/webhook"];
 
@@ -6,7 +7,7 @@ const RATE_LIMITED_PATHS = ["/api/auth/sign-in", "/api/auth/sign-up"];
 const MAX_ATTEMPTS = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const rateLimitStore = new TtlCache<{ count: number }>(1000);
 
 function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -16,40 +17,27 @@ function getClientIp(request: NextRequest): string {
   return (request as NextRequest & { ip?: string }).ip ?? "unknown";
 }
 
-function cleanExpiredEntries() {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (now > entry.resetAt) {
-      rateLimitStore.delete(key);
-    }
-  }
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Apply rate limiting to auth endpoints
   if (RATE_LIMITED_PATHS.some((p) => pathname.startsWith(p))) {
     const ip = getClientIp(request);
-    const now = Date.now();
-
-    cleanExpiredEntries();
-
     const entry = rateLimitStore.get(ip);
 
-    if (entry && now < entry.resetAt) {
+    if (entry) {
       if (entry.count >= MAX_ATTEMPTS) {
-        const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
         return new NextResponse("Too Many Requests", {
           status: 429,
           headers: {
-            "Retry-After": String(retryAfterSeconds),
+            "Retry-After": String(Math.ceil(WINDOW_MS / 1000)),
           },
         });
       }
       entry.count += 1;
+      rateLimitStore.set(ip, entry, WINDOW_MS);
     } else {
-      rateLimitStore.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+      rateLimitStore.set(ip, { count: 1 }, WINDOW_MS);
     }
   }
 

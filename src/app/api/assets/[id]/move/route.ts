@@ -6,6 +6,7 @@ import {
   requireAssetOwnership,
   jsonResponse,
   handleError,
+  validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, moveAsset } from "@/types";
 
@@ -16,6 +17,7 @@ export async function POST(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "asset ID");
     await requireAssetOwnership(id, user.id);
 
     const body = await parseBody(request, moveAsset);

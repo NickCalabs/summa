@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, handleError, requireAuth, requirePortfolioOwnership } from "@/lib/api-helpers";
+import { jsonResponse, errorResponse, handleError, requireAuth, requirePortfolioOwnership, validateUuid } from "@/lib/api-helpers";
 import { detectColumnMapping, detectSourceFormat } from "@/lib/csv-utils";
 import Papa from "papaparse";
 
@@ -9,6 +9,7 @@ export async function POST(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "portfolio ID");
     await requirePortfolioOwnership(id, user.id);
 
     const formData = await request.formData();

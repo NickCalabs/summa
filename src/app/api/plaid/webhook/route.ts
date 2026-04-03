@@ -214,22 +214,17 @@ export async function POST(request: Request) {
         const balances = await getBalances(accessToken);
 
         for (const balance of balances) {
-          await db
+          const [updated] = await db
             .update(plaidAccounts)
             .set({
               currentBalance: balance.currentBalance?.toFixed(2) ?? null,
               availableBalance: balance.availableBalance?.toFixed(2) ?? null,
               updatedAt: new Date(),
             })
-            .where(eq(plaidAccounts.plaidAccountId, balance.accountId));
-
-          const [account] = await db
-            .select()
-            .from(plaidAccounts)
             .where(eq(plaidAccounts.plaidAccountId, balance.accountId))
-            .limit(1);
+            .returning();
 
-          if (account?.assetId && balance.currentBalance != null) {
+          if (updated?.assetId && balance.currentBalance != null) {
             await db
               .update(assets)
               .set({
@@ -237,7 +232,23 @@ export async function POST(request: Request) {
                 lastSyncedAt: new Date(),
                 updatedAt: new Date(),
               })
-              .where(eq(assets.id, account.assetId));
+              .where(eq(assets.id, updated.assetId));
+          }
+        }
+
+        // Mark assets for accounts not returned by Plaid as stale
+        const returnedAccountIds = new Set(balances.map((b) => b.accountId));
+        const allAccounts = await db
+          .select({ plaidAccountId: plaidAccounts.plaidAccountId, assetId: plaidAccounts.assetId })
+          .from(plaidAccounts)
+          .where(eq(plaidAccounts.connectionId, connection.id));
+
+        for (const acct of allAccounts) {
+          if (!returnedAccountIds.has(acct.plaidAccountId) && acct.assetId) {
+            await db
+              .update(assets)
+              .set({ lastSyncedAt: null, updatedAt: new Date() })
+              .where(eq(assets.id, acct.assetId));
           }
         }
 

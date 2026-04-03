@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { plaidConnections, plaidAccounts, assets } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { jsonResponse, errorResponse, handleError, requireAuth } from "@/lib/api-helpers";
+import { jsonResponse, errorResponse, handleError, requireAuth, validateUuid } from "@/lib/api-helpers";
 import { decrypt } from "@/lib/encryption";
 import { removeItem } from "@/lib/providers/plaid";
 
@@ -12,6 +12,7 @@ export async function DELETE(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "connection ID");
 
     const [connection] = await db
       .select()

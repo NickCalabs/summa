@@ -11,6 +11,7 @@ import {
   requirePortfolioOwnership,
   jsonResponse,
   handleError,
+  validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, updatePortfolio } from "@/types";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
@@ -24,6 +25,7 @@ export async function GET(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "portfolio ID");
     const portfolio = await requirePortfolioOwnership(id, user.id);
 
     // Fetch sheets
@@ -144,6 +146,7 @@ export async function PATCH(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "portfolio ID");
     await requirePortfolioOwnership(id, user.id);
 
     const body = await parseBody(request, updatePortfolio);
@@ -167,6 +170,7 @@ export async function DELETE(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "portfolio ID");
     await requirePortfolioOwnership(id, user.id);
 
     await db.delete(portfolios).where(eq(portfolios.id, id));

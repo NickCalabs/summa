@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { plaidConnections, plaidAccounts, assets } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { jsonResponse, errorResponse, handleError, requireAuth } from "@/lib/api-helpers";
+import { jsonResponse, errorResponse, handleError, requireAuth, validateUuid } from "@/lib/api-helpers";
 import { decrypt } from "@/lib/encryption";
 import { getBalances } from "@/lib/providers/plaid";
 
@@ -12,6 +12,7 @@ export async function POST(
   try {
     const { user } = await requireAuth(request);
     const { id } = await params;
+    validateUuid(id, "connection ID");
 
     const [connection] = await db
       .select()
@@ -28,24 +29,17 @@ export async function POST(
 
     let updatedCount = 0;
     for (const balance of balances) {
-      // Update plaid_accounts
-      await db
+      const [updated] = await db
         .update(plaidAccounts)
         .set({
           currentBalance: balance.currentBalance?.toFixed(2) ?? null,
           availableBalance: balance.availableBalance?.toFixed(2) ?? null,
           updatedAt: new Date(),
         })
-        .where(eq(plaidAccounts.plaidAccountId, balance.accountId));
-
-      // Update linked asset
-      const [account] = await db
-        .select()
-        .from(plaidAccounts)
         .where(eq(plaidAccounts.plaidAccountId, balance.accountId))
-        .limit(1);
+        .returning();
 
-      if (account?.assetId && balance.currentBalance != null) {
+      if (updated?.assetId && balance.currentBalance != null) {
         await db
           .update(assets)
           .set({
@@ -53,8 +47,24 @@ export async function POST(
             lastSyncedAt: new Date(),
             updatedAt: new Date(),
           })
-          .where(eq(assets.id, account.assetId));
+          .where(eq(assets.id, updated.assetId));
         updatedCount++;
+      }
+    }
+
+    // Mark assets for accounts not returned by Plaid as stale
+    const returnedAccountIds = new Set(balances.map((b) => b.accountId));
+    const allAccounts = await db
+      .select({ plaidAccountId: plaidAccounts.plaidAccountId, assetId: plaidAccounts.assetId })
+      .from(plaidAccounts)
+      .where(eq(plaidAccounts.connectionId, id));
+
+    for (const acct of allAccounts) {
+      if (!returnedAccountIds.has(acct.plaidAccountId) && acct.assetId) {
+        await db
+          .update(assets)
+          .set({ lastSyncedAt: null, updatedAt: new Date() })
+          .where(eq(assets.id, acct.assetId));
       }
     }
 
