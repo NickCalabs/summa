@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -330,6 +330,14 @@ function SidebarContent({
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense>
+      <AppLayoutInner>{children}</AppLayoutInner>
+    </Suspense>
+  );
+}
+
+function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
