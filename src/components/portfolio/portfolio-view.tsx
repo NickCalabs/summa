@@ -17,7 +17,6 @@ import { AddFlowDialog } from "./add-flow-dialog";
 import { AccountDetailModal } from "./account-detail-modal";
 import { PlaidConnectDialog } from "./plaid-connect-dialog";
 import { CsvImportDialog } from "./csv-import-dialog";
-import { ChartSection } from "@/components/charts/chart-section";
 import { CurrencyProvider } from "@/contexts/currency-context";
 
 interface PortfolioViewProps {
@@ -123,8 +122,6 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
             currency={portfolio.currency}
           />
         )}
-
-        <ChartSection portfolio={portfolio} />
 
         <SheetTabs
           sheets={portfolio.sheets}
