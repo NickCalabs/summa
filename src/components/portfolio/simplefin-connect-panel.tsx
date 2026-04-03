@@ -288,39 +288,62 @@ function SimpleFINConnectionCard({
       )}
 
       {connection.accounts.length > 0 && (
-        <div className="text-xs text-muted-foreground space-y-1">
-          {connection.accounts.map((account) => {
-            const target = getAccountTarget(connection, account);
-
-            return (
-              <div key={account.id} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 flex-1 truncate">
-                  {target.institution} - {account.accountName}
+        <div className="space-y-2">
+          {groupAccountsByInstitution(connection).map((group) => (
+            <div key={group.institution}>
+              <div className="flex items-center gap-2 py-1">
+                <Building2Icon className="size-3 text-muted-foreground/60" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {group.institution}
                 </span>
-                {account.isTracked ? (
-                  <span className="tabular-nums">
-                    {target.sheetType === "debts" ? "Debt" : "Tracked"}
-                  </span>
-                ) : relinkAccountId === account.simplefinAccountId ? (
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => setRelinkAccountId(null)}
-                  >
-                    Cancel
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={() => setRelinkAccountId(account.simplefinAccountId)}
-                  >
-                    Link
-                  </Button>
-                )}
               </div>
-            );
-          })}
+              <div className="space-y-0.5">
+                {group.accounts.map((account) => {
+                  const target = getAccountTarget(connection, account);
+                  return (
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between gap-3 text-sm py-1"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {account.accountName}
+                      </span>
+                      {account.balance != null && (
+                        <MoneyDisplay
+                          amount={Math.abs(Number(account.balance))}
+                          currency={account.currency}
+                          className="tabular-nums text-sm font-medium shrink-0"
+                        />
+                      )}
+                      {account.isTracked ? (
+                        <Badge variant="secondary" className="text-[10px] shrink-0">
+                          {target.sheetType === "debts" ? "Debt" : "Tracked"}
+                        </Badge>
+                      ) : relinkAccountId === account.simplefinAccountId ? (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => setRelinkAccountId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          onClick={() =>
+                            setRelinkAccountId(account.simplefinAccountId)
+                          }
+                        >
+                          Link
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -368,6 +391,32 @@ function SimpleFINAccountSelector({
     });
   }
 
+  function toggleInstitution(accounts: SimpleFINAccount[]) {
+    setSelected((previous) => {
+      const next = new Set(previous);
+      const ids = accounts.map((a) => a.simplefinAccountId);
+      const allSelected = ids.every((id) => next.has(id));
+      for (const id of ids) {
+        if (allSelected) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+      }
+      return next;
+    });
+  }
+
+  const selectedTotal = useMemo(() => {
+    let total = 0;
+    for (const account of connection.accounts) {
+      if (selected.has(account.simplefinAccountId) && account.balance != null) {
+        total += Math.abs(Number(account.balance));
+      }
+    }
+    return total;
+  }, [connection.accounts, selected]);
+
   function handleConfirm() {
     const accounts = Array.from(selected.values()).map((simplefinAccountId) => ({
       simplefinAccountId,
@@ -402,67 +451,99 @@ function SimpleFINAccountSelector({
       </p>
 
       <div className="space-y-2">
-        {groupedAccounts.map((group) => (
-          <div key={group.institution} className="rounded-md border border-border/60">
-            <div className="px-3 py-2 border-b border-border/60 bg-muted/30">
-              <div className="font-medium text-sm">{group.institution}</div>
-              <div className="text-xs text-muted-foreground">
-                Imported accounts will land under the {group.institution} section.
+        {groupedAccounts.map((group) => {
+          const groupIds = group.accounts.map((a) => a.simplefinAccountId);
+          const allGroupSelected = groupIds.every((id) => selected.has(id));
+
+          return (
+            <div key={group.institution} className="rounded-md border border-border/60">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-muted/30">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Building2Icon className="size-3.5 text-muted-foreground" />
+                    <span className="font-medium text-sm">{group.institution}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {group.accounts.length} account{group.accounts.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => toggleInstitution(group.accounts)}
+                  className="text-xs"
+                >
+                  {allGroupSelected ? "Deselect all" : "Select all"}
+                </Button>
+              </div>
+
+              <div className="divide-y divide-border/40">
+                {group.accounts.map((account) => {
+                  const isSelected = selected.has(account.simplefinAccountId);
+                  const target = getAccountTarget(connection, account);
+
+                  return (
+                    <div key={account.id} className="flex items-center gap-3 p-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleAccount(account.simplefinAccountId)}
+                        className="rounded"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate font-medium">{account.accountName}</div>
+                        <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
+                          <span>
+                            {target.sheetType === "debts" ? "Debts" : "Assets"}
+                          </span>
+                          <span>·</span>
+                          <span>{target.assetType}</span>
+                          {account.balanceDate ? (
+                            <>
+                              <span>·</span>
+                              <span>
+                                {new Date(account.balanceDate).toLocaleDateString()}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {target.sheetType === "debts" && (
+                        <Badge variant="destructive" className="text-[10px] shrink-0">
+                          Debt
+                        </Badge>
+                      )}
+
+                      {account.balance != null && (
+                        <MoneyDisplay
+                          amount={Math.abs(Number(account.balance))}
+                          currency={account.currency}
+                          className="tabular-nums text-sm font-semibold shrink-0"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-            <div className="divide-y divide-border/40">
-              {group.accounts.map((account) => {
-                const isSelected = selected.has(account.simplefinAccountId);
-                const target = getAccountTarget(connection, account);
-
-                return (
-                  <div key={account.id} className="flex items-center gap-3 p-3 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleAccount(account.simplefinAccountId)}
-                      className="rounded"
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate">{account.accountName}</div>
-                      <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
-                        <span>
-                          {target.sheetType === "debts" ? "Debts" : "Assets"} /{" "}
-                          {target.institution}
-                        </span>
-                        <span>•</span>
-                        <span>{target.assetType}</span>
-                        {account.balanceDate ? (
-                          <>
-                            <span>•</span>
-                            <span>
-                              {new Date(account.balanceDate).toLocaleDateString()}
-                            </span>
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {target.sheetType === "debts" && <Badge variant="outline">Debt</Badge>}
-
-                    {account.balance != null && (
-                      <MoneyDisplay
-                        amount={Number(account.balance)}
-                        currency={account.currency}
-                        className="tabular-nums text-muted-foreground"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-between gap-3">
+        {selected.size > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Selected total:{" "}
+            <MoneyDisplay
+              amount={selectedTotal}
+              currency="USD"
+              className="font-semibold text-foreground"
+            />
+          </p>
+        )}
+        <div className="flex-1" />
         <Button variant="outline" size="sm" onClick={onDone}>
           Skip
         </Button>

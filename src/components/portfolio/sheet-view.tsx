@@ -71,9 +71,13 @@ export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
           Create your first section
         </p>
         <Popover open={addOpen} onOpenChange={setAddOpen}>
-          <PopoverTrigger render={<Button variant="outline" size="sm" />}>
-            Add Section
-          </PopoverTrigger>
+          <PopoverTrigger
+            render={(props) => (
+              <Button variant="outline" size="sm" {...props}>
+                Add Section
+              </Button>
+            )}
+          />
           <PopoverContent className="w-56">
             <form
               onSubmit={(e) => {
@@ -110,6 +114,7 @@ export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
           key={section.id}
           section={section}
           sheetTotal={sheetTotal}
+          sheetType={sheet.type}
           currency={currency}
           portfolioId={portfolioId}
           sections={sheet.sections}
@@ -121,9 +126,13 @@ export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
       ))}
 
       <Popover open={addOpen} onOpenChange={setAddOpen}>
-        <PopoverTrigger render={<Button variant="outline" size="sm" />}>
-          Add Section
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={(props) => (
+            <Button variant="outline" size="sm" {...props}>
+              Add Section
+            </Button>
+          )}
+        />
         <PopoverContent className="w-56">
           <form
             onSubmit={(e) => {

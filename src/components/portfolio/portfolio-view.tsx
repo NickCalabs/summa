@@ -8,12 +8,13 @@ import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import { NetWorthHeader } from "./net-worth-header";
+import { SheetTotalHeader } from "./sheet-total-header";
 import { SheetTabs } from "./sheet-tabs";
 import { SheetView } from "./sheet-view";
 import { TopBar } from "./top-bar";
 import { DetailPanel } from "./detail-panel";
-import { AddAssetDialog } from "./add-asset-dialog";
+import { AddFlowDialog } from "./add-flow-dialog";
+import { AccountDetailModal } from "./account-detail-modal";
 import { PlaidConnectDialog } from "./plaid-connect-dialog";
 import { CsvImportDialog } from "./csv-import-dialog";
 import { ChartSection } from "@/components/charts/chart-section";
@@ -112,15 +113,16 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           portfolioId={portfolioId}
           portfolioName={portfolio.name}
           defaultSectionId={defaultSectionId}
+          activeSheetId={activeSheet?.id ?? null}
+          activeSheetType={activeSheet?.type ?? null}
         />
 
-        <NetWorthHeader
-          portfolioId={portfolioId}
-          aggregates={portfolio.aggregates}
-          currency={portfolio.currency}
-          sections={portfolio.sheets.filter((s) => s.type === "assets").flatMap((s) => s.sections)}
-          rates={portfolio.rates ?? {}}
-        />
+        {activeSheet && (
+          <SheetTotalHeader
+            sheet={activeSheet}
+            currency={portfolio.currency}
+          />
+        )}
 
         <ChartSection portfolio={portfolio} />
 
@@ -144,7 +146,8 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
         ) : null}
 
         <DetailPanel portfolioId={portfolioId} portfolio={portfolio} />
-        <AddAssetDialog
+        <AccountDetailModal />
+        <AddFlowDialog
           portfolioId={portfolioId}
           currency={portfolio.currency}
           sections={allSections}

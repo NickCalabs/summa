@@ -20,6 +20,7 @@ import type { Section } from "@/hooks/use-portfolio";
 
 interface SectionHeaderProps {
   section: Section;
+  sheetType: "assets" | "debts";
   currency: string;
   isCollapsed: boolean;
   onToggle: () => void;
@@ -32,6 +33,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({
   section,
+  sheetType,
   currency,
   isCollapsed,
   onToggle,
@@ -43,7 +45,7 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   const updateSection = useUpdateSection(portfolioId);
   const deleteSection = useDeleteSection(portfolioId);
-  const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
+  const openAddFlow = useUIStore((s) => s.openAddFlow);
   const { toBase } = useCurrency();
 
   const [isRenaming, setIsRenaming] = useState(false);
@@ -140,7 +142,7 @@ export function SectionHeader({
           variant="ghost"
           size="sm"
           className="h-7 text-xs text-muted-foreground"
-          onClick={() => openAddAssetDialog(section.id)}
+          onClick={() => openAddFlow(sheetType, section.id)}
         >
           Add Asset
         </Button>

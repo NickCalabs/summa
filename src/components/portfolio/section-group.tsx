@@ -8,6 +8,7 @@ import type { Section } from "@/hooks/use-portfolio";
 interface SectionGroupProps {
   section: Section;
   sheetTotal: number;
+  sheetType: "assets" | "debts";
   currency: string;
   portfolioId: string;
   sections: Section[];
@@ -20,6 +21,7 @@ interface SectionGroupProps {
 
 export function SectionGroup({
   section,
+  sheetType,
   currency,
   portfolioId,
   sections,
@@ -37,6 +39,7 @@ export function SectionGroup({
       <div>
         <SectionHeader
           section={section}
+          sheetType={sheetType}
           currency={currency}
           isCollapsed={isCollapsed}
           onToggle={() => toggleSection(section.id)}
@@ -54,6 +57,7 @@ export function SectionGroup({
           portfolioId={portfolioId}
           sectionId={section.id}
           sections={sections}
+          sheetType={sheetType}
         />
       )}
     </div>

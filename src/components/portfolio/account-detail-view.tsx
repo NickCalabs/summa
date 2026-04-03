@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 interface AccountDetailViewProps {
   portfolioId: string;
   assetId: string;
+  isModal?: boolean;
 }
 
 type AccountAsset = NonNullable<ReturnType<typeof findAssetLocation>>["asset"];
@@ -93,6 +94,7 @@ const BENCHMARKS = [
 export function AccountDetailView({
   portfolioId,
   assetId,
+  isModal = false,
 }: AccountDetailViewProps) {
   const { data: portfolio, isLoading, error } = usePortfolio(portfolioId);
   const updateAsset = useUpdateAsset(portfolioId);
@@ -109,7 +111,7 @@ export function AccountDetailView({
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
+      <div className={isModal ? "space-y-8" : "mx-auto max-w-7xl space-y-8 p-6 md:p-8"}>
         <Skeleton className="h-7 w-32" />
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-12 w-full rounded-2xl" />
@@ -120,14 +122,16 @@ export function AccountDetailView({
 
   if (error || !portfolio || !assetLocation) {
     return (
-      <div className="mx-auto max-w-7xl space-y-4 p-6 md:p-8">
+      <div className={isModal ? "space-y-4" : "mx-auto max-w-7xl space-y-4 p-6 md:p-8"}>
         <p className="text-lg font-medium">Account not found</p>
-        <Link href={`/portfolio/${portfolioId}`}>
-          <Button variant="outline" size="sm">
-            <ArrowLeftIcon className="size-4" data-icon="inline-start" />
-            Back to portfolio
-          </Button>
-        </Link>
+        {!isModal && (
+          <Link href={`/portfolio/${portfolioId}`}>
+            <Button variant="outline" size="sm">
+              <ArrowLeftIcon className="size-4" data-icon="inline-start" />
+              Back to portfolio
+            </Button>
+          </Link>
+        )}
       </div>
     );
   }
@@ -142,17 +146,19 @@ export function AccountDetailView({
         : "value";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
-      <Link href={`/portfolio/${portfolioId}?sheet=${sheet.id}`}>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-0 text-muted-foreground"
-        >
-          <ArrowLeftIcon className="size-4" data-icon="inline-start" />
-          Back to {sheet.name}
-        </Button>
-      </Link>
+    <div className={isModal ? "space-y-8" : "mx-auto max-w-7xl space-y-8 p-6 md:p-8"}>
+      {!isModal && (
+        <Link href={`/portfolio/${portfolioId}?sheet=${sheet.id}`}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="px-0 text-muted-foreground"
+          >
+            <ArrowLeftIcon className="size-4" data-icon="inline-start" />
+            Back to {sheet.name}
+          </Button>
+        </Link>
+      )}
 
       <AccountHero
         asset={asset}

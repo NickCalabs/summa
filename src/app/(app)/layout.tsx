@@ -13,6 +13,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { usePortfolio, usePortfolios } from "@/hooks/use-portfolio";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -96,6 +97,8 @@ function SidebarContent({
     | {
         id: string;
         name: string;
+        currency: string;
+        aggregates: { totalAssets: number; totalDebts: number; netWorth: number };
         sheets: { id: string; name: string; type: "assets" | "debts" }[];
       }
     | undefined;
@@ -103,6 +106,8 @@ function SidebarContent({
 }) {
   const assetSheets = activePortfolio?.sheets.filter((sheet) => sheet.type === "assets") ?? [];
   const debtSheets = activePortfolio?.sheets.filter((sheet) => sheet.type === "debts") ?? [];
+  const firstAssetSheetId = assetSheets[0]?.id;
+  const firstDebtSheetId = debtSheets[0]?.id;
 
   return (
     <>
@@ -114,26 +119,122 @@ function SidebarContent({
       <Separator className="bg-white/10" />
 
       <div className="flex-1 overflow-y-auto p-3">
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
+        {/* Summary nav — Kubera-style totals */}
+        {activePortfolio && (
+          <>
+            <nav className="space-y-0.5">
               <Link
-                key={item.href}
-                href={item.href}
+                href="/dashboard"
                 onClick={onNavigate}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                  isActive
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                  pathname === "/dashboard"
                     ? "bg-white text-[#1E1E2E]"
                     : "text-white/70 hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <item.icon className="size-4" />
-                {item.label}
+                <span className="flex items-center gap-3">
+                  <LayoutGridIcon className="size-4" />
+                  Net Worth
+                </span>
+                <MoneyDisplay
+                  amount={activePortfolio.aggregates.netWorth}
+                  currency={activePortfolio.currency}
+                  className="text-sm tabular-nums"
+                />
               </Link>
-            );
-          })}
+
+              <Link
+                href={
+                  firstAssetSheetId
+                    ? `/portfolio/${activePortfolio.id}?sheet=${firstAssetSheetId}`
+                    : `/portfolio/${activePortfolio.id}`
+                }
+                onClick={onNavigate}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                  pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
+                  activeSheetId &&
+                  assetSheets.some((s) => s.id === activeSheetId)
+                    ? "bg-white text-[#1E1E2E]"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <WalletCardsIcon className="size-4" />
+                  Assets
+                </span>
+                <MoneyDisplay
+                  amount={activePortfolio.aggregates.totalAssets}
+                  currency={activePortfolio.currency}
+                  className="text-sm tabular-nums"
+                />
+              </Link>
+
+              <Link
+                href={
+                  firstDebtSheetId
+                    ? `/portfolio/${activePortfolio.id}?sheet=${firstDebtSheetId}`
+                    : `/portfolio/${activePortfolio.id}`
+                }
+                onClick={onNavigate}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                  pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
+                  activeSheetId &&
+                  debtSheets.some((s) => s.id === activeSheetId)
+                    ? "bg-white text-[#1E1E2E]"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <LandmarkIcon className="size-4" />
+                  Debts
+                </span>
+                <MoneyDisplay
+                  amount={activePortfolio.aggregates.totalDebts}
+                  currency={activePortfolio.currency}
+                  className="text-sm tabular-nums"
+                />
+              </Link>
+            </nav>
+
+            <Separator className="my-4 bg-white/10" />
+          </>
+        )}
+
+        {/* Settings */}
+        <nav className="space-y-1">
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+              pathname === "/settings"
+                ? "bg-white text-[#1E1E2E]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <SettingsIcon className="size-4" />
+            Settings
+          </Link>
         </nav>
+
+        {!activePortfolio && (
+          <>
+            <Separator className="my-4 bg-white/10" />
+            <nav className="space-y-1">
+              <Link
+                href="/dashboard"
+                onClick={onNavigate}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                  pathname === "/dashboard"
+                    ? "bg-white text-[#1E1E2E]"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <LayoutGridIcon className="size-4" />
+                Dashboard
+              </Link>
+            </nav>
+          </>
+        )}
 
         <Separator className="my-4 bg-white/10" />
 
@@ -171,68 +272,56 @@ function SidebarContent({
             </div>
           </div>
 
-          {activePortfolio && (
-            <>
-              <div>
-                <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
-                  Assets
-                </p>
-                <div className="mt-1 space-y-1">
-                  {assetSheets.length === 0 ? (
-                    <div className="rounded-xl border border-white/10 px-3 py-2 text-sm text-white/40">
-                      No asset sheets yet
-                    </div>
-                  ) : (
-                    assetSheets.map((sheet) => (
-                      <Link
-                        key={sheet.id}
-                        href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
-                        onClick={onNavigate}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                          pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
-                          activeSheetId === sheet.id
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        <WalletCardsIcon className="size-4 shrink-0 text-white/45" />
-                        <span className="truncate">{sheet.name}</span>
-                      </Link>
-                    ))
-                  )}
-                </div>
+          {activePortfolio && assetSheets.length > 1 && (
+            <div>
+              <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
+                Asset Sheets
+              </p>
+              <div className="mt-1 space-y-1">
+                {assetSheets.map((sheet) => (
+                  <Link
+                    key={sheet.id}
+                    href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
+                    onClick={onNavigate}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                      pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
+                      activeSheetId === sheet.id
+                        ? "bg-white/10 text-white"
+                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <WalletCardsIcon className="size-4 shrink-0 text-white/45" />
+                    <span className="truncate">{sheet.name}</span>
+                  </Link>
+                ))}
               </div>
+            </div>
+          )}
 
-              <div>
-                <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
-                  Debts
-                </p>
-                <div className="mt-1 space-y-1">
-                  {debtSheets.length === 0 ? (
-                    <div className="rounded-xl border border-white/10 px-3 py-2 text-sm text-white/40">
-                      No debt sheets yet
-                    </div>
-                  ) : (
-                    debtSheets.map((sheet) => (
-                      <Link
-                        key={sheet.id}
-                        href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
-                        onClick={onNavigate}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                          pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
-                          activeSheetId === sheet.id
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        <LandmarkIcon className="size-4 shrink-0 text-white/45" />
-                        <span className="truncate">{sheet.name}</span>
-                      </Link>
-                    ))
-                  )}
-                </div>
+          {activePortfolio && debtSheets.length > 1 && (
+            <div>
+              <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
+                Debt Sheets
+              </p>
+              <div className="mt-1 space-y-1">
+                {debtSheets.map((sheet) => (
+                  <Link
+                    key={sheet.id}
+                    href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
+                    onClick={onNavigate}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                      pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
+                      activeSheetId === sheet.id
+                        ? "bg-white/10 text-white"
+                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <LandmarkIcon className="size-4 shrink-0 text-white/45" />
+                    <span className="truncate">{sheet.name}</span>
+                  </Link>
+                ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -272,6 +361,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               ? {
                   id: activePortfolio.id,
                   name: activePortfolio.name,
+                  currency: activePortfolio.currency,
+                  aggregates: activePortfolio.aggregates,
                   sheets: activePortfolio.sheets.map((sheet) => ({
                     id: sheet.id,
                     name: sheet.name,
@@ -316,6 +407,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 ? {
                     id: activePortfolio.id,
                     name: activePortfolio.name,
+                    currency: activePortfolio.currency,
+                    aggregates: activePortfolio.aggregates,
                     sheets: activePortfolio.sheets.map((sheet) => ({
                       id: sheet.id,
                       name: sheet.name,

@@ -45,6 +45,7 @@ interface AssetTableProps {
   portfolioId: string;
   sectionId: string;
   sections: Section[];
+  sheetType?: "assets" | "debts";
 }
 
 type EditField = "name" | "currentValue";
@@ -99,8 +100,9 @@ function InlineInput({
   );
 }
 
-export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTableProps) {
-  const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
+export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType = "assets" }: AssetTableProps) {
+  const openAddFlow = useUIStore((s) => s.openAddFlow);
+  const openAccountDetail = useUIStore((s) => s.openAccountDetail);
   const router = useRouter();
   const { baseCurrency, toBase } = useCurrency();
   const updateAsset = useUpdateAsset(portfolioId);
@@ -187,7 +189,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
               onClick={() => {
                 if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
                 clickTimerRef.current = setTimeout(
-                  () => router.push(`/portfolio/${portfolioId}/asset/${asset.id}`),
+                  () => openAccountDetail(portfolioId, asset.id),
                   200
                 );
               }}
@@ -315,7 +317,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onSelect={() => router.push(`/portfolio/${portfolioId}/asset/${asset.id}`)}
+                  onSelect={() => openAccountDetail(portfolioId, asset.id)}
                 >
                   Open account
                 </DropdownMenuItem>
@@ -387,7 +389,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections }: AssetTa
         <p className="text-xs text-muted-foreground mb-4">
           Click below to add your first asset to this section
         </p>
-        <Button size="sm" variant="outline" onClick={() => openAddAssetDialog(sectionId)}>
+        <Button size="sm" variant="outline" onClick={() => openAddFlow(sheetType, sectionId)}>
           <PlusIcon className="size-3.5" data-icon="inline-start" />
           Add Asset
         </Button>

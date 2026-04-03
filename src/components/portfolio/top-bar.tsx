@@ -12,21 +12,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUpdatePortfolio } from "@/hooks/use-portfolio-mutations";
+import { useCreateSection } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
 
 interface TopBarProps {
   portfolioId: string;
   portfolioName: string;
   defaultSectionId: string | null;
+  activeSheetId: string | null;
+  activeSheetType: "assets" | "debts" | null;
 }
 
 export function TopBar({
   portfolioId,
   portfolioName,
   defaultSectionId,
+  activeSheetId,
+  activeSheetType,
 }: TopBarProps) {
   const updatePortfolio = useUpdatePortfolio(portfolioId);
-  const openAddAssetDialog = useUIStore((s) => s.openAddAssetDialog);
+  const createSection = useCreateSection(portfolioId);
+  const openAddFlow = useUIStore((s) => s.openAddFlow);
   const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
   const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
 
@@ -110,8 +116,20 @@ export function TopBar({
 
       <Button
         size="sm"
-        onClick={() => defaultSectionId && openAddAssetDialog(defaultSectionId)}
-        disabled={!defaultSectionId}
+        disabled={createSection.isPending || !activeSheetId}
+        onClick={async () => {
+          const sheetType = activeSheetType ?? "assets";
+          if (defaultSectionId) {
+            openAddFlow(sheetType, defaultSectionId);
+            return;
+          }
+          if (!activeSheetId) return;
+          const section = await createSection.mutateAsync({
+            sheetId: activeSheetId,
+            name: "General",
+          });
+          openAddFlow(sheetType, section.id);
+        }}
       >
         <PlusIcon className="size-3.5" data-icon="inline-start" />
         Add
