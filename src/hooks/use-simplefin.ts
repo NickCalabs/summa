@@ -92,14 +92,18 @@ export function useLinkSimpleFINAccounts() {
   return useMutation({
     mutationFn: async (data: {
       connectionId: string;
-      accounts: { simplefinAccountId: string; sectionId: string }[];
+      portfolioId: string;
+      accounts: { simplefinAccountId: string; sectionId?: string }[];
     }) => {
       const res = await fetch(
         `/api/simplefin/connections/${data.connectionId}/accounts`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accounts: data.accounts }),
+          body: JSON.stringify({
+            portfolioId: data.portfolioId,
+            accounts: data.accounts,
+          }),
         }
       );
 

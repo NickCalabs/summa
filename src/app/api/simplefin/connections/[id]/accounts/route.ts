@@ -1,9 +1,6 @@
 import { db } from "@/lib/db";
 import {
   assets,
-  portfolios,
-  sections,
-  sheets,
   simplefinAccounts,
   simplefinConnections,
 } from "@/lib/db/schema";
@@ -12,9 +9,16 @@ import {
   errorResponse,
   handleError,
   jsonResponse,
+  requirePortfolioOwnership,
   requireAuth,
   validateUuid,
 } from "@/lib/api-helpers";
+import {
+  getInstitutionSectionName,
+  inferSimpleFINAssetType,
+  inferSimpleFINSheetType,
+} from "@/lib/provider-account-grouping";
+import { ensurePortfolioInstitutionSection } from "@/lib/provider-section-routing";
 import { parseBody, simplefinLinkAccounts } from "@/types";
 
 function getAssetValue(balance: string | null, sheetType: "assets" | "debts"): string {
@@ -48,6 +52,7 @@ export async function POST(
     }
 
     const body = await parseBody(request, simplefinLinkAccounts);
+    await requirePortfolioOwnership(body.portfolioId, user.id);
     const created: string[] = [];
 
     for (const item of body.accounts) {
@@ -64,30 +69,29 @@ export async function POST(
 
       if (!account || account.assetId) continue;
 
-      const sectionInfo = await db
-        .select({
-          sheetType: sheets.type,
-        })
-        .from(sections)
-        .innerJoin(sheets, eq(sections.sheetId, sheets.id))
-        .innerJoin(portfolios, eq(sheets.portfolioId, portfolios.id))
-        .where(
-          and(eq(sections.id, item.sectionId), eq(portfolios.userId, user.id))
-        )
-        .limit(1);
+      const sheetType = inferSimpleFINSheetType({
+        accountName: account.accountName,
+        balance: account.balance,
+      });
+      const assetType = inferSimpleFINAssetType({
+        accountName: account.accountName,
+        balance: account.balance,
+      });
+      const targetSection = await ensurePortfolioInstitutionSection({
+        portfolioId: body.portfolioId,
+        sheetType,
+        institutionName: getInstitutionSectionName(account.institutionName),
+      });
 
-      if (sectionInfo.length === 0) continue;
-
-      const sheetType = sectionInfo[0].sheetType;
       const [asset] = await db
         .insert(assets)
         .values({
-          sectionId: item.sectionId,
+          sectionId: targetSection.id,
           name: account.accountName,
-          type: sheetType === "debts" ? "loan" : "cash",
+          type: assetType,
           currency: account.currency,
           currentValue: getAssetValue(account.balance, sheetType),
-          isCashEquivalent: sheetType === "assets",
+          isCashEquivalent: sheetType === "assets" && assetType === "cash",
           providerType: "simplefin",
           providerConfig: {
             connectionId: id,
