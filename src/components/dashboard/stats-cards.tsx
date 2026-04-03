@@ -12,13 +12,11 @@ import { cn } from "@/lib/utils";
 interface StatsCardsProps {
   portfolio: Portfolio;
   snapshots: PortfolioSnapshot[];
-  investableTotal: number;
 }
 
 export function StatsCards({
   portfolio,
   snapshots,
-  investableTotal,
 }: StatsCardsProps) {
   const { aggregates, currency } = portfolio;
   const [cashSheetOpen, setCashSheetOpen] = useState(false);
@@ -26,20 +24,13 @@ export function StatsCards({
 
   return (
     <>
-      <div className="grid gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70 md:grid-cols-4">
-        <SummaryCell
-          label="Investable"
-          value={investableTotal}
-          currency={currency}
-          detail={`${((investableTotal / assetBase) * 100).toFixed(0)}% of assets`}
-        />
+      <div className="grid gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70 md:grid-cols-3">
         <SummaryCell
           label="Assets"
           value={aggregates.totalAssets}
           currency={currency}
           detail="Gross balance sheet"
           changeDay={getChangeFromSnapshots(snapshots, "totalAssets", 1)}
-          changeYear={getChangeFromSnapshots(snapshots, "totalAssets", 365)}
         />
         <SummaryCell
           label="Debts"
@@ -47,7 +38,6 @@ export function StatsCards({
           currency={currency}
           detail={`${((aggregates.totalDebts / assetBase) * 100).toFixed(0)}% of assets`}
           changeDay={getChangeFromSnapshots(snapshots, "totalDebts", 1)}
-          changeYear={getChangeFromSnapshots(snapshots, "totalDebts", 365)}
           invertColor
         />
         <SummaryCell
@@ -56,7 +46,6 @@ export function StatsCards({
           currency={currency}
           detail={`${((aggregates.cashOnHand / assetBase) * 100).toFixed(0)}% of assets`}
           changeDay={getChangeFromSnapshots(snapshots, "cashOnHand", 1)}
-          changeYear={getChangeFromSnapshots(snapshots, "cashOnHand", 365)}
           onClick={() => setCashSheetOpen(true)}
         />
       </div>
@@ -76,7 +65,6 @@ function SummaryCell({
   currency,
   detail,
   changeDay,
-  changeYear,
   invertColor = false,
   onClick,
 }: {
@@ -85,7 +73,6 @@ function SummaryCell({
   currency: string;
   detail: string;
   changeDay?: ReturnType<typeof getChangeFromSnapshots>;
-  changeYear?: ReturnType<typeof getChangeFromSnapshots>;
   invertColor?: boolean;
   onClick?: () => void;
 }) {
@@ -111,24 +98,14 @@ function SummaryCell({
         />
       </div>
       <div className="mt-1 text-xs text-muted-foreground">{detail}</div>
-      {(changeDay || changeYear) && (
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
-          {changeDay ? (
-            <ChangeIndicator
-              change={changeDay}
-              currency={currency}
-              label="1D"
-              invertColor={invertColor}
-            />
-          ) : null}
-          {changeYear ? (
-            <ChangeIndicator
-              change={changeYear}
-              currency={currency}
-              label="1Y"
-              invertColor={invertColor}
-            />
-          ) : null}
+      {changeDay && (
+        <div className="mt-3">
+          <ChangeIndicator
+            change={changeDay}
+            currency={currency}
+            label="1D"
+            invertColor={invertColor}
+          />
         </div>
       )}
     </Element>

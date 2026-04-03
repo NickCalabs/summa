@@ -62,9 +62,9 @@ export function NetWorthChart({
         <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 4 }}>
           <defs>
             <linearGradient id="netWorthGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6b8ef7" stopOpacity={0.34} />
-              <stop offset="72%" stopColor="#6b8ef7" stopOpacity={0.12} />
-              <stop offset="100%" stopColor="#6b8ef7" stopOpacity={0.03} />
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.34} />
+              <stop offset="72%" stopColor="#8b5cf6" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.03} />
             </linearGradient>
           </defs>
           <CartesianGrid
@@ -94,14 +94,14 @@ export function NetWorthChart({
           <Line
             type="natural"
             dataKey="netWorth"
-            stroke="#5c7ef0"
+            stroke="#7c3aed"
             strokeWidth={2.5}
             dot={false}
             activeDot={{
               r: 4,
               stroke: "var(--background)",
               strokeWidth: 2,
-              fill: "#5c7ef0",
+              fill: "#7c3aed",
             }}
           />
         </AreaChart>

@@ -123,129 +123,119 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
             <StatsCards
               portfolio={portfolio}
               snapshots={recapSnapshots}
-              investableTotal={investableTotal}
             />
 
             <DashboardSurface
-              title="Recap Flow"
-              description="Kubera-style money flow from account groups into assets, debts, and net worth."
+              title="Net worth history"
+              description="Crisp net worth trend with quick range switches."
             >
-              <RecapSankeyChart portfolio={portfolio} />
-            </DashboardSurface>
-
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_360px]">
-              <DashboardSurface
-                title="Net worth history"
-                description="Crisp net worth trend with quick range switches."
-              >
-                <div className="space-y-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                      <span>
-                        Assets{" "}
-                        <span className="font-medium text-foreground">
-                          <MoneyDisplay
-                            amount={portfolio.aggregates.totalAssets}
-                            currency={portfolio.currency}
-                          />
-                        </span>
-                      </span>
-                      <span>
-                        Debts{" "}
-                        <span className="font-medium text-foreground">
-                          <MoneyDisplay
-                            amount={portfolio.aggregates.totalDebts}
-                            currency={portfolio.currency}
-                          />
-                        </span>
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1">
-                      {DATE_RANGES.map((range) => (
-                        <button
-                          key={range}
-                          type="button"
-                          onClick={() => setChartRange(range)}
-                          className={cn(
-                            "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                            chartRange === range
-                              ? "border-foreground bg-foreground text-background"
-                              : "border-border/70 text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground"
-                          )}
-                        >
-                          {range}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <NetWorthChart
-                    portfolioId={portfolioId}
-                    from={getFromDate(chartRange)}
-                    currency={portfolio.currency}
-                    heightClassName="h-[280px] md:h-[340px] xl:h-[390px]"
-                  />
-                </div>
-              </DashboardSurface>
-
-              <DashboardSurface
-                title="Balance Sheet Today"
-                description="Quiet ledger-style recap for the current balance sheet."
-              >
-                <div className="overflow-hidden rounded-2xl border border-border/70">
-                  <StatementRow
-                    label="Net worth"
-                    value={
+              <div className="space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <span className="font-medium">
                       <MoneyDisplay
                         amount={portfolio.aggregates.netWorth}
                         currency={portfolio.currency}
                       />
-                    }
-                  />
-                  <StatementRow
-                    label="Investable"
-                    value={
-                      <MoneyDisplay
-                        amount={investableTotal}
-                        currency={portfolio.currency}
-                      />
-                    }
-                    detail={`${percentage(investableTotal, portfolio.aggregates.totalAssets)} of assets`}
-                  />
-                  <StatementRow
-                    label="Assets"
-                    value={
-                      <MoneyDisplay
-                        amount={portfolio.aggregates.totalAssets}
-                        currency={portfolio.currency}
-                      />
-                    }
-                  />
-                  <StatementRow
-                    label="Debts"
-                    value={
-                      <MoneyDisplay
-                        amount={portfolio.aggregates.totalDebts}
-                        currency={portfolio.currency}
-                      />
-                    }
-                    detail={`${percentage(portfolio.aggregates.totalDebts, portfolio.aggregates.totalAssets)} of assets`}
-                  />
-                  <StatementRow
-                    label="Cash"
-                    value={
-                      <MoneyDisplay
-                        amount={portfolio.aggregates.cashOnHand}
-                        currency={portfolio.currency}
-                      />
-                    }
-                    detail={`${percentage(portfolio.aggregates.cashOnHand, portfolio.aggregates.totalAssets)} of assets`}
-                    last
-                  />
+                    </span>
+                    <ChangeIndicator
+                      change={oneDayNetWorth}
+                      currency={portfolio.currency}
+                      label="1D"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {DATE_RANGES.map((range) => (
+                      <button
+                        key={range}
+                        type="button"
+                        onClick={() => setChartRange(range)}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                          chartRange === range
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border/70 text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </DashboardSurface>
-            </div>
+
+                <NetWorthChart
+                  portfolioId={portfolioId}
+                  from={getFromDate(chartRange)}
+                  currency={portfolio.currency}
+                  heightClassName="h-[280px] md:h-[340px] xl:h-[390px]"
+                />
+              </div>
+            </DashboardSurface>
+
+            <DashboardSurface
+              title="Recap Flow"
+              description="Money flow from account groups into assets, debts, and net worth."
+            >
+              <RecapSankeyChart portfolio={portfolio} />
+            </DashboardSurface>
+
+            <DashboardSurface
+              title="Balance Sheet Today"
+              description="Ledger-style recap for the current balance sheet."
+            >
+              <div className="overflow-hidden rounded-2xl border border-border/70">
+                <StatementRow
+                  label="Net worth"
+                  value={
+                    <MoneyDisplay
+                      amount={portfolio.aggregates.netWorth}
+                      currency={portfolio.currency}
+                    />
+                  }
+                />
+                <StatementRow
+                  label="Investable"
+                  value={
+                    <MoneyDisplay
+                      amount={investableTotal}
+                      currency={portfolio.currency}
+                    />
+                  }
+                  detail={`${percentage(investableTotal, portfolio.aggregates.totalAssets)} of assets`}
+                />
+                <StatementRow
+                  label="Assets"
+                  value={
+                    <MoneyDisplay
+                      amount={portfolio.aggregates.totalAssets}
+                      currency={portfolio.currency}
+                    />
+                  }
+                />
+                <StatementRow
+                  label="Debts"
+                  value={
+                    <MoneyDisplay
+                      amount={portfolio.aggregates.totalDebts}
+                      currency={portfolio.currency}
+                    />
+                  }
+                  detail={`${percentage(portfolio.aggregates.totalDebts, portfolio.aggregates.totalAssets)} of assets`}
+                />
+                <StatementRow
+                  label="Cash"
+                  value={
+                    <MoneyDisplay
+                      amount={portfolio.aggregates.cashOnHand}
+                      currency={portfolio.currency}
+                    />
+                  }
+                  detail={`${percentage(portfolio.aggregates.cashOnHand, portfolio.aggregates.totalAssets)} of assets`}
+                  last
+                />
+              </div>
+            </DashboardSurface>
           </div>
         </section>
 

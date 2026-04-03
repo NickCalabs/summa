@@ -381,7 +381,7 @@ function buildChart(
 
   const layout = sankey<SankeyNodeDatum, SankeyLinkDatum>()
     .nodeId((node: SankeyNodeDatum) => node.id)
-    .nodeWidth(16)
+    .nodeWidth(10)
     .nodePadding(22)
     .nodeAlign((node: SankeyNodeDatum, depth: number) =>
       Math.min(COLUMN_INDEX[node.column], depth - 1)
@@ -459,10 +459,10 @@ function resolveLinkStyle(link: RecapSankeyLink) {
 }
 
 function resolveLinkOpacity(link: RecapSankeyLink) {
-  if (link.tone === "debt") return 0.72;
-  if (link.tone === "netWorth") return 0.8;
-  if (getTargetNode(link).column === "summary") return 0.62;
-  return 0.55;
+  if (link.tone === "debt") return 0.78;
+  if (link.tone === "netWorth") return 0.85;
+  if (getTargetNode(link).column === "summary") return 0.68;
+  return 0.62;
 }
 
 function estimateBadgeWidth(charCount: number, compact: boolean) {
