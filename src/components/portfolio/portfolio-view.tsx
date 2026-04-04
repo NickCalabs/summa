@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { LayoutGridIcon } from "lucide-react";
 import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
+import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
+import { getChangeFromSnapshots } from "@/lib/snapshot-utils";
+import { getFromDate } from "@/lib/chart-utils";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { SheetTotalHeader } from "./sheet-total-header";
-import { SheetTabs } from "./sheet-tabs";
+import { SheetSummaryRow } from "./sheet-summary-row";
 import { SheetView } from "./sheet-view";
 import { TopBar } from "./top-bar";
 import { DetailPanel } from "./detail-panel";
@@ -25,6 +28,7 @@ interface PortfolioViewProps {
 
 export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   const { data: portfolio, isLoading, error } = usePortfolio(portfolioId);
+  const { data: snapshots = [] } = usePortfolioSnapshots(portfolioId, getFromDate("1Y"));
   const searchParams = useSearchParams();
   const activeSheetId = useUIStore((s) => s.activeSheetId);
   const setActiveSheet = useUIStore((s) => s.setActiveSheet);
@@ -118,16 +122,32 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
         {activeSheet && (
           <SheetTotalHeader
-            sheet={activeSheet}
+            type={activeSheet.type}
+            total={
+              activeSheet.type === "assets"
+                ? portfolio.aggregates.totalAssets
+                : portfolio.aggregates.totalDebts
+            }
             currency={portfolio.currency}
+            changeDay={getChangeFromSnapshots(
+              snapshots,
+              activeSheet.type === "assets" ? "totalAssets" : "totalDebts",
+              1
+            )}
+            changeYear={getChangeFromSnapshots(
+              snapshots,
+              activeSheet.type === "assets" ? "totalAssets" : "totalDebts",
+              365
+            )}
           />
         )}
 
-        <SheetTabs
+        <SheetSummaryRow
           sheets={portfolio.sheets}
           activeSheetId={activeSheetId}
           onSheetChange={setActiveSheet}
           portfolioId={portfolioId}
+          currency={portfolio.currency}
         />
 
         {portfolio.sheets.length === 0 ? (
@@ -135,7 +155,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
             <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
             <p className="font-medium text-sm mb-1">Create your first sheet</p>
             <p className="text-xs text-muted-foreground">
-              Use the <span className="font-medium">+</span> button above to add an assets or debts sheet
+              Use the <span className="font-medium">⋮</span> menu above to add a sheet
             </p>
           </div>
         ) : activeSheet ? (
