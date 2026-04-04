@@ -77,7 +77,7 @@ export function SectionHeader({
       <div className="flex items-center gap-2 py-1">
         <button
           type="button"
-          className="flex items-center text-muted-foreground hover:text-foreground"
+          className="flex items-center justify-center size-6 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           onClick={onToggle}
         >
           <ChevronIcon collapsed={isCollapsed} />
@@ -191,8 +191,8 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="12"
-      height="12"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

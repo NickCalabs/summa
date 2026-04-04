@@ -29,14 +29,12 @@ export function StatsCards({
           label="Assets"
           value={aggregates.totalAssets}
           currency={currency}
-          detail="Gross balance sheet"
           changeDay={getChangeFromSnapshots(snapshots, "totalAssets", 1)}
         />
         <SummaryCell
           label="Debts"
           value={aggregates.totalDebts}
           currency={currency}
-          detail={`${((aggregates.totalDebts / assetBase) * 100).toFixed(0)}% of assets`}
           changeDay={getChangeFromSnapshots(snapshots, "totalDebts", 1)}
           invertColor
         />
@@ -44,7 +42,6 @@ export function StatsCards({
           label="Cash"
           value={aggregates.cashOnHand}
           currency={currency}
-          detail={`${((aggregates.cashOnHand / assetBase) * 100).toFixed(0)}% of assets`}
           changeDay={getChangeFromSnapshots(snapshots, "cashOnHand", 1)}
           onClick={() => setCashSheetOpen(true)}
         />
@@ -63,7 +60,6 @@ function SummaryCell({
   label,
   value,
   currency,
-  detail,
   changeDay,
   invertColor = false,
   onClick,
@@ -71,7 +67,6 @@ function SummaryCell({
   label: string;
   value: number;
   currency: string;
-  detail: string;
   changeDay?: ReturnType<typeof getChangeFromSnapshots>;
   invertColor?: boolean;
   onClick?: () => void;
@@ -97,17 +92,14 @@ function SummaryCell({
           className="text-2xl font-semibold tracking-tight"
         />
       </div>
-      <div className="mt-1 text-xs text-muted-foreground">{detail}</div>
-      {changeDay && (
-        <div className="mt-3">
-          <ChangeIndicator
-            change={changeDay}
-            currency={currency}
-            label="1D"
-            invertColor={invertColor}
-          />
-        </div>
-      )}
+      <div className="mt-2">
+        <ChangeIndicator
+          change={changeDay ?? null}
+          currency={currency}
+          label="1D"
+          invertColor={invertColor}
+        />
+      </div>
     </Element>
   );
 }

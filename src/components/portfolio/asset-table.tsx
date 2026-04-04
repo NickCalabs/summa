@@ -160,7 +160,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
     () => [
       {
         accessorKey: "name",
-        header: "ASSET",
+        header: sheetType === "debts" ? "DEBT" : "ASSET",
         cell: ({ row }) => {
           const asset = row.original;
           const isEditing =
@@ -372,6 +372,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
       portfolioId,
       archiveAsset,
       moveAsset,
+      sheetType,
     ]
   );
 

@@ -42,12 +42,10 @@ export function SheetTotalHeader({
         currency={currency}
         className="text-4xl font-bold tracking-tight"
       />
-      {(changeDay || changeYear) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
-          <ChangeIndicator change={changeDay ?? null} currency={currency} label="1D" invertColor={invertColor} />
-          <ChangeIndicator change={changeYear ?? null} currency={currency} label="1Y" invertColor={invertColor} />
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
+        <ChangeIndicator change={changeDay ?? null} currency={currency} label="1D" invertColor={invertColor} />
+        <ChangeIndicator change={changeYear ?? null} currency={currency} label="1Y" invertColor={invertColor} />
+      </div>
     </div>
   );
 }

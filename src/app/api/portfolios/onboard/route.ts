@@ -7,42 +7,41 @@ export async function POST(request: Request) {
   try {
     const { user } = await requireAuth(request);
 
-    // Check if user already has portfolios
-    const existing = await db
-      .select({ id: portfolios.id })
-      .from(portfolios)
-      .where(eq(portfolios.userId, user.id))
-      .limit(1);
+    const result = await db.transaction(async (tx) => {
+      // Check if user already has portfolios (inside transaction for safety)
+      const existing = await tx
+        .select({ id: portfolios.id })
+        .from(portfolios)
+        .where(eq(portfolios.userId, user.id))
+        .limit(1);
 
-    if (existing.length > 0) {
-      return jsonResponse({ portfolioId: existing[0].id, created: false });
-    }
+      if (existing.length > 0) {
+        return { portfolioId: existing[0].id, created: false };
+      }
 
-    const currency =
-      (user as Record<string, unknown>).defaultCurrency as string || "USD";
+      const currency =
+        (user as Record<string, unknown>).defaultCurrency as string || "USD";
 
-    // Create default portfolio
-    const [portfolio] = await db
-      .insert(portfolios)
-      .values({
-        userId: user.id,
-        name: "My Net Worth",
-        currency,
-      })
-      .returning();
+      const [portfolio] = await tx
+        .insert(portfolios)
+        .values({
+          userId: user.id,
+          name: "My Net Worth",
+          currency,
+        })
+        .returning();
 
-    // Create default sheet
-    const [sheet] = await db
-      .insert(sheets)
-      .values({
+      await tx.insert(sheets).values({
         portfolioId: portfolio.id,
         name: "Assets",
         type: "assets",
         sortOrder: 0,
-      })
-      .returning();
+      });
 
-    return jsonResponse({ portfolioId: portfolio.id, created: true }, 201);
+      return { portfolioId: portfolio.id, created: true };
+    });
+
+    return jsonResponse(result, result.created ? 201 : 200);
   } catch (error) {
     return handleError(error);
   }

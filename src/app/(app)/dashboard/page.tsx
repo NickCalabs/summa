@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
@@ -15,17 +15,14 @@ export default function DashboardPage() {
   const session = authClient.useSession();
   const router = useRouter();
   const [isOnboarding, setIsOnboarding] = useState(false);
+  const onboardingRef = useRef(false);
 
   useEffect(() => {
-    const shouldOnboard =
-      !isLoading &&
-      portfolioList &&
-      portfolioList.length === 0 &&
-      !isOnboarding;
+    if (isLoading || !portfolioList || portfolioList.length > 0) return;
+    if (onboardingRef.current) return;
+    onboardingRef.current = true;
+    setIsOnboarding(true);
 
-    if (!shouldOnboard) return;
-
-    Promise.resolve().then(() => setIsOnboarding(true));
     fetch("/api/portfolios/onboard", { method: "POST" })
       .then((res) => res.json())
       .then((data) => {
@@ -33,12 +30,14 @@ export default function DashboardPage() {
           router.push(`/portfolio/${data.portfolioId}`);
           return;
         }
+        onboardingRef.current = false;
         setIsOnboarding(false);
       })
       .catch(() => {
+        onboardingRef.current = false;
         setIsOnboarding(false);
       });
-  }, [isLoading, portfolioList, isOnboarding, router]);
+  }, [isLoading, portfolioList, router]);
 
   if (isLoading || isOnboarding) {
     return (
