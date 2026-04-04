@@ -8,6 +8,7 @@ export interface PortfolioSnapshot {
   totalDebts: string;
   netWorth: string;
   cashOnHand: string;
+  investableTotal: string | null;
   createdAt: string;
 }
 

@@ -12,6 +12,7 @@ import { SectionGroup } from "./section-group";
 import { useCreateSection, useReorderSections } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
+import { ASSET_CATEGORIES, DEBT_CATEGORIES } from "./asset-categories";
 import type { Sheet } from "@/hooks/use-portfolio";
 
 interface SheetViewProps {
@@ -67,58 +68,40 @@ export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
   );
 
   if (sheet.sections.length === 0) {
-    const emptyLabel =
+    const categories =
+      sheet.type === "assets" ? ASSET_CATEGORIES : DEBT_CATEGORIES;
+    const heading =
       sheet.type === "assets"
-        ? "All your assets in one place"
-        : "Track everything you owe";
+        ? "All your assets in one place!"
+        : "All the money you owe!";
+    const subtext =
+      sheet.type === "assets"
+        ? "Choose a category to add your first asset."
+        : "Choose a category to add your first debt.";
 
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-lg font-medium mb-1">{emptyLabel}</p>
-        <p className="text-sm text-muted-foreground mb-6">
-          Add a section to organize your {sheet.type}, then add accounts within it.
-        </p>
-        <div className="flex items-center gap-2">
-          <Popover open={addOpen} onOpenChange={setAddOpen}>
-            <PopoverTrigger
-              render={(props) => (
-                <Button variant="outline" size="sm" {...props}>
-                  + Add Section
-                </Button>
-              )}
-            />
-            <PopoverContent className="w-56">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreate();
-                }}
-                className="space-y-3"
-              >
-                <Input
-                  placeholder="Section name"
-                  value={newSectionName}
-                  onChange={(e) => setNewSectionName(e.target.value)}
-                  autoFocus
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="w-full"
-                  disabled={createSection.isPending}
-                >
-                  {createSection.isPending ? "Creating..." : "Add Section"}
-                </Button>
-              </form>
-            </PopoverContent>
-          </Popover>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => openAddFlow(sheet.type, null)}
-          >
-            + Add Asset
-          </Button>
+      <div className="py-8">
+        <div className="text-center mb-6">
+          <p className="text-lg font-semibold mb-1">{heading}</p>
+          <p className="text-sm text-muted-foreground">{subtext}</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => openAddFlow(sheet.type, null)}
+              className="flex items-start gap-3 rounded-lg border border-border/60 p-3 text-left transition-colors hover:bg-accent hover:border-accent-foreground/20"
+            >
+              <cat.icon className="size-5 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium leading-tight">{cat.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {cat.description}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     );

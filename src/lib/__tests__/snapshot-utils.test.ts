@@ -16,6 +16,7 @@ function makeSnapshot(
     totalDebts: "2000",
     netWorth: "8000",
     cashOnHand: "3000",
+    investableTotal: null,
     createdAt: date,
     ...overrides,
   };

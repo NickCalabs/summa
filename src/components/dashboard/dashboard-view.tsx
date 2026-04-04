@@ -18,6 +18,7 @@ import { StatsCards } from "./stats-cards";
 import { AllocationChart } from "./allocation-chart";
 import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
+import { CagrCard } from "./cagr-card";
 import { cn } from "@/lib/utils";
 
 interface DashboardViewProps {
@@ -158,6 +159,8 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
               snapshots={recapSnapshots}
             />
 
+            <CagrCard snapshots={recapSnapshots} />
+
             <DashboardSurface
               title="Net worth history"
               description="Crisp net worth trend with quick range switches."
@@ -165,17 +168,32 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
               <div className="space-y-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center gap-3 text-sm">
-                    <span className="font-medium">
-                      <MoneyDisplay
-                        amount={portfolio.aggregates.netWorth}
-                        currency={portfolio.currency}
-                      />
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-block size-2 rounded-full bg-[#7c3aed]" />
+                      <span className="font-medium">
+                        <MoneyDisplay
+                          amount={portfolio.aggregates.netWorth}
+                          currency={portfolio.currency}
+                        />
+                      </span>
+                    </div>
                     <ChangeIndicator
                       change={oneDayNetWorth}
                       currency={portfolio.currency}
                       label="1D"
                     />
+                    {investableTotal > 0 && (
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <span className="inline-block size-2 rounded-full bg-[#a78bfa]" />
+                        <span>
+                          Investable{" "}
+                          <MoneyDisplay
+                            amount={investableTotal}
+                            currency={portfolio.currency}
+                          />
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-1">

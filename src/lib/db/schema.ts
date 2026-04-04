@@ -214,6 +214,7 @@ export const portfolioSnapshots = pgTable(
     totalDebts: numeric("total_debts", { precision: 20, scale: 2 }).notNull(),
     netWorth: numeric("net_worth", { precision: 20, scale: 2 }).notNull(),
     cashOnHand: numeric("cash_on_hand", { precision: 20, scale: 2 }).notNull(),
+    investableTotal: numeric("investable_total", { precision: 20, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [

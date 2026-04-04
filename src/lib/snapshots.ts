@@ -103,6 +103,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
   let totalAssets = 0;
   let totalDebts = 0;
   let cashOnHand = 0;
+  let investableTotal = 0;
 
   for (const asset of assetRows) {
     const val = convertToBase(
@@ -114,14 +115,24 @@ export async function takePortfolioSnapshot(portfolioId: string) {
     const sheetId = sectionSheetMap.get(asset.sectionId);
     const sheetType = sheetId ? sheetTypeMap.get(sheetId) : "assets";
     const sheet = { type: sheetType ?? "assets" };
+    const isLiability = isLiabilityAsset(sheet, asset);
 
-    if (isLiabilityAsset(sheet, asset)) {
+    if (isLiability) {
       totalDebts += val;
     } else {
       totalAssets += val;
     }
     if (asset.isCashEquivalent) {
       cashOnHand += val;
+    }
+    if (asset.isInvestable && !isLiability) {
+      const ownership = Number(asset.ownershipPct ?? 100) / 100;
+      investableTotal += convertToBase(
+        Number(asset.currentValue) * ownership,
+        asset.currency,
+        baseCurrency,
+        rates
+      );
     }
   }
 
@@ -137,6 +148,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
       totalDebts: totalDebts.toFixed(2),
       netWorth: netWorth.toFixed(2),
       cashOnHand: cashOnHand.toFixed(2),
+      investableTotal: investableTotal.toFixed(2),
     })
     .onConflictDoUpdate({
       target: [portfolioSnapshots.portfolioId, portfolioSnapshots.date],
@@ -145,6 +157,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
         totalDebts: totalDebts.toFixed(2),
         netWorth: netWorth.toFixed(2),
         cashOnHand: cashOnHand.toFixed(2),
+        investableTotal: investableTotal.toFixed(2),
       },
     })
     .returning();

@@ -1,10 +1,11 @@
-import { subDays, differenceInCalendarDays, parseISO } from "date-fns";
+import { subDays, differenceInCalendarDays, differenceInDays, parseISO } from "date-fns";
 import type { PortfolioSnapshot } from "@/hooks/use-snapshots";
 import type { Portfolio } from "@/hooks/use-portfolio";
 import { convertToBase } from "@/lib/currency";
 import { isLiabilityAsset } from "@/lib/portfolio-utils";
 
 type SnapshotField = "netWorth" | "totalAssets" | "totalDebts" | "cashOnHand";
+type CagrField = SnapshotField | "investableTotal";
 
 export interface Change {
   absoluteChange: number;
@@ -69,4 +70,30 @@ export function computeInvestableTotal(portfolio: Portfolio): number {
     }
   }
   return total;
+}
+
+/**
+ * Compute CAGR for a given field using the oldest and newest snapshots.
+ * Snapshots are expected in descending date order (newest first).
+ * Returns null if < 30 days of data or startValue is 0.
+ */
+export function computeCAGR(
+  snapshots: PortfolioSnapshot[],
+  field: CagrField
+): number | null {
+  if (snapshots.length < 2) return null;
+
+  const newest = snapshots[0];
+  const oldest = snapshots[snapshots.length - 1];
+
+  const endValue = Number(newest[field] ?? 0);
+  const startValue = Number(oldest[field] ?? 0);
+
+  if (startValue <= 0 || endValue <= 0) return null;
+
+  const days = differenceInDays(parseISO(newest.date), parseISO(oldest.date));
+  if (days < 30) return null;
+
+  const years = days / 365.25;
+  return Math.pow(endValue / startValue, 1 / years) - 1;
 }

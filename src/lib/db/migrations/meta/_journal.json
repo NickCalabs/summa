@@ -64,6 +64,13 @@
       "when": 1775356800000,
       "tag": "0008_simplefin_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775266689422,
+      "tag": "0009_low_agent_zero",
+      "breakpoints": true
     }
   ]
 }
