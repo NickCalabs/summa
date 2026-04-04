@@ -74,23 +74,69 @@ export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
       sheet.type === "assets"
         ? "All your assets in one place!"
         : "All the money you owe!";
-    const subtext =
-      sheet.type === "assets"
-        ? "Choose a category to add your first asset."
-        : "Choose a category to add your first debt.";
 
     return (
       <div className="py-8">
         <div className="text-center mb-6">
           <p className="text-lg font-semibold mb-1">{heading}</p>
-          <p className="text-sm text-muted-foreground">{subtext}</p>
+          <p className="text-sm text-muted-foreground">
+            Start by creating a section to organize your {sheet.type}.
+          </p>
+        </div>
+
+        <div className="flex justify-center mb-8">
+          <Popover open={addOpen} onOpenChange={setAddOpen}>
+            <PopoverTrigger
+              render={(props) => (
+                <Button variant="default" size="sm" {...props}>
+                  + Create Section
+                </Button>
+              )}
+            />
+            <PopoverContent className="w-56">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCreate();
+                }}
+                className="space-y-3"
+              >
+                <Input
+                  placeholder="Section name"
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  autoFocus
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="w-full"
+                  disabled={createSection.isPending}
+                >
+                  {createSection.isPending ? "Creating..." : "Create"}
+                </Button>
+              </form>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="text-center mb-4">
+          <p className="text-xs text-muted-foreground">
+            Or jump straight in — we&apos;ll create a section for you:
+          </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
           {categories.map((cat) => (
             <button
               key={cat.id}
               type="button"
-              onClick={() => openAddFlow(sheet.type, null)}
+              onClick={() => {
+                // Auto-create a default section, then open add flow
+                createSection.mutate(
+                  { sheetId: sheet.id, name: cat.label },
+                  { onSuccess: (newSection) => openAddFlow(sheet.type, newSection.id) }
+                );
+              }}
               className="flex items-start gap-3 rounded-lg border border-border/60 p-3 text-left transition-colors hover:bg-accent hover:border-accent-foreground/20"
             >
               <cat.icon className="size-5 text-muted-foreground mt-0.5 shrink-0" />

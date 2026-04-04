@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -56,6 +57,22 @@ function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-white/60"
+        aria-label="Toggle theme"
+      >
+        <SunIcon className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <MoonIcon className="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      </button>
+    );
+  }
 
   return (
     <DropdownMenu>

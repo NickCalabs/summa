@@ -206,7 +206,7 @@ export function SheetSummaryRow({
             <MoreVertical className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => setAddOpen(true)}>
+            <DropdownMenuItem onSelect={() => setTimeout(() => setAddOpen(true), 0)}>
               <Plus className="size-4 mr-2" />
               New Sheet
             </DropdownMenuItem>
