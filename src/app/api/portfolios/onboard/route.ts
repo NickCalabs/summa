@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { portfolios, sheets, sections } from "@/lib/db/schema";
+import { portfolios, sheets } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth, jsonResponse, handleError } from "@/lib/api-helpers";
 
@@ -41,13 +41,6 @@ export async function POST(request: Request) {
         sortOrder: 0,
       })
       .returning();
-
-    // Create default section
-    await db.insert(sections).values({
-      sheetId: sheet.id,
-      name: "Getting Started",
-      sortOrder: 0,
-    });
 
     return jsonResponse({ portfolioId: portfolio.id, created: true }, 201);
   } catch (error) {

@@ -58,6 +58,39 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
     );
   }
 
+  const isEmpty =
+    portfolio.aggregates.totalAssets === 0 &&
+    portfolio.aggregates.totalDebts === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
+
+        <div className="relative mx-auto max-w-7xl p-6 md:p-8">
+          <section className="overflow-hidden rounded-[32px] border border-border/70 bg-background/90 shadow-[0_1px_0_rgba(255,255,255,0.45)] backdrop-blur">
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <p className="text-2xl font-semibold tracking-tight mb-2">
+                Hi, {userName}
+              </p>
+              <p className="text-sm text-muted-foreground max-w-md mb-8">
+                Here&apos;s where you&apos;ll see your portfolio overview. Add your
+                first assets to get started.
+              </p>
+              <Link
+                href={`/portfolio/${portfolioId}`}
+                className={buttonVariants({ size: "lg", className: "gap-1.5" })}
+              >
+                Add Assets
+                <ArrowRightIcon className="size-4" />
+              </Link>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
   const oneDayNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 1);
   const oneYearNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 365);
 

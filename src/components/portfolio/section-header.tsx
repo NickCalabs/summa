@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoneyDisplay } from "./money-display";
@@ -103,7 +104,7 @@ export function SectionHeader({
               />
             </form>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <span
                 className="cursor-pointer text-lg font-semibold tracking-tight"
                 onDoubleClick={startRenaming}
@@ -113,29 +114,42 @@ export function SectionHeader({
               <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
                 {section.assets.length}
               </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="inline-flex items-center text-muted-foreground/60 hover:text-muted-foreground transition-colors ml-0.5"
+                    />
+                  }
+                >
+                  <ChevronDown className="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onSelect={startRenaming}>
+                    Rename
+                  </DropdownMenuItem>
+                  {!isFirst && (
+                    <DropdownMenuItem onSelect={onMoveUp}>
+                      Move Up
+                    </DropdownMenuItem>
+                  )}
+                  {!isLast && (
+                    <DropdownMenuItem onSelect={onMoveDown}>
+                      Move Down
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setDeleteOpen(true)}
+                  >
+                    Remove Section
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
-        </div>
-
-        <div className="flex items-center gap-0.5 opacity-60">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            disabled={isFirst}
-            onClick={onMoveUp}
-          >
-            <ChevronUpIcon className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            disabled={isLast}
-            onClick={onMoveDown}
-          >
-            <ChevronDownIcon className="size-3.5" />
-          </Button>
         </div>
 
         <Button
@@ -146,27 +160,6 @@ export function SectionHeader({
         >
           Add Asset
         </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="ghost" size="icon" className="h-6 w-6" />
-            }
-          >
-            <MoreHorizontalIcon />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={startRenaming}>
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => setDeleteOpen(true)}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       {!isCollapsed && (
@@ -209,26 +202,6 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
       className={`transition-transform ${collapsed ? "" : "rotate-90"}`}
     >
       <path d="m9 18 6-6-6-6" />
-    </svg>
-  );
-}
-
-function MoreHorizontalIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
-      <circle cx="5" cy="12" r="1" />
     </svg>
   );
 }
