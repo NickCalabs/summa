@@ -195,7 +195,7 @@ async function refreshExchangeRates() {
   }
 }
 
-async function refreshPlaidBalances() {
+export async function refreshPlaidBalances() {
   if (!isPlaidConfigured()) return;
 
   const ts = new Date().toISOString();

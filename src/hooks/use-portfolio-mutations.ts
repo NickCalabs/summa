@@ -46,3 +46,33 @@ export function useUpdatePortfolio(portfolioId: string) {
     },
   });
 }
+
+export function useSyncPortfolio(portfolioId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/portfolios/${portfolioId}/sync`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        if (res.status === 429) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(
+            `Slow down — try again in ${body.retryAfter ?? "a few"} seconds`
+          );
+        }
+        throw new Error("Sync failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
+      queryClient.invalidateQueries({ queryKey: ["snapshots"] });
+      toast.success("Synced");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+}
