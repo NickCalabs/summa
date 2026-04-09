@@ -33,11 +33,20 @@ export default function KuberaImportPage() {
     )
   );
 
+  const existingSheetNames = new Set((portfolio.sheets ?? []).map((s) => s.name));
+  const existingSectionKeys = new Set(
+    (portfolio.sheets ?? []).flatMap((sheet) =>
+      sheet.sections.map((sec) => `${sheet.name}::${sec.name}`)
+    )
+  );
+
   return (
     <div className="p-8">
       <KuberaImport
         portfolioId={portfolio.id}
         existingAssets={existingAssets}
+        existingSheetNames={existingSheetNames}
+        existingSectionKeys={existingSectionKeys}
       />
     </div>
   );

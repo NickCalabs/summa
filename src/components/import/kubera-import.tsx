@@ -22,17 +22,28 @@ interface ExistingAsset {
 interface KuberaImportProps {
   portfolioId: string;
   existingAssets: ExistingAsset[];
+  existingSheetNames: Set<string>;
+  existingSectionKeys: Set<string>; // "sheetName::sectionName"
 }
 
 type Step = "upload" | "review" | "confirm" | "result";
 
-export function KuberaImport({ portfolioId, existingAssets }: KuberaImportProps) {
+export function KuberaImport({ portfolioId, existingAssets, existingSheetNames, existingSectionKeys }: KuberaImportProps) {
   const [step, setStep] = useState<Step>("upload");
   const [error, setError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedImport | null>(null);
   const [exportDate, setExportDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [importResult, setImportResult] = useState<{
+    assetsCreated: number;
+    assetsMatched: number;
+    assetsSkipped: number;
+    snapshotsInserted: number;
+    sheetsCreated: number;
+    sectionsCreated: number;
+    errors: string[];
+  } | null>(null);
 
   const importMutation = useKuberaImport();
 
@@ -90,8 +101,10 @@ export function KuberaImport({ portfolioId, existingAssets }: KuberaImportProps)
             for (const account of section.accounts) {
               if (account.action === "create") {
                 create++;
-                newSheets.add(sheet.name);
-                newSections.add(`${sheet.name}::${section.name}`);
+                if (!existingSheetNames.has(sheet.name)) newSheets.add(sheet.name);
+                if (!existingSectionKeys.has(`${sheet.name}::${section.name}`)) {
+                  newSections.add(`${sheet.name}::${section.name}`);
+                }
               } else if (account.action === "match") match++;
               else skip++;
             }
@@ -133,7 +146,10 @@ export function KuberaImport({ portfolioId, existingAssets }: KuberaImportProps)
     importMutation.mutate(
       { exportDate, portfolioId, actions },
       {
-        onSuccess: () => setStep("result"),
+        onSuccess: (data) => {
+          setImportResult(data);
+          setStep("result");
+        },
       }
     );
   };
@@ -260,26 +276,26 @@ export function KuberaImport({ portfolioId, existingAssets }: KuberaImportProps)
         </div>
       )}
 
-      {step === "result" && importMutation.data && (
+      {step === "result" && importResult && (
         <div className="border rounded-lg p-6 space-y-4 text-center">
           <CheckCircleIcon className="size-12 mx-auto text-green-600" />
           <h2 className="text-lg font-semibold">Import complete</h2>
           <ul className="text-sm space-y-1">
-            <li>{importMutation.data.assetsCreated} assets created</li>
-            <li>{importMutation.data.assetsMatched} assets matched</li>
-            <li>{importMutation.data.snapshotsInserted} snapshots recorded</li>
-            {importMutation.data.sheetsCreated > 0 && (
-              <li>{importMutation.data.sheetsCreated} sheets created</li>
+            <li>{importResult.assetsCreated} assets created</li>
+            <li>{importResult.assetsMatched} assets matched</li>
+            <li>{importResult.snapshotsInserted} snapshots recorded</li>
+            {importResult.sheetsCreated > 0 && (
+              <li>{importResult.sheetsCreated} sheets created</li>
             )}
-            {importMutation.data.sectionsCreated > 0 && (
-              <li>{importMutation.data.sectionsCreated} sections created</li>
+            {importResult.sectionsCreated > 0 && (
+              <li>{importResult.sectionsCreated} sections created</li>
             )}
           </ul>
-          {importMutation.data.errors.length > 0 && (
+          {importResult.errors.length > 0 && (
             <div className="text-left">
               <p className="text-sm font-medium text-destructive">Errors:</p>
               <ul className="text-sm text-destructive list-disc pl-5">
-                {importMutation.data.errors.map((e, i) => (
+                {importResult.errors.map((e, i) => (
                   <li key={i}>{e}</li>
                 ))}
               </ul>

@@ -198,28 +198,33 @@ export const csvImportConfirm = z.object({
 
 // ── Kubera import ──
 
-export const kuberaImportAction = z.object({
-  kuberaId: z.string(),
-  action: z.enum(["create", "match", "skip"]),
-  summaAssetId: z.string().uuid().optional(),
-  name: z.string(),
-  category: z.enum(["asset", "debt"]),
-  sheetName: z.string(),
-  sectionName: z.string(),
-  value: z.number(),
-  currency: z.string().default("USD"),
-  ticker: z.string().nullable(),
-  quantity: z.number().nullable(),
-  price: z.number().nullable(),
-  ownership: z.number().min(0).max(100).default(100),
-  costBasis: z.number().nullable(),
-  isInvestable: z.boolean().default(true),
-  isCashEquivalent: z.boolean().default(false),
-  assetType: z.string().default("other"),
-  providerType: z.enum(["manual", "ticker"]).default("manual"),
-  purchaseDate: z.string().nullable(),
-  notes: z.string().nullable(),
-});
+export const kuberaImportAction = z
+  .object({
+    kuberaId: z.string(),
+    action: z.enum(["create", "match", "skip"]),
+    summaAssetId: z.string().uuid().optional(),
+    name: z.string(),
+    category: z.enum(["asset", "debt"]),
+    sheetName: z.string(),
+    sectionName: z.string(),
+    value: z.number(),
+    currency: z.string().default("USD"),
+    ticker: z.string().nullable(),
+    quantity: z.number().nullable(),
+    price: z.number().nullable(),
+    ownership: z.number().min(0).max(100).default(100),
+    costBasis: z.number().nullable(),
+    isInvestable: z.boolean().default(true),
+    isCashEquivalent: z.boolean().default(false),
+    assetType: z.string().default("other"),
+    providerType: z.enum(["manual", "ticker"]).default("manual"),
+    purchaseDate: z.string().nullable(),
+    notes: z.string().nullable(),
+  })
+  .refine((v) => v.action !== "match" || !!v.summaAssetId, {
+    message: "summaAssetId required when action is match",
+    path: ["summaAssetId"],
+  });
 
 export const kuberaImportRequest = z.object({
   exportDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),

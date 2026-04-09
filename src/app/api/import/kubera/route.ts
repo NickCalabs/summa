@@ -38,7 +38,6 @@ export async function POST(request: Request) {
     let snapshotsInserted = 0;
     let sheetsCreated = 0;
     let sectionsCreated = 0;
-    const errors: string[] = [];
 
     // Track sheets/sections by name for reuse within this import
     const sheetIdByName = new Map<string, string>();
@@ -54,106 +53,109 @@ export async function POST(request: Request) {
       }
     }
 
+    // Per-sheet section count for correct sortOrder
+    const sectionCountBySheet = new Map<string, number>();
+    for (const sec of allSectionRows) {
+      const count = sectionCountBySheet.get(sec.sheetId) ?? 0;
+      sectionCountBySheet.set(sec.sheetId, count + 1);
+    }
+
     await db.transaction(async (tx) => {
       for (const item of body.actions) {
-        try {
-          if (item.action === "skip") {
-            assetsSkipped++;
-            continue;
-          }
+        if (item.action === "skip") {
+          assetsSkipped++;
+          continue;
+        }
 
-          if (item.action === "match") {
-            assetsMatched++;
-            continue;
-          }
+        if (item.action === "match") {
+          assetsMatched++;
+          continue;
+        }
 
-          // action === "create"
+        // action === "create"
 
-          // 1. Ensure sheet exists
-          let sheetId = sheetIdByName.get(item.sheetName);
-          if (!sheetId) {
-            const sheetType = item.category === "debt" ? "debts" : "assets";
-            const [newSheet] = await tx
-              .insert(sheets)
-              .values({
-                portfolioId: body.portfolioId,
-                name: item.sheetName,
-                type: sheetType,
-                sortOrder: existingSheets.length + sheetsCreated,
-              })
-              .returning();
-            sheetId = newSheet.id;
-            sheetIdByName.set(item.sheetName, sheetId);
-            sheetsCreated++;
-          }
-
-          // 2. Ensure section exists
-          const sectionKey = `${item.sheetName}::${item.sectionName}`;
-          let sectionId = sectionIdByKey.get(sectionKey);
-          if (!sectionId) {
-            const [newSection] = await tx
-              .insert(sections)
-              .values({
-                sheetId,
-                name: item.sectionName,
-                sortOrder: sectionsCreated,
-              })
-              .returning();
-            sectionId = newSection.id;
-            sectionIdByKey.set(sectionKey, sectionId);
-            sectionsCreated++;
-          }
-
-          // 3. Create asset
-          const [newAsset] = await tx
-            .insert(assets)
+        // 1. Ensure sheet exists
+        let sheetId = sheetIdByName.get(item.sheetName);
+        if (!sheetId) {
+          const sheetType = item.category === "debt" ? "debts" : "assets";
+          const [newSheet] = await tx
+            .insert(sheets)
             .values({
-              sectionId,
-              name: item.name,
-              type: item.assetType,
-              currency: item.currency,
-              currentValue: item.value.toFixed(2),
-              currentPrice: item.price != null ? item.price.toFixed(8) : null,
-              quantity: item.quantity != null ? item.quantity.toFixed(8) : null,
-              costBasis: item.costBasis != null ? item.costBasis.toFixed(2) : null,
-              ownershipPct: item.ownership.toFixed(2),
-              isInvestable: item.isInvestable,
-              isCashEquivalent: item.isCashEquivalent,
-              providerType: item.providerType,
-              providerConfig: item.ticker ? { ticker: item.ticker } : {},
-              notes: item.notes,
-              sortOrder: assetsCreated,
+              portfolioId: body.portfolioId,
+              name: item.sheetName,
+              type: sheetType,
+              sortOrder: existingSheets.length + sheetsCreated,
             })
             .returning();
-          assetsCreated++;
+          sheetId = newSheet.id;
+          sheetIdByName.set(item.sheetName, sheetId);
+          sheetsCreated++;
+        }
 
-          // 4. Create snapshot
-          await tx
-            .insert(assetSnapshots)
+        // 2. Ensure section exists
+        const sectionKey = `${item.sheetName}::${item.sectionName}`;
+        let sectionId = sectionIdByKey.get(sectionKey);
+        if (!sectionId) {
+          const currentCount = sectionCountBySheet.get(sheetId) ?? 0;
+          const [newSection] = await tx
+            .insert(sections)
             .values({
-              assetId: newAsset.id,
-              date: body.exportDate,
+              sheetId,
+              name: item.sectionName,
+              sortOrder: currentCount,
+            })
+            .returning();
+          sectionId = newSection.id;
+          sectionIdByKey.set(sectionKey, sectionId);
+          sectionCountBySheet.set(sheetId, currentCount + 1);
+          sectionsCreated++;
+        }
+
+        // 3. Create asset
+        const [newAsset] = await tx
+          .insert(assets)
+          .values({
+            sectionId,
+            name: item.name,
+            type: item.assetType,
+            currency: item.currency,
+            currentValue: item.value.toFixed(2),
+            currentPrice: item.price != null ? item.price.toFixed(8) : null,
+            quantity: item.quantity != null ? item.quantity.toFixed(8) : null,
+            costBasis: item.costBasis != null ? item.costBasis.toFixed(2) : null,
+            ownershipPct: item.ownership.toFixed(2),
+            isInvestable: item.isInvestable,
+            isCashEquivalent: item.isCashEquivalent,
+            providerType: item.providerType,
+            providerConfig: item.ticker ? { ticker: item.ticker } : {},
+            notes: item.notes,
+            sortOrder: assetsCreated,
+          })
+          .returning();
+        assetsCreated++;
+
+        // 4. Create snapshot
+        await tx
+          .insert(assetSnapshots)
+          .values({
+            assetId: newAsset.id,
+            date: body.exportDate,
+            value: item.value.toFixed(2),
+            valueInBase: item.value.toFixed(2),
+            price: item.price != null ? item.price.toFixed(8) : null,
+            quantity: item.quantity != null ? item.quantity.toFixed(8) : null,
+            source: "import",
+          })
+          .onConflictDoUpdate({
+            target: [assetSnapshots.assetId, assetSnapshots.date],
+            set: {
               value: item.value.toFixed(2),
               valueInBase: item.value.toFixed(2),
               price: item.price != null ? item.price.toFixed(8) : null,
               quantity: item.quantity != null ? item.quantity.toFixed(8) : null,
-              source: "import",
-            })
-            .onConflictDoUpdate({
-              target: [assetSnapshots.assetId, assetSnapshots.date],
-              set: {
-                value: item.value.toFixed(2),
-                valueInBase: item.value.toFixed(2),
-                price: item.price != null ? item.price.toFixed(8) : null,
-                quantity: item.quantity != null ? item.quantity.toFixed(8) : null,
-              },
-            });
-          snapshotsInserted++;
-        } catch (err) {
-          errors.push(
-            `${item.name}: ${err instanceof Error ? err.message : "Unknown error"}`
-          );
-        }
+            },
+          });
+        snapshotsInserted++;
       }
     });
 
@@ -164,7 +166,7 @@ export async function POST(request: Request) {
       snapshotsInserted,
       sheetsCreated,
       sectionsCreated,
-      errors,
+      errors: [],
     });
   } catch (error) {
     return handleError(error);
