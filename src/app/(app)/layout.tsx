@@ -8,6 +8,7 @@ import {
   LandmarkIcon,
   LayoutGridIcon,
   MenuIcon,
+  PlugIcon,
   WalletCardsIcon,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -213,6 +214,18 @@ function SidebarContent({
           >
             <SettingsIcon className="size-4" />
             Settings
+          </Link>
+          <Link
+            href="/settings/connections"
+            onClick={onNavigate}
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+              pathname === "/settings/connections"
+                ? "bg-white text-[#1E1E2E]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <PlugIcon className="size-4" />
+            Connections
           </Link>
         </nav>
 
