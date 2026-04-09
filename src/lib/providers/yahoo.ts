@@ -1,7 +1,10 @@
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoo-finance2";
 import type { PriceProvider, PriceResult, SearchResult, BatchPriceResult } from "./types";
 
-const yf = yahooFinance as any;
+// yahoo-finance2 v3+ requires `new YahooFinance()` — the default export is a
+// class, not a pre-configured instance. Calling .quote() / .search() directly
+// on the imported value throws "Call `const yahooFinance = new YahooFinance()` first."
+const yf = new YahooFinance() as any;
 
 const QUOTE_TYPE_MAP: Record<string, SearchResult["type"]> = {
   EQUITY: "stock",

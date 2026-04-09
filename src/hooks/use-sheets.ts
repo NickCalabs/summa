@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Portfolio, Sheet } from "@/hooks/use-portfolio";
 import { recomputeAggregates } from "@/lib/portfolio-utils";
+import { tempId } from "@/lib/temp-id";
 
 function portfolioKey(portfolioId: string) {
   return ["portfolio", portfolioId] as const;
@@ -27,7 +28,7 @@ export function useCreateSheet(portfolioId: string) {
       if (!previous) return { previous };
 
       const tempSheet: Sheet = {
-        id: crypto.randomUUID(),
+        id: tempId(),
         portfolioId,
         name: data.name,
         type: data.type ?? "assets",
