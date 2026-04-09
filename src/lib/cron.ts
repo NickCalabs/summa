@@ -14,6 +14,7 @@ let started = false;
 // Concurrency guards — prevent overlapping job executions
 const running = {
   prices: false,
+  cryptoPrices: false,
   plaid: false,
   snapshots: false,
 };
@@ -26,9 +27,13 @@ function nextBackoffMs(retryCount: number): number {
   return Math.min(ms, MAX_BACKOFF_MS);
 }
 
-export async function refreshPrices() {
+export async function refreshPrices(opts: { sources?: string[] } = {}) {
   const ts = new Date().toISOString();
-  console.log(`[cron] ${ts} Starting price refresh...`);
+  const sourceFilter = opts.sources ? new Set(opts.sources) : null;
+  const label = sourceFilter
+    ? `(${[...sourceFilter].join(",")})`
+    : "(all sources)";
+  console.log(`[cron] ${ts} Starting price refresh ${label}...`);
 
   try {
     const tickerAssets = await db
@@ -47,6 +52,7 @@ export async function refreshPrices() {
     const groups = new Map<string, typeof activeAssets>();
     for (const asset of activeAssets) {
       const source = asset.providerConfig?.source ?? "yahoo";
+      if (sourceFilter && !sourceFilter.has(source)) continue;
       const currency = asset.currency ?? "USD";
       const key = `${source}:${currency}`;
       const group = groups.get(key) ?? [];
@@ -311,13 +317,31 @@ export function startCronJobs() {
 
   console.log(`[cron] ${new Date().toISOString()} Registering cron jobs...`);
 
-  // Every 15 minutes — refresh ticker-based asset prices
+  // Every 15 minutes — refresh stock/ETF prices via Yahoo.
+  // Yahoo's free tier is 15-min delayed for most tickers, so polling
+  // faster than this buys nothing during market hours.
   cron.schedule("*/15 * * * *", () => {
     if (running.prices) return;
     running.prices = true;
-    refreshPrices()
+    refreshPrices({ sources: ["yahoo"] })
       .catch((err) => console.error("[cron] Unhandled error in refreshPrices:", err))
       .finally(() => { running.prices = false; });
+  });
+
+  // Every minute — refresh crypto prices via CoinGecko.
+  // Crypto moves continuously and CoinGecko's batch endpoint lets us
+  // pull every holding in a single request, so this comfortably fits
+  // inside the 25 req/min token bucket.
+  cron.schedule("* * * * *", () => {
+    if (running.cryptoPrices) return;
+    running.cryptoPrices = true;
+    refreshPrices({ sources: ["coingecko"] })
+      .catch((err) =>
+        console.error("[cron] Unhandled error in crypto refreshPrices:", err)
+      )
+      .finally(() => {
+        running.cryptoPrices = false;
+      });
   });
 
   // Every 6 hours — refresh Plaid balances
