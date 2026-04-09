@@ -11,6 +11,7 @@ import {
 } from "@/lib/snapshot-utils";
 import { getFromDate, type DateRangeKey } from "@/lib/chart-utils";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
+import { AssetsDebtsChart } from "@/components/charts/assets-debts-chart";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -222,6 +223,17 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                   heightClassName="h-[280px] md:h-[340px] xl:h-[390px]"
                 />
               </div>
+            </DashboardSurface>
+
+            <DashboardSurface
+              title="Assets vs debts over time"
+              description="Stacked view of total assets and total debts. The gap between them is your net worth."
+            >
+              <AssetsDebtsChart
+                portfolioId={portfolioId}
+                from={getFromDate(chartRange)}
+                currency={portfolio.currency}
+              />
             </DashboardSurface>
 
             <DashboardSurface

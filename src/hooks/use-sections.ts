@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Portfolio, Section } from "@/hooks/use-portfolio";
 import { recomputeAggregates } from "@/lib/portfolio-utils";
+import { tempId } from "@/lib/temp-id";
 
 function portfolioKey(portfolioId: string) {
   return ["portfolio", portfolioId] as const;
@@ -30,7 +31,7 @@ export function useCreateSection(portfolioId: string) {
       const sheet = clone.sheets.find((s) => s.id === data.sheetId);
       if (sheet) {
         const tempSection: Section = {
-          id: crypto.randomUUID(),
+          id: tempId(),
           sheetId: data.sheetId,
           name: data.name,
           sortOrder: sheet.sections.length,

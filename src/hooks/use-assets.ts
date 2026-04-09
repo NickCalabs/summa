@@ -7,6 +7,7 @@ import {
   removeAssetFromTree,
   insertAssetInTree,
 } from "@/lib/portfolio-utils";
+import { tempId } from "@/lib/temp-id";
 
 type QueryKey = ["portfolio", string];
 
@@ -94,7 +95,7 @@ export function useCreateAsset(portfolioId: string) {
       if (!previous) return { previous };
 
       const tempAsset: Asset = {
-        id: crypto.randomUUID(),
+        id: tempId(),
         sectionId: data.sectionId,
         name: data.name,
         type: data.type ?? "other",
