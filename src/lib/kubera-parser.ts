@@ -98,7 +98,9 @@ function mapAccount(k: KuberaAccount): ParsedAccount {
     assetType: k.assetClass ?? k.type ?? "other",
     providerType: ticker ? "ticker" : "manual",
     purchaseDate: k.purchaseDate ?? null,
-    notes: k.purchaseDate ? `Purchased: ${k.purchaseDate}` : null,
+    notes: [k.notes, k.description, k.purchaseDate ? `Purchased: ${k.purchaseDate}` : null]
+      .filter(Boolean)
+      .join(" | ") || null,
     action: "create",
     matchedAssetId: null,
   };
@@ -114,10 +116,13 @@ export function parseKuberaJson(raw: string): ParsedImport {
     throw new Error("Invalid JSON file. Please upload a Kubera JSON export.");
   }
 
-  const allAccounts = [
-    ...(data.asset ?? []),
-    ...(data.debt ?? []),
-  ];
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Invalid Kubera export. Expected a JSON object with 'asset' and/or 'debt' arrays.");
+  }
+
+  const assetArray = Array.isArray(data.asset) ? data.asset : [];
+  const debtArray = Array.isArray(data.debt) ? data.debt : [];
+  const allAccounts = [...assetArray, ...debtArray];
 
   if (allAccounts.length === 0) {
     throw new Error("No accounts found in the Kubera export. Expected 'asset' or 'debt' arrays.");
