@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/stores/ui-store";
 import { ManualAssetForm } from "./manual-asset-form";
 import { TickerAssetForm } from "./ticker-asset-form";
+import { WalletAssetForm } from "./wallet-asset-form";
 import {
   ASSET_CATEGORIES,
   DEBT_CATEGORIES,
@@ -57,13 +58,10 @@ export function AddFlowDialog({
       return;
     }
 
-    if (categoryId === "crypto") {
-      // Placeholder — for now treat as manual with crypto type pre-selected
-      setAddFlowStep("form", "manual");
-      return;
-    }
-
-    // Categories that open the form step
+    // Categories that open the form step. The `crypto` category opens the
+    // WalletAssetForm (not ManualAssetForm); we keep the category id as
+    // "crypto" so the dialog title and back button continue to reflect
+    // "Crypto Wallets & Exchanges".
     setAddFlowStep("form", categoryId);
   }
 
@@ -124,6 +122,16 @@ export function AddFlowDialog({
 
         {step === "form" && category === "ticker" && effectiveSectionId && (
           <TickerAssetForm
+            portfolioId={portfolioId}
+            currency={currency}
+            sections={sections}
+            defaultSectionId={effectiveSectionId}
+            onSuccess={handleAssetCreated}
+          />
+        )}
+
+        {step === "form" && category === "crypto" && effectiveSectionId && (
+          <WalletAssetForm
             portfolioId={portfolioId}
             currency={currency}
             sections={sections}

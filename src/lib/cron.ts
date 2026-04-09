@@ -8,6 +8,7 @@ import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
 import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
+import { refreshBtcWallets } from "@/lib/wallets";
 
 let started = false;
 
@@ -17,6 +18,7 @@ const running = {
   cryptoPrices: false,
   plaid: false,
   snapshots: false,
+  btcWallets: false,
 };
 
 // Maximum backoff: 7 days in ms
@@ -351,6 +353,30 @@ export function startCronJobs() {
     refreshPlaidBalances()
       .catch((err) => console.error("[cron] Unhandled error in refreshPlaidBalances:", err))
       .finally(() => { running.plaid = false; });
+  });
+
+  // Every 30 minutes — refresh BTC watch-only wallets via Blockstream.
+  // On-chain data doesn't move fast enough to justify tighter polling:
+  // new blocks land every ~10 min and our users don't need sub-block
+  // latency for net-worth tracking. 30-min is also gentle on the public
+  // Blockstream/Mempool endpoints.
+  cron.schedule("*/30 * * * *", () => {
+    if (running.btcWallets) return;
+    running.btcWallets = true;
+    const ts = new Date().toISOString();
+    refreshBtcWallets()
+      .then((summary) => {
+        if (summary.totalWallets === 0) return;
+        console.log(
+          `[cron] ${ts} BTC wallet refresh: ${summary.updated}/${summary.totalWallets} updated, ${summary.failed} failed${summary.priceAvailable ? "" : " (price unavailable)"}`
+        );
+      })
+      .catch((err) =>
+        console.error("[cron] Unhandled error in refreshBtcWallets:", err)
+      )
+      .finally(() => {
+        running.btcWallets = false;
+      });
   });
 
   // Midnight UTC — refresh exchange rates then take daily portfolio snapshots

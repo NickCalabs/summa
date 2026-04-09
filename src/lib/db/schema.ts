@@ -162,6 +162,9 @@ export const assets = pgTable("assets", {
       connectionId?: string;
       plaidAccountId?: string;
       simplefinAccountId?: string;
+      // v0.2 wallet fields
+      chain?: "btc" | "eth" | "sol";
+      address?: string;
     }>()
     .default({}),
   ownershipPct: numeric("ownership_pct", { precision: 5, scale: 2 })
