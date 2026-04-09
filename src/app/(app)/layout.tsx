@@ -9,6 +9,7 @@ import {
   LayoutGridIcon,
   MenuIcon,
   PlugIcon,
+  UploadIcon,
   WalletCardsIcon,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -226,6 +227,18 @@ function SidebarContent({
           >
             <PlugIcon className="size-4" />
             Connections
+          </Link>
+          <Link
+            href="/import/kubera"
+            onClick={onNavigate}
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+              pathname === "/import/kubera"
+                ? "bg-white text-[#1E1E2E]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <UploadIcon className="size-4" />
+            Import
           </Link>
         </nav>
 
