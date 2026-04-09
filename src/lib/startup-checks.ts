@@ -29,6 +29,14 @@ export function runStartupChecks(): void {
     );
   }
 
+  // ── Optional API keys (warn but don't block startup) ──
+  if (!process.env.ETHERSCAN_API_KEY) {
+    console.warn(
+      "[startup] ETHERSCAN_API_KEY is not set — ETH wallet tracking will be disabled.\n" +
+        "  Get a free key at https://etherscan.io/myapikey"
+    );
+  }
+
   if (errors.length > 0) {
     const message =
       "[startup] Missing required environment variables:\n\n" +

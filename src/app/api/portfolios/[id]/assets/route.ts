@@ -15,8 +15,17 @@ import {
   defaultBtcWalletName,
   computeCurrentValueUsd,
 } from "@/lib/btc";
+import {
+  isValidEthAddress,
+  normalizeEthAddress,
+  defaultEthWalletName,
+  truncateEthQuantity,
+  weiToEthString,
+  isStablecoinContract,
+} from "@/lib/eth";
 import { getBtcBalance, BlockstreamError } from "@/lib/providers/blockstream";
-import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
+import { getEthBalance, EtherscanError, isEtherscanConfigured } from "@/lib/providers/etherscan";
+import { getCoinGeckoBatchPrices, getCoinGeckoTokenPrice } from "@/lib/providers/coingecko";
 
 export async function POST(
   request: Request,
@@ -53,12 +62,121 @@ export async function POST(
       const chain = config.chain;
       const address = typeof config.address === "string" ? config.address.trim() : "";
 
-      if (chain !== "btc") {
+      if (chain !== "btc" && chain !== "eth") {
         return errorResponse(
-          "Only BTC wallets are supported in this release",
+          "Unsupported wallet chain. Supported: btc, eth",
           400
         );
       }
+
+      // ── ETH wallet ──
+      if (chain === "eth") {
+        if (!isValidEthAddress(address)) {
+          return errorResponse(
+            "Invalid ETH address. Use a 0x-prefixed 40-character hex address.",
+            400
+          );
+        }
+        if (!isEtherscanConfigured()) {
+          return errorResponse(
+            "Etherscan API key is not configured. Set ETHERSCAN_API_KEY in your .env file.",
+            503
+          );
+        }
+        const normalized = normalizeEthAddress(address);
+
+        let info;
+        try {
+          info = await getEthBalance(normalized, { skipCache: true });
+        } catch (err) {
+          if (err instanceof EtherscanError) {
+            return errorResponse(
+              `Could not fetch ETH balance: ${err.message}`,
+              502
+            );
+          }
+          throw err;
+        }
+
+        // ETH/USD price
+        let ethUsdPrice: number | null = null;
+        try {
+          const prices = await getCoinGeckoBatchPrices(["ethereum"], "USD");
+          ethUsdPrice = prices.get("ethereum")?.price ?? null;
+        } catch {
+          // Soft-fail: insert the asset without USD value; cron will fill it in.
+        }
+
+        // Price each token via CoinGecko contract lookup
+        const tokenList = await Promise.all(
+          info.tokens.map(async (t) => {
+            let priceUsd = 0;
+            try {
+              priceUsd = (await getCoinGeckoTokenPrice(t.contractAddress)) ?? 0;
+            } catch {
+              // CoinGecko didn't have this token — leave price at 0.
+            }
+            const balance = Number(t.formattedBalance);
+            return {
+              symbol: t.symbol,
+              name: t.name,
+              contractAddress: t.contractAddress,
+              decimals: t.decimals,
+              balance: t.formattedBalance,
+              priceUsd,
+              valueUsd: balance * priceUsd,
+              isStablecoin: isStablecoinContract(t.contractAddress),
+            };
+          })
+        );
+
+        // Sort by USD value desc, keep top 50
+        tokenList.sort((a, b) => b.valueUsd - a.valueUsd);
+        const topTokens = tokenList.slice(0, 50);
+
+        const ethValueUsd = ethUsdPrice != null ? info.ethBalanceFormatted * ethUsdPrice : 0;
+        const tokenValueUsd = topTokens.reduce((sum, t) => sum + t.valueUsd, 0);
+        const totalUsd = ethValueUsd + tokenValueUsd;
+
+        const ethQty = truncateEthQuantity(weiToEthString(info.ethBalanceWei));
+        const walletName = body.name?.trim() || defaultEthWalletName(normalized);
+
+        const [asset] = await db
+          .insert(assets)
+          .values({
+            sectionId: body.sectionId,
+            name: walletName,
+            type: "crypto",
+            currency: "USD",
+            quantity: ethQty,
+            currentValue: totalUsd.toFixed(2),
+            currentPrice: ethUsdPrice != null ? ethUsdPrice.toFixed(8) : null,
+            isInvestable: body.isInvestable ?? true,
+            isCashEquivalent: false,
+            providerType: "wallet",
+            providerConfig: {
+              chain: "eth",
+              address: normalized,
+              source: "etherscan",
+            },
+            metadata: {
+              ethBalance: ethQty,
+              ethPriceUsd: ethUsdPrice,
+              tokens: topTokens,
+              totalUsd,
+              lastSync: new Date().toISOString(),
+            },
+            ownershipPct: body.ownershipPct ?? "100",
+            notes: body.notes,
+            sortOrder: body.sortOrder ?? 0,
+            lastSyncedAt: new Date(),
+          })
+          .returning();
+
+        return jsonResponse(asset, 201);
+      }
+
+      // ── BTC wallet ──
       if (!isValidBtcAddress(address)) {
         return errorResponse(
           "Invalid BTC address. Use a mainnet address starting with bc1, 1, or 3.",
