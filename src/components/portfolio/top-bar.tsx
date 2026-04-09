@@ -8,10 +8,14 @@ import {
   BuildingIcon,
   UploadIcon,
   DownloadIcon,
+  RefreshCwIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useUpdatePortfolio } from "@/hooks/use-portfolio-mutations";
+import {
+  useUpdatePortfolio,
+  useSyncPortfolio,
+} from "@/hooks/use-portfolio-mutations";
 import { useCreateSection } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -31,6 +35,7 @@ export function TopBar({
   activeSheetType,
 }: TopBarProps) {
   const updatePortfolio = useUpdatePortfolio(portfolioId);
+  const syncPortfolio = useSyncPortfolio(portfolioId);
   const createSection = useCreateSection(portfolioId);
   const openAddFlow = useUIStore((s) => s.openAddFlow);
   const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
@@ -92,6 +97,20 @@ export function TopBar({
           className="h-8 w-48 pl-8 text-xs"
         />
       </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => syncPortfolio.mutate()}
+        disabled={syncPortfolio.isPending}
+        title="Refresh prices and balances"
+      >
+        <RefreshCwIcon
+          className={`size-3.5 ${syncPortfolio.isPending ? "animate-spin" : ""}`}
+          data-icon="inline-start"
+        />
+        {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
+      </Button>
 
       <Button variant="outline" size="sm" onClick={openPlaidDialog}>
         <BuildingIcon className="size-3.5" data-icon="inline-start" />

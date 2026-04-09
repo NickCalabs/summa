@@ -30,7 +30,12 @@ interface DashboardViewProps {
 const DATE_RANGES: DateRangeKey[] = ["1M", "3M", "6M", "YTD", "1Y", "ALL"];
 
 export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
-  const { data: portfolio, isLoading, error } = usePortfolio(portfolioId);
+  // Live polling on the dashboard — refetch every 30s so prices flow in
+  // shortly after the crypto cron updates them. Pauses automatically when
+  // the tab is hidden (refetchIntervalInBackground: false in the hook).
+  const { data: portfolio, isLoading, error } = usePortfolio(portfolioId, {
+    refetchInterval: 30_000,
+  });
   const { data: recapSnapshots = [] } = usePortfolioSnapshots(
     portfolioId,
     getFromDate("1Y")
@@ -119,6 +124,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                   <MoneyDisplay
                     amount={portfolio.aggregates.netWorth}
                     currency={portfolio.currency}
+                    animate
                     className="text-4xl font-semibold tracking-tight sm:text-5xl xl:text-6xl"
                   />
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -175,6 +181,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                         <MoneyDisplay
                           amount={portfolio.aggregates.netWorth}
                           currency={portfolio.currency}
+                          animate
                         />
                       </span>
                     </div>
