@@ -23,8 +23,17 @@ import {
   weiToEthString,
   isStablecoinContract,
 } from "@/lib/eth";
+import {
+  isValidSolAddress,
+  normalizeSolAddress,
+  defaultSolWalletName,
+  truncateSolQuantity,
+  lamportsToSolString,
+  isStablecoinMint,
+} from "@/lib/sol";
 import { getBtcBalance, BlockstreamError } from "@/lib/providers/blockstream";
 import { getEthBalance, EtherscanError, isEtherscanConfigured } from "@/lib/providers/etherscan";
+import { getSolBalance, HeliusError, isHeliusConfigured } from "@/lib/providers/helius";
 import { getCoinGeckoBatchPrices, getCoinGeckoTokenPrice } from "@/lib/providers/coingecko";
 
 export async function POST(
@@ -62,9 +71,9 @@ export async function POST(
       const chain = config.chain;
       const address = typeof config.address === "string" ? config.address.trim() : "";
 
-      if (chain !== "btc" && chain !== "eth") {
+      if (chain !== "btc" && chain !== "eth" && chain !== "sol") {
         return errorResponse(
-          "Unsupported wallet chain. Supported: btc, eth",
+          "Unsupported wallet chain. Supported: btc, eth, sol",
           400
         );
       }
@@ -163,6 +172,102 @@ export async function POST(
               ethBalance: ethQty,
               ethPriceUsd: ethUsdPrice,
               tokens: topTokens,
+              totalUsd,
+              lastSync: new Date().toISOString(),
+            },
+            ownershipPct: body.ownershipPct ?? "100",
+            notes: body.notes,
+            sortOrder: body.sortOrder ?? 0,
+            lastSyncedAt: new Date(),
+          })
+          .returning();
+
+        return jsonResponse(asset, 201);
+      }
+
+      // ── SOL wallet ──
+      if (chain === "sol") {
+        if (!isValidSolAddress(address)) {
+          return errorResponse(
+            "Invalid SOL address. Use a base58-encoded Solana public key (32-44 characters).",
+            400
+          );
+        }
+        if (!isHeliusConfigured()) {
+          return errorResponse(
+            "Helius API key is not configured. Set HELIUS_API_KEY in your .env file.",
+            503
+          );
+        }
+        const normalized = normalizeSolAddress(address);
+
+        let info;
+        try {
+          info = await getSolBalance(normalized, { skipCache: true });
+        } catch (err) {
+          if (err instanceof HeliusError) {
+            return errorResponse(
+              `Could not fetch SOL balance: ${err.message}`,
+              502
+            );
+          }
+          throw err;
+        }
+
+        // Helius DAS pre-prices SOL and most tokens. Use their price if
+        // available, otherwise fall back to CoinGecko for the SOL/USD rate.
+        let solUsdPrice = info.solPriceUsd;
+        if (solUsdPrice == null) {
+          try {
+            const prices = await getCoinGeckoBatchPrices(["solana"], "USD");
+            solUsdPrice = prices.get("solana")?.price ?? null;
+          } catch {
+            // Soft-fail
+          }
+        }
+
+        // Build token list with stablecoin detection
+        const tokenList = info.tokens.map((t) => ({
+          symbol: t.symbol,
+          name: t.name,
+          mint: t.mint,
+          decimals: t.decimals,
+          balance: t.formattedBalance,
+          priceUsd: t.priceUsd,
+          valueUsd: t.valueUsd,
+          isStablecoin: isStablecoinMint(t.mint),
+        }));
+
+        const solValueUsd =
+          solUsdPrice != null ? info.solBalanceFormatted * solUsdPrice : info.solValueUsd;
+        const tokenValueUsd = tokenList.reduce((sum, t) => sum + t.valueUsd, 0);
+        const totalUsd = solValueUsd + tokenValueUsd;
+
+        const solQty = truncateSolQuantity(lamportsToSolString(info.solBalanceLamports));
+        const walletName = body.name?.trim() || defaultSolWalletName(normalized);
+
+        const [asset] = await db
+          .insert(assets)
+          .values({
+            sectionId: body.sectionId,
+            name: walletName,
+            type: "crypto",
+            currency: "USD",
+            quantity: solQty,
+            currentValue: totalUsd.toFixed(2),
+            currentPrice: solUsdPrice != null ? solUsdPrice.toFixed(8) : null,
+            isInvestable: body.isInvestable ?? true,
+            isCashEquivalent: false,
+            providerType: "wallet",
+            providerConfig: {
+              chain: "sol",
+              address: normalized,
+              source: "helius",
+            },
+            metadata: {
+              solBalance: solQty,
+              solPriceUsd: solUsdPrice,
+              tokens: tokenList,
               totalUsd,
               lastSync: new Date().toISOString(),
             },

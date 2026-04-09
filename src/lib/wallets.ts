@@ -3,9 +3,11 @@ import { assets } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getBtcBalanceBatch } from "@/lib/providers/blockstream";
 import { getEthBalanceBatch, isEtherscanConfigured } from "@/lib/providers/etherscan";
+import { getSolBalanceBatch, isHeliusConfigured } from "@/lib/providers/helius";
 import { getCoinGeckoBatchPrices, getCoinGeckoTokenPrice } from "@/lib/providers/coingecko";
 import { computeCurrentValueUsd } from "@/lib/btc";
 import { truncateEthQuantity, weiToEthString, isStablecoinContract } from "@/lib/eth";
+import { truncateSolQuantity, lamportsToSolString, isStablecoinMint } from "@/lib/sol";
 
 /**
  * Refresh on-chain balances for every active BTC wallet asset.
@@ -296,5 +298,161 @@ export async function refreshEthWallets(
     updated,
     failed,
     priceAvailable: ethUsdPrice != null,
+  };
+}
+
+// ── SOL wallet refresh ──
+
+export interface SolWalletRefreshSummary {
+  totalWallets: number;
+  updated: number;
+  failed: number;
+  priceAvailable: boolean;
+}
+
+/**
+ * Refresh on-chain balances for every active SOL wallet asset.
+ *
+ * Strategy:
+ * 1. Pull every active `providerType=wallet, chain=sol` row.
+ * 2. Hit Helius DAS for each address (SOL + SPL tokens in one call).
+ * 3. Helius pre-prices most tokens. Fall back to CoinGecko for SOL/USD
+ *    if Helius doesn't include it.
+ * 4. Write new quantity + token metadata + total value to the asset row.
+ */
+export async function refreshSolWallets(
+  opts: { assetId?: string } = {}
+): Promise<SolWalletRefreshSummary> {
+  if (!isHeliusConfigured()) {
+    return { totalWallets: 0, updated: 0, failed: 0, priceAvailable: false };
+  }
+
+  const ts = new Date().toISOString();
+
+  const whereClauses = [
+    eq(assets.providerType, "wallet"),
+    eq(assets.isArchived, false),
+    sql`${assets.providerConfig}->>'chain' = 'sol'`,
+  ];
+  if (opts.assetId) {
+    whereClauses.push(eq(assets.id, opts.assetId));
+  }
+
+  const wallets = await db
+    .select()
+    .from(assets)
+    .where(and(...whereClauses));
+
+  if (wallets.length === 0) {
+    return { totalWallets: 0, updated: 0, failed: 0, priceAvailable: false };
+  }
+
+  const addresses = [
+    ...new Set(
+      wallets
+        .map((w) => {
+          const cfg = w.providerConfig as { address?: string } | null;
+          return cfg?.address ?? null;
+        })
+        .filter((a): a is string => typeof a === "string" && a.length > 0)
+    ),
+  ];
+
+  const balanceMap = await getSolBalanceBatch(addresses, {
+    skipCache: true,
+    onError: (address, err) =>
+      console.warn(
+        `[wallets] ${ts} SOL balance fetch failed for ${address}: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      ),
+  });
+
+  // SOL/USD price — prefer Helius DAS price, fall back to CoinGecko.
+  let solUsdPrice: number | null = null;
+  const firstResult = balanceMap.values().next().value;
+  if (firstResult?.solPriceUsd != null) {
+    solUsdPrice = firstResult.solPriceUsd;
+  } else {
+    try {
+      const prices = await getCoinGeckoBatchPrices(["solana"], "USD");
+      solUsdPrice = prices.get("solana")?.price ?? null;
+    } catch (err) {
+      console.warn(
+        `[wallets] ${ts} SOL price fetch failed; skipping price update:`,
+        err
+      );
+    }
+  }
+
+  const now = new Date();
+  let updated = 0;
+  let failed = 0;
+
+  for (const wallet of wallets) {
+    const cfg = wallet.providerConfig as { address?: string } | null;
+    const address = cfg?.address;
+    if (!address) {
+      failed++;
+      continue;
+    }
+    const info = balanceMap.get(address);
+    if (!info) {
+      failed++;
+      continue;
+    }
+
+    try {
+      const tokenList = info.tokens.map((t) => ({
+        symbol: t.symbol,
+        name: t.name,
+        mint: t.mint,
+        decimals: t.decimals,
+        balance: t.formattedBalance,
+        priceUsd: t.priceUsd,
+        valueUsd: t.valueUsd,
+        isStablecoin: isStablecoinMint(t.mint),
+      }));
+
+      const solValueUsd =
+        solUsdPrice != null
+          ? info.solBalanceFormatted * solUsdPrice
+          : info.solValueUsd;
+      const tokenValueUsd = tokenList.reduce((sum, t) => sum + t.valueUsd, 0);
+      const totalUsd = solValueUsd + tokenValueUsd;
+
+      const solQty = truncateSolQuantity(lamportsToSolString(info.solBalanceLamports));
+
+      const patch: Partial<typeof assets.$inferInsert> = {
+        quantity: solQty,
+        currentValue: totalUsd.toFixed(2),
+        metadata: {
+          ...(wallet.metadata as Record<string, unknown> | null),
+          solBalance: solQty,
+          solPriceUsd: solUsdPrice,
+          tokens: tokenList,
+          totalUsd,
+          lastSync: now.toISOString(),
+        },
+        lastSyncedAt: now,
+        updatedAt: now,
+      };
+      if (solUsdPrice != null) {
+        patch.currentPrice = solUsdPrice.toFixed(8);
+      }
+
+      await db.update(assets).set(patch).where(eq(assets.id, wallet.id));
+      updated++;
+    } catch (err) {
+      console.error(`[wallets] ${ts} SOL wallet ${wallet.id} refresh failed:`, err);
+      failed++;
+    }
+  }
+
+  return {
+    totalWallets: wallets.length,
+    updated,
+    failed,
+    priceAvailable: solUsdPrice != null,
   };
 }

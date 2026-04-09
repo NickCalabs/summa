@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { redactBtcAddress } from "@/lib/btc";
 import { redactEthAddress } from "@/lib/eth";
+import { redactSolAddress } from "@/lib/sol";
 import { copyText } from "@/lib/copy-text";
 import { useWalletRefresh } from "@/hooks/use-wallet-refresh";
 import type { Asset } from "@/hooks/use-portfolio";
@@ -19,6 +20,7 @@ const SOURCE_LABELS: Record<string, string> = {
   blockstream: "Blockstream",
   "mempool.space": "Mempool.space",
   etherscan: "Etherscan",
+  helius: "Helius",
 };
 
 interface TokenInfo {
@@ -40,29 +42,40 @@ export function WalletInfoCard({ asset, portfolioId }: WalletInfoCardProps) {
   const [copied, setCopied] = useState(false);
 
   const chain = config.chain;
-  if ((chain !== "btc" && chain !== "eth") || !config.address) return null;
+  if ((chain !== "btc" && chain !== "eth" && chain !== "sol") || !config.address) return null;
 
   const address = config.address;
-  const source = config.source ?? (chain === "eth" ? "etherscan" : "blockstream");
+  const source =
+    config.source ??
+    (chain === "sol" ? "helius" : chain === "eth" ? "etherscan" : "blockstream");
   const sourceLabel = SOURCE_LABELS[source] ?? source;
 
   const explorerUrl =
-    chain === "eth"
-      ? `https://etherscan.io/address/${encodeURIComponent(address)}`
-      : `https://mempool.space/address/${encodeURIComponent(address)}`;
+    chain === "sol"
+      ? `https://solscan.io/account/${encodeURIComponent(address)}`
+      : chain === "eth"
+        ? `https://etherscan.io/address/${encodeURIComponent(address)}`
+        : `https://mempool.space/address/${encodeURIComponent(address)}`;
 
   const redacted =
-    chain === "eth" ? redactEthAddress(address) : redactBtcAddress(address);
+    chain === "sol"
+      ? redactSolAddress(address)
+      : chain === "eth"
+        ? redactEthAddress(address)
+        : redactBtcAddress(address);
 
-  const chainLabel = chain === "eth" ? "ETH Wallet" : "BTC Wallet";
+  const chainLabel =
+    chain === "sol" ? "SOL Wallet" : chain === "eth" ? "ETH Wallet" : "BTC Wallet";
 
-  // Token list from metadata (ETH wallets only, Option A flat structure)
+  // Token list from metadata (ETH + SOL wallets, Option A flat structure)
   const metadata = (asset.metadata ?? {}) as {
     tokens?: TokenInfo[];
     ethBalance?: string;
     ethPriceUsd?: number;
+    solBalance?: string;
+    solPriceUsd?: number;
   };
-  const tokens = chain === "eth" ? (metadata.tokens ?? []) : [];
+  const tokens = chain === "eth" || chain === "sol" ? (metadata.tokens ?? []) : [];
 
   async function handleCopy() {
     const ok = await copyText(address);
@@ -150,7 +163,26 @@ export function WalletInfoCard({ asset, portfolioId }: WalletInfoCardProps) {
         </div>
       )}
 
-      {/* Token breakdown list (ETH wallets only) */}
+      {/* SOL balance line (SOL wallets only) */}
+      {chain === "sol" && metadata.solBalance && (
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">SOL Balance</p>
+          <p className="text-sm font-medium tabular-nums">
+            {Number(metadata.solBalance).toLocaleString(undefined, {
+              minimumFractionDigits: 4,
+              maximumFractionDigits: 8,
+            })}{" "}
+            SOL
+            {metadata.solPriceUsd != null && (
+              <span className="text-xs text-muted-foreground ml-2">
+                @ ${metadata.solPriceUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Token breakdown list (ETH + SOL wallets) */}
       {tokens.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
