@@ -196,6 +196,37 @@ export const csvImportConfirm = z.object({
   rows: z.array(z.record(z.string(), z.string())),
 });
 
+// ── Kubera import ──
+
+export const kuberaImportAction = z.object({
+  kuberaId: z.string(),
+  action: z.enum(["create", "match", "skip"]),
+  summaAssetId: z.string().uuid().optional(),
+  name: z.string(),
+  category: z.enum(["asset", "debt"]),
+  sheetName: z.string(),
+  sectionName: z.string(),
+  value: z.number(),
+  currency: z.string().default("USD"),
+  ticker: z.string().nullable(),
+  quantity: z.number().nullable(),
+  price: z.number().nullable(),
+  ownership: z.number().min(0).max(100).default(100),
+  costBasis: z.number().nullable(),
+  isInvestable: z.boolean().default(true),
+  isCashEquivalent: z.boolean().default(false),
+  assetType: z.string().default("other"),
+  providerType: z.enum(["manual", "ticker"]).default("manual"),
+  purchaseDate: z.string().nullable(),
+  notes: z.string().nullable(),
+});
+
+export const kuberaImportRequest = z.object({
+  exportDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  portfolioId: z.string().uuid(),
+  actions: z.array(kuberaImportAction).min(1, "At least one account required"),
+});
+
 // ── Parse helper ──
 
 export async function parseBody<T>(
