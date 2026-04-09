@@ -53,20 +53,26 @@ The running prioritized list. Survives sessions; not chat.
 
 ---
 
-## v0.2 — Crypto & wallet tracking (planning)
+## v0.2 — Crypto & wallet tracking
 
-The schema is already prepared (`providerType="wallet"` + `walletAddress` in `providerConfig`). No migrations needed for the basics.
+The schema is already prepared (`providerType="wallet"` with `chain` + `address` in `providerConfig`). No migrations needed for the basics.
 
-| # | Item | Spec / handoff |
-|---|------|----------------|
-| 1 | BTC watch-only address support (Blockstream + Mempool.space) | `docs/handoffs/v0.2-btc.md` (TBD) |
-| 2 | ETH + ERC-20 token detection (Etherscan) | `docs/handoffs/v0.2-eth.md` (TBD) |
-| 3 | SOL + SPL token detection (Helius) | `docs/handoffs/v0.2-sol.md` (TBD) |
-| 4 | Stablecoin → cash-equivalent auto-classification | Subtask of #1–3 |
-| 5 | Provider settings page + connection health | `docs/handoffs/v0.2-provider-settings.md` (TBD) |
-| 6 | Holdings expansion (click wallet → see tokens inline) | After #1–3 |
-| 7 | Multi-chain DeFi positions (Zerion) | After #5 |
-| 8 | Exchange API connections (Coinbase / Kraken / Gemini, read-only API key) | After #5 |
+| # | Item | Status | Spec / handoff |
+|---|------|--------|----------------|
+| 1 | BTC watch-only address support (Blockstream + Mempool.space) | ✅ done | `docs/handoffs/v0.2-btc.md` |
+| 2 | ETH + ERC-20 token detection (Etherscan) | ⬜ next | `docs/handoffs/v0.2-eth.md` |
+| 3 | SOL + SPL token detection (Helius) | ⬜ | `docs/handoffs/v0.2-sol.md` |
+| 4 | Stablecoin → cash-equivalent auto-classification | ⬜ | Subtask of #1–3 |
+| 5 | Provider settings page + connection health | ⬜ | `docs/handoffs/v0.2-provider-settings.md` |
+| 6 | Holdings expansion (click wallet → see tokens inline) | ⬜ | After #1–3 |
+| 7 | Multi-chain DeFi positions (Zerion) | ⬜ | After #5 |
+| 8 | Exchange API connections (Coinbase / Kraken / Gemini, read-only API key) | ⬜ | After #5 |
+
+### v0.2 follow-ups
+
+| Item | Notes |
+|------|-------|
+| xpub / ypub / zpub support | Extended public keys for HD wallets. Deferred from chunk #1 — the BTC chunk ships single-address watch-only only. A separate PR will add xpub derivation (gap-limit-based address scan via Blockstream) so users can track whole HD wallets from one ext-key paste. |
 
 These will be executed as separate sessions with handoff prompts. Each chunk = one PR.
 

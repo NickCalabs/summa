@@ -86,7 +86,23 @@ export function useCreateAsset(portfolioId: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create asset");
+      if (!res.ok) {
+        // Try to surface the specific API error message (e.g. "Invalid BTC
+        // address", "Could not fetch BTC balance: …") so downstream
+        // components can show it inline instead of a generic "Failed to
+        // create asset". Fall back to the generic message if the body
+        // isn't JSON or doesn't include one.
+        let message = "Failed to create asset";
+        try {
+          const body = await res.json();
+          if (typeof body?.error === "string" && body.error.length > 0) {
+            message = body.error;
+          }
+        } catch {
+          // Non-JSON response — stick with the generic message.
+        }
+        throw new Error(message);
+      }
       return res.json();
     },
     onMutate: async (data) => {
@@ -127,9 +143,11 @@ export function useCreateAsset(portfolioId: string) {
       );
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
-      toast.error("Failed to create asset");
+      toast.error(
+        err instanceof Error && err.message ? err.message : "Failed to create asset"
+      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: key });

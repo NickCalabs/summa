@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
+import { WalletInfoCard } from "@/components/portfolio/wallet-info-card";
 import { usePortfolio, type Asset, type Portfolio } from "@/hooks/use-portfolio";
 import { useUpdateAsset } from "@/hooks/use-assets";
 import {
@@ -263,7 +264,11 @@ export function AccountDetailView({
         ) : resolvedDetailKind === "brokerage" ? (
           <>
             <TabsContent value="holdings">
-              <BrokerageHoldingsTab asset={asset} analytics={analytics} />
+              <BrokerageHoldingsTab
+                asset={asset}
+                analytics={analytics}
+                portfolioId={portfolioId}
+              />
             </TabsContent>
             <TabsContent value="value">
               <BrokerageValueTab
@@ -537,12 +542,23 @@ function ValueTab({
 function BrokerageHoldingsTab({
   asset,
   analytics,
+  portfolioId,
 }: {
   asset: AccountAsset;
   analytics: BrokerageAnalytics;
+  portfolioId: string;
 }) {
+  const walletConfig = asset.providerConfig as
+    | { chain?: string; address?: string }
+    | null;
+  const isBtcWallet =
+    asset.providerType === "wallet" && walletConfig?.chain === "btc";
+
   return (
     <div className="space-y-6">
+      {isBtcWallet && (
+        <WalletInfoCard asset={asset} portfolioId={portfolioId} />
+      )}
       <div className="grid gap-4 md:grid-cols-3">
         <MetricSurface
           label="Quantity"
