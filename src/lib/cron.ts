@@ -8,7 +8,7 @@ import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
 import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
-import { refreshBtcWallets, refreshEthWallets } from "@/lib/wallets";
+import { refreshBtcWallets, refreshEthWallets, refreshSolWallets } from "@/lib/wallets";
 
 let started = false;
 
@@ -20,6 +20,7 @@ const running = {
   snapshots: false,
   btcWallets: false,
   ethWallets: false,
+  solWallets: false,
 };
 
 // Maximum backoff: 7 days in ms
@@ -399,6 +400,28 @@ export function startCronJobs() {
       )
       .finally(() => {
         running.ethWallets = false;
+      });
+  });
+
+  // Every 30 minutes — refresh SOL watch-only wallets via Helius DAS.
+  // Same cadence as BTC/ETH. Helius returns prices inline, so the main
+  // cost per cycle is just the DAS call per wallet.
+  cron.schedule("*/30 * * * *", () => {
+    if (running.solWallets) return;
+    running.solWallets = true;
+    const ts = new Date().toISOString();
+    refreshSolWallets()
+      .then((summary) => {
+        if (summary.totalWallets === 0) return;
+        console.log(
+          `[cron] ${ts} SOL wallet refresh: ${summary.updated}/${summary.totalWallets} updated, ${summary.failed} failed${summary.priceAvailable ? "" : " (price unavailable)"}`
+        );
+      })
+      .catch((err) =>
+        console.error("[cron] Unhandled error in refreshSolWallets:", err)
+      )
+      .finally(() => {
+        running.solWallets = false;
       });
   });
 
