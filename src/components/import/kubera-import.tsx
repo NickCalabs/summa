@@ -47,24 +47,29 @@ export function KuberaImport({ portfolioId, existingAssets, existingSheetNames, 
 
   const importMutation = useKuberaImport();
 
+  const processJson = useCallback(
+    (raw: string) => {
+      setError(null);
+      try {
+        const result = parseKuberaJson(raw);
+        const matched = autoMatch(result, existingAssets);
+        setParsed(matched);
+        setStep("review");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to parse JSON");
+      }
+    },
+    [existingAssets]
+  );
+
   const handleFile = useCallback(
     (file: File) => {
       setError(null);
       const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const raw = e.target?.result as string;
-          const result = parseKuberaJson(raw);
-          const matched = autoMatch(result, existingAssets);
-          setParsed(matched);
-          setStep("review");
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Failed to parse file");
-        }
-      };
+      reader.onload = (e) => processJson(e.target?.result as string);
       reader.readAsText(file);
     },
-    [existingAssets]
+    [processJson]
   );
 
   const handleActionChange = useCallback(
@@ -164,23 +169,62 @@ export function KuberaImport({ portfolioId, existingAssets, existingSheetNames, 
       </div>
 
       {step === "upload" && (
-        <div className="border-2 border-dashed rounded-lg p-12 text-center space-y-4">
-          <UploadIcon className="size-10 mx-auto text-muted-foreground" />
-          <div>
-            <p className="font-medium">Drop your Kubera JSON file here</p>
-            <p className="text-sm text-muted-foreground">
-              Export from Kubera, then upload the .json file
-            </p>
+        <div className="space-y-6">
+          <div className="border-2 border-dashed rounded-lg p-8 text-center space-y-4">
+            <UploadIcon className="size-10 mx-auto text-muted-foreground" />
+            <div>
+              <p className="font-medium">Upload a Kubera JSON file</p>
+              <p className="text-sm text-muted-foreground">
+                Export from Kubera, then upload the .json file
+              </p>
+            </div>
+            <Input
+              type="file"
+              accept=".json"
+              className="max-w-xs mx-auto"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
+            />
           </div>
-          <Input
-            type="file"
-            accept=".json"
-            className="max-w-xs mx-auto"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFile(file);
-            }}
-          />
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">or paste JSON</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <textarea
+              className="w-full h-40 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground"
+              placeholder='Paste your Kubera JSON here... (starts with {"asset":[...]})'
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  const val = (e.target as HTMLTextAreaElement).value.trim();
+                  if (val) processJson(val);
+                }
+              }}
+            />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Press Cmd+Enter to import</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const textarea = document.querySelector("textarea");
+                  const val = textarea?.value.trim();
+                  if (val) processJson(val);
+                }}
+              >
+                Parse JSON
+              </Button>
+            </div>
+          </div>
+
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}

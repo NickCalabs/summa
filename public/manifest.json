@@ -1,0 +1,16 @@
+{
+  "name": "Summa",
+  "short_name": "Summa",
+  "description": "Self-hosted net worth tracker",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -19,6 +21,44 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   const user = session.data?.user;
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwStatus, setPwStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [pwLoading, setPwLoading] = useState(false);
+
+  async function handleChangePassword() {
+    setPwStatus(null);
+    if (newPassword !== confirmPassword) {
+      setPwStatus({ type: "error", message: "New passwords don't match." });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPwStatus({ type: "error", message: "Password must be at least 8 characters." });
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const res = await authClient.changePassword({
+        currentPassword,
+        newPassword,
+        revokeOtherSessions: true,
+      });
+      if (res.error) {
+        setPwStatus({ type: "error", message: res.error.message ?? "Failed to change password." });
+      } else {
+        setPwStatus({ type: "success", message: "Password changed." });
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch {
+      setPwStatus({ type: "error", message: "Failed to change password." });
+    } finally {
+      setPwLoading(false);
+    }
+  }
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -55,6 +95,45 @@ export default function SettingsPage() {
             </p>
             <p className="text-sm">{user?.email ?? "—"}</p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Change Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+          <CardDescription>Update your account password.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input
+            type="password"
+            placeholder="Current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <Input
+            type="password"
+            placeholder="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <Input
+            type="password"
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          {pwStatus && (
+            <p className={`text-sm ${pwStatus.type === "error" ? "text-destructive" : "text-green-600"}`}>
+              {pwStatus.message}
+            </p>
+          )}
+          <Button
+            onClick={handleChangePassword}
+            disabled={pwLoading || !currentPassword || !newPassword || !confirmPassword}
+          >
+            {pwLoading ? "Changing..." : "Change password"}
+          </Button>
         </CardContent>
       </Card>
 
