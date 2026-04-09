@@ -74,6 +74,52 @@ export const coingeckoProvider: PriceProvider = {
   },
 };
 
+/**
+ * Fetch USD price for an ERC-20 token by its Ethereum mainnet contract
+ * address. Uses the /coins/ethereum/contract/{address} endpoint.
+ *
+ * Returns the USD price, or null if CoinGecko doesn't have the token
+ * (404). Callers should treat null as "price unknown, value = 0" rather
+ * than an error.
+ *
+ * Aggressively cached (10 min TTL) because token prices don't need to
+ * refresh every cron cycle and the free tier only allows 30 req/min.
+ */
+const TOKEN_PRICE_TTL = 10 * 60 * 1000; // 10 minutes
+
+export async function getCoinGeckoTokenPrice(
+  contractAddress: string
+): Promise<number | null> {
+  const normalized = contractAddress.trim().toLowerCase();
+  const cacheKey = `token:${normalized}`;
+
+  const cached = cache.get(cacheKey) as number | null | undefined;
+  if (cached !== undefined) return cached;
+
+  try {
+    const data = await cgFetch<{
+      market_data?: {
+        current_price?: { usd?: number };
+      };
+    }>(`/coins/ethereum/contract/${encodeURIComponent(normalized)}`);
+
+    const price = data?.market_data?.current_price?.usd ?? null;
+    cache.set(cacheKey, price, TOKEN_PRICE_TTL);
+    return price;
+  } catch (err) {
+    // 404 = CoinGecko doesn't track this token. Cache the null so we
+    // don't re-query on every cron tick.
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("404")) {
+      cache.set(cacheKey, null, TOKEN_PRICE_TTL);
+      return null;
+    }
+    // Real errors (rate limit, network) — don't cache, throw so the
+    // caller can decide what to do.
+    throw err;
+  }
+}
+
 export async function getCoinGeckoBatchPrices(
   coinIds: string[],
   currency: string

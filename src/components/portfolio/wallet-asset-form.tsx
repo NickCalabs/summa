@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useCreateAsset } from "@/hooks/use-assets";
 import { isValidBtcAddress, defaultBtcWalletName } from "@/lib/btc";
+import { isValidEthAddress, defaultEthWalletName } from "@/lib/eth";
 import type { Section } from "@/hooks/use-portfolio";
 
 interface WalletAssetFormProps {
@@ -27,7 +28,7 @@ interface WalletAssetFormProps {
 // dropdown in place so it's obvious how the surface extends.
 const CHAIN_OPTIONS = [
   { id: "btc", label: "Bitcoin (BTC)", enabled: true },
-  { id: "eth", label: "Ethereum (ETH) — coming soon", enabled: false },
+  { id: "eth", label: "Ethereum (ETH)", enabled: true },
   { id: "sol", label: "Solana (SOL) — coming soon", enabled: false },
 ] as const;
 
@@ -51,19 +52,25 @@ export function WalletAssetForm({
     e.preventDefault();
     setError("");
     const trimmedAddress = address.trim();
-    if (chain !== "btc") {
-      setError("Only BTC wallets are supported in this release.");
-      return;
-    }
-    if (!isValidBtcAddress(trimmedAddress)) {
+    if (chain === "btc" && !isValidBtcAddress(trimmedAddress)) {
       setError(
         "That doesn't look like a BTC address. Use a mainnet address starting with bc1, 1, or 3."
       );
       return;
     }
+    if (chain === "eth" && !isValidEthAddress(trimmedAddress)) {
+      setError(
+        "That doesn't look like an ETH address. Use a 0x-prefixed 40-character hex address."
+      );
+      return;
+    }
     if (!sectionId) return;
 
-    const walletName = name.trim() || defaultBtcWalletName(trimmedAddress);
+    const walletName =
+      name.trim() ||
+      (chain === "eth"
+        ? defaultEthWalletName(trimmedAddress)
+        : defaultBtcWalletName(trimmedAddress));
 
     createAsset.mutate(
       {
@@ -126,7 +133,7 @@ export function WalletAssetForm({
       <div className="space-y-2">
         <label className="text-sm font-medium">Address</label>
         <Input
-          placeholder="bc1q..."
+          placeholder={chain === "eth" ? "0x..." : "bc1q..."}
           value={address}
           onChange={(e) => {
             setAddress(e.target.value);
@@ -145,9 +152,13 @@ export function WalletAssetForm({
         <label className="text-sm font-medium">Name (optional)</label>
         <Input
           placeholder={
-            address && isValidBtcAddress(address.trim())
-              ? defaultBtcWalletName(address.trim())
-              : "BTC Wallet"
+            chain === "eth"
+              ? address && isValidEthAddress(address.trim())
+                ? defaultEthWalletName(address.trim())
+                : "ETH Wallet"
+              : address && isValidBtcAddress(address.trim())
+                ? defaultBtcWalletName(address.trim())
+                : "BTC Wallet"
           }
           value={name}
           onChange={(e) => setName(e.target.value)}

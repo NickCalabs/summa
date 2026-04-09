@@ -9,7 +9,7 @@ import {
 import { db } from "@/lib/db";
 import { assets } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { refreshBtcWallets } from "@/lib/wallets";
+import { refreshBtcWallets, refreshEthWallets } from "@/lib/wallets";
 
 /**
  * POST /api/assets/:id/refresh
@@ -35,14 +35,16 @@ export async function POST(
       return errorResponse("Asset is not a wallet", 400);
     }
     const cfg = asset.providerConfig as { chain?: string } | null;
-    if (cfg?.chain !== "btc") {
+    if (cfg?.chain !== "btc" && cfg?.chain !== "eth") {
       return errorResponse(
-        "Only BTC wallets are supported in this release",
+        "Unsupported wallet chain for refresh",
         400
       );
     }
 
-    const summary = await refreshBtcWallets({ assetId: id });
+    const summary = cfg.chain === "eth"
+      ? await refreshEthWallets({ assetId: id })
+      : await refreshBtcWallets({ assetId: id });
 
     // Return the refreshed asset row so the client can update its cache
     // without a second fetch.

@@ -60,7 +60,7 @@ The schema is already prepared (`providerType="wallet"` with `chain` + `address`
 | # | Item | Status | Spec / handoff |
 |---|------|--------|----------------|
 | 1 | BTC watch-only address support (Blockstream + Mempool.space) | ✅ done | `docs/handoffs/v0.2-btc.md` |
-| 2 | ETH + ERC-20 token detection (Etherscan) | ⬜ next | `docs/handoffs/v0.2-eth.md` |
+| 2 | ETH + ERC-20 token detection (Etherscan) | ✅ done | `docs/handoffs/v0.2-eth.md` |
 | 3 | SOL + SPL token detection (Helius) | ⬜ | `docs/handoffs/v0.2-sol.md` |
 | 4 | Stablecoin → cash-equivalent auto-classification | ⬜ | Subtask of #1–3 |
 | 5 | Provider settings page + connection health | ⬜ | `docs/handoffs/v0.2-provider-settings.md` |

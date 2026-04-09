@@ -8,7 +8,7 @@ import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
 import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
-import { refreshBtcWallets } from "@/lib/wallets";
+import { refreshBtcWallets, refreshEthWallets } from "@/lib/wallets";
 
 let started = false;
 
@@ -19,6 +19,7 @@ const running = {
   plaid: false,
   snapshots: false,
   btcWallets: false,
+  ethWallets: false,
 };
 
 // Maximum backoff: 7 days in ms
@@ -376,6 +377,28 @@ export function startCronJobs() {
       )
       .finally(() => {
         running.btcWallets = false;
+      });
+  });
+
+  // Every 30 minutes — refresh ETH watch-only wallets via Etherscan.
+  // Same cadence as BTC. Token prices are aggressively cached by CoinGecko,
+  // so the main cost per cycle is the Etherscan balance/tokentx calls.
+  cron.schedule("*/30 * * * *", () => {
+    if (running.ethWallets) return;
+    running.ethWallets = true;
+    const ts = new Date().toISOString();
+    refreshEthWallets()
+      .then((summary) => {
+        if (summary.totalWallets === 0) return;
+        console.log(
+          `[cron] ${ts} ETH wallet refresh: ${summary.updated}/${summary.totalWallets} updated, ${summary.failed} failed${summary.priceAvailable ? "" : " (price unavailable)"}`
+        );
+      })
+      .catch((err) =>
+        console.error("[cron] Unhandled error in refreshEthWallets:", err)
+      )
+      .finally(() => {
+        running.ethWallets = false;
       });
   });
 

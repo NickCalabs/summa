@@ -551,12 +551,13 @@ function BrokerageHoldingsTab({
   const walletConfig = asset.providerConfig as
     | { chain?: string; address?: string }
     | null;
-  const isBtcWallet =
-    asset.providerType === "wallet" && walletConfig?.chain === "btc";
+  const isWallet =
+    asset.providerType === "wallet" &&
+    (walletConfig?.chain === "btc" || walletConfig?.chain === "eth");
 
   return (
     <div className="space-y-6">
-      {isBtcWallet && (
+      {isWallet && (
         <WalletInfoCard asset={asset} portfolioId={portfolioId} />
       )}
       <div className="grid gap-4 md:grid-cols-3">
