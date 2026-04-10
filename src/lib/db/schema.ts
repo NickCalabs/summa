@@ -170,6 +170,9 @@ export const assets = pgTable("assets", {
       // v0.2 wallet fields
       chain?: "btc" | "eth" | "sol";
       address?: string;
+      // v0.3 holdings expansion — SimpleFIN group parents
+      isGroupParent?: boolean;
+      institutionName?: string;
     }>()
     .default({}),
   ownershipPct: numeric("ownership_pct", { precision: 5, scale: 2 })

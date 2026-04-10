@@ -4,7 +4,7 @@ import {
   simplefinAccounts,
   simplefinConnections,
 } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import {
   errorResponse,
   handleError,
@@ -111,6 +111,103 @@ export async function POST(
         .where(eq(simplefinAccounts.id, account.id));
 
       created.push(asset.id);
+    }
+
+    // ── Auto-group multi-account institutions ──
+    if (created.length > 0) {
+      // Fetch all tracked accounts for this connection with their assets
+      const allTracked = await db
+        .select({
+          institutionName: simplefinAccounts.institutionName,
+          assetId: simplefinAccounts.assetId,
+          balance: simplefinAccounts.balance,
+        })
+        .from(simplefinAccounts)
+        .where(
+          and(
+            eq(simplefinAccounts.connectionId, id),
+            eq(simplefinAccounts.isTracked, true)
+          )
+        );
+
+      const allAssetIds = allTracked
+        .map((r) => r.assetId)
+        .filter((aid): aid is string => !!aid);
+
+      if (allAssetIds.length > 0) {
+        const assetRows = await db
+          .select()
+          .from(assets)
+          .where(inArray(assets.id, allAssetIds));
+
+        const assetById = new Map(assetRows.map((a) => [a.id, a]));
+
+        // Group by institution
+        const byInstitution = new Map<
+          string,
+          { assetId: string; balance: string | null; asset: (typeof assetRows)[number] }[]
+        >();
+        for (const row of allTracked) {
+          const asset = row.assetId ? assetById.get(row.assetId) : null;
+          if (!asset) continue;
+          const inst = row.institutionName ?? "Unknown";
+          const list = byInstitution.get(inst) ?? [];
+          list.push({ assetId: row.assetId!, balance: row.balance, asset });
+          byInstitution.set(inst, list);
+        }
+
+        for (const [institutionName, group] of byInstitution) {
+          if (group.length < 2) continue;
+
+          // Find existing parent or create one
+          const childWithParent = group.find((g) => g.asset.parentAssetId);
+          let parentId: string;
+
+          if (childWithParent) {
+            parentId = childWithParent.asset.parentAssetId!;
+          } else {
+            const firstChild = group[0].asset;
+            const [parent] = await db
+              .insert(assets)
+              .values({
+                sectionId: firstChild.sectionId,
+                name: institutionName,
+                type: firstChild.type,
+                currency: firstChild.currency,
+                currentValue: "0",
+                providerType: "simplefin",
+                providerConfig: {
+                  isGroupParent: true,
+                  institutionName,
+                  connectionId: id,
+                },
+                lastSyncedAt: new Date(),
+              })
+              .returning();
+            parentId = parent.id;
+          }
+
+          // Set parentAssetId on children + archive zero-balance
+          for (const { assetId, balance, asset } of group) {
+            const isZero = !balance || Number(balance) === 0;
+            const updates: Record<string, unknown> = {};
+
+            if (asset.parentAssetId !== parentId) {
+              updates.parentAssetId = parentId;
+            }
+            if (isZero) {
+              updates.isArchived = true;
+            }
+
+            if (Object.keys(updates).length > 0) {
+              await db
+                .update(assets)
+                .set({ ...updates, updatedAt: new Date() })
+                .where(eq(assets.id, assetId));
+            }
+          }
+        }
+      }
     }
 
     return jsonResponse({ created });
