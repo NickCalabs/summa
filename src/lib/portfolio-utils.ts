@@ -375,8 +375,11 @@ export function findAssetInTree(
 ): Asset | undefined {
   for (const sheet of portfolio.sheets) {
     for (const section of sheet.sections) {
-      const asset = section.assets.find((a) => a.id === assetId);
-      if (asset) return asset;
+      for (const asset of section.assets) {
+        if (asset.id === assetId) return asset;
+        const child = asset.children?.find((c) => c.id === assetId);
+        if (child) return child;
+      }
     }
   }
   return undefined;
@@ -385,9 +388,10 @@ export function findAssetInTree(
 export function findAssetLocation(portfolio: Portfolio, assetId: string) {
   for (const sheet of portfolio.sheets) {
     for (const section of sheet.sections) {
-      const asset = section.assets.find((a) => a.id === assetId);
-      if (asset) {
-        return { sheet, section, asset };
+      for (const asset of section.assets) {
+        if (asset.id === assetId) return { sheet, section, asset };
+        const child = asset.children?.find((c) => c.id === assetId);
+        if (child) return { sheet, section, asset: child };
       }
     }
   }
@@ -551,6 +555,19 @@ export function updateAssetInTree(
         section.assets[idx] = { ...section.assets[idx], ...partial };
         return recomputeAggregates(clone);
       }
+      // Search within children of parent assets
+      for (const asset of section.assets) {
+        if (!asset.children) continue;
+        const childIdx = asset.children.findIndex((c) => c.id === assetId);
+        if (childIdx !== -1) {
+          asset.children[childIdx] = { ...asset.children[childIdx], ...partial };
+          // Recompute parent value from children
+          asset.currentValue = asset.children
+            .reduce((sum, c) => sum + Number(c.currentValue), 0)
+            .toFixed(2);
+          return recomputeAggregates(clone);
+        }
+      }
     }
   }
   return clone;
@@ -567,6 +584,18 @@ export function removeAssetFromTree(
       if (idx !== -1) {
         section.assets.splice(idx, 1);
         return recomputeAggregates(clone);
+      }
+      // Search within children of parent assets
+      for (const asset of section.assets) {
+        if (!asset.children) continue;
+        const childIdx = asset.children.findIndex((c) => c.id === assetId);
+        if (childIdx !== -1) {
+          asset.children.splice(childIdx, 1);
+          asset.currentValue = asset.children
+            .reduce((sum, c) => sum + Number(c.currentValue), 0)
+            .toFixed(2);
+          return recomputeAggregates(clone);
+        }
       }
     }
   }

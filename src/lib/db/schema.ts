@@ -10,6 +10,7 @@ import {
   pgEnum,
   date,
   uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 // ── Enums ──
@@ -140,6 +141,10 @@ export const assets = pgTable("assets", {
   sectionId: uuid("section_id")
     .notNull()
     .references(() => sections.id, { onDelete: "cascade" }),
+  parentAssetId: uuid("parent_asset_id").references(
+    (): AnyPgColumn => assets.id,
+    { onDelete: "cascade" },
+  ),
   name: text("name").notNull(),
   type: text("type").notNull().default("other"),
   sortOrder: integer("sort_order").notNull().default(0),

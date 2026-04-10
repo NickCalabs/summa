@@ -54,26 +54,77 @@ export async function GET(
 
     const sectionIds = sectionRows.map((s) => s.id);
 
-    // Fetch non-archived assets
-    const assetRows =
+    // Fetch all assets (including archived, needed for child counting)
+    const allAssetRows =
       sectionIds.length > 0
         ? await db
             .select()
             .from(assets)
             .where(inArray(assets.sectionId, sectionIds))
             .orderBy(asc(assets.sortOrder))
-            .then((rows) => rows.filter((a) => !a.isArchived))
         : [];
 
+    // Separate children from top-level and group by parent
+    const activeChildrenByParent = new Map<string, typeof allAssetRows>();
+    const allChildrenByParent = new Map<string, typeof allAssetRows>();
+    const topLevelRows: typeof allAssetRows = [];
+
+    for (const asset of allAssetRows) {
+      if (asset.parentAssetId) {
+        const allList = allChildrenByParent.get(asset.parentAssetId) ?? [];
+        allList.push(asset);
+        allChildrenByParent.set(asset.parentAssetId, allList);
+        if (!asset.isArchived) {
+          const activeList = activeChildrenByParent.get(asset.parentAssetId) ?? [];
+          activeList.push(asset);
+          activeChildrenByParent.set(asset.parentAssetId, activeList);
+        }
+      } else {
+        topLevelRows.push(asset);
+      }
+    }
+
+    // Build enhanced top-level assets with children attached
+    type DbAssetRow = (typeof allAssetRows)[number];
+    type EnhancedAsset = DbAssetRow & {
+      children?: (DbAssetRow & { isChild: boolean })[];
+      childCount?: number;
+      isChild: boolean;
+    };
+
+    const assetRows: EnhancedAsset[] = [];
+    for (const asset of topLevelRows) {
+      const isParent = allChildrenByParent.has(asset.id);
+      // Filter out archived non-parent assets (current behavior preserved)
+      if (asset.isArchived && !isParent) continue;
+
+      if (isParent) {
+        const activeChildren = activeChildrenByParent.get(asset.id) ?? [];
+        const computedValue = activeChildren.reduce(
+          (sum, c) => sum + Number(c.currentValue),
+          0
+        );
+        assetRows.push({
+          ...asset,
+          currentValue: computedValue.toFixed(2),
+          children: activeChildren.map((c) => ({ ...c, isChild: true as const })),
+          childCount: allChildrenByParent.get(asset.id)!.length,
+          isChild: false,
+        });
+      } else {
+        assetRows.push({ ...asset, isChild: false });
+      }
+    }
+
     // Build maps
-    const assetsBySection = new Map<string, typeof assetRows>();
+    const assetsBySection = new Map<string, EnhancedAsset[]>();
     for (const asset of assetRows) {
       const list = assetsBySection.get(asset.sectionId) ?? [];
       list.push(asset);
       assetsBySection.set(asset.sectionId, list);
     }
 
-    const sectionsBySheet = new Map<string, (typeof sectionRows[number] & { assets: typeof assetRows })[]>();
+    const sectionsBySheet = new Map<string, (typeof sectionRows[number] & { assets: EnhancedAsset[] })[]>();
     for (const section of sectionRows) {
       const list = sectionsBySheet.get(section.sheetId) ?? [];
       list.push({ ...section, assets: assetsBySection.get(section.id) ?? [] });
@@ -108,7 +159,7 @@ export async function GET(
             portfolio.currency,
             rates
           );
-          if (isLiabilityAsset(sheet, asset)) {
+          if (isLiabilityAsset(sheet, { type: asset.type })) {
             totalDebts += val;
           } else {
             totalAssets += val;

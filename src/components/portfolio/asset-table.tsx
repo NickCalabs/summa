@@ -14,7 +14,13 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { PackageOpenIcon, Loader2, PlusIcon } from "lucide-react";
+import {
+  PackageOpenIcon,
+  Loader2,
+  PlusIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -113,6 +119,18 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(
+    new Set()
+  );
+
+  const toggleExpand = useCallback((assetId: string) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(assetId)) next.delete(assetId);
+      else next.add(assetId);
+      return next;
+    });
+  }, []);
 
   // Keep a stable ref to assets so commitEdit doesn't need assets in its deps
   const assetsRef = useRef(assets);
@@ -139,7 +157,11 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
   const commitEdit = useCallback(
     (assetId: string, field: EditField, rawValue: string) => {
       setEditingCell(null);
-      const asset = assetsRef.current.find((a) => a.id === assetId);
+      const asset =
+        assetsRef.current.find((a) => a.id === assetId) ??
+        assetsRef.current
+          .flatMap((a) => a.children ?? [])
+          .find((c) => c.id === assetId);
       if (!asset) return;
 
       if (field === "name") {
@@ -183,10 +205,18 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
             updateAsset.variables?.id === asset.id &&
             "name" in (updateAsset.variables ?? {});
 
+          const isParent =
+            asset.children && asset.children.length > 0 || (asset.childCount ?? 0) > 0;
+          const isExpanded = expandedParents.has(asset.id);
+
           return (
             <div
               className="select-none flex items-center gap-1.5"
               onClick={() => {
+                if (isParent) {
+                  toggleExpand(asset.id);
+                  return;
+                }
                 if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
                 clickTimerRef.current = setTimeout(
                   () => openAccountDetail(portfolioId, asset.id),
@@ -194,10 +224,20 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                 );
               }}
               onDoubleClick={() => {
+                if (isParent) return;
                 if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
                 startEdit(asset.id, "name");
               }}
             >
+              {isParent && (
+                <span className="text-muted-foreground shrink-0 -ml-1">
+                  {isExpanded ? (
+                    <ChevronDownIcon className="size-4" />
+                  ) : (
+                    <ChevronRightIcon className="size-4" />
+                  )}
+                </span>
+              )}
               <span
                 className={`font-medium cursor-pointer ${
                   isDisconnected ? "italic text-muted-foreground" : ""
@@ -205,6 +245,12 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
               >
                 {asset.name}
               </span>
+              {isParent && (
+                <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0">
+                  {asset.children?.length ?? 0} holding
+                  {(asset.children?.length ?? 0) !== 1 ? "s" : ""}
+                </span>
+              )}
               {isNameSaving && (
                 <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
               )}
@@ -373,6 +419,8 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
       archiveAsset,
       moveAsset,
       sheetType,
+      expandedParents,
+      toggleExpand,
     ]
   );
 
@@ -398,7 +446,9 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
     );
   }
 
-  const deleteTargetAsset = assets.find((a) => a.id === deleteTarget);
+  const deleteTargetAsset =
+    assets.find((a) => a.id === deleteTarget) ??
+    assets.flatMap((a) => a.children ?? []).find((c) => c.id === deleteTarget);
 
   return (
     <>
@@ -430,24 +480,71 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row, i) => {
-            const stale = isAssetStale(row.original);
+            const asset = row.original;
+            const stale = isAssetStale(asset);
+            const isParent =
+              (asset.children && asset.children.length > 0) ||
+              (asset.childCount ?? 0) > 0;
+            const isExpanded = expandedParents.has(asset.id);
+
             return (
-              <tr
-                key={row.id}
-                className={`border-b border-border/30 transition-colors hover:bg-muted/35 ${
-                  i % 2 === 1 ? "bg-muted/10" : ""
-                } ${
-                  stale && row.original.providerType !== "plaid"
-                    ? "opacity-60"
-                    : ""
-                }`}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-6 py-3.5 align-middle">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
+              <React.Fragment key={row.id}>
+                <tr
+                  className={`border-b border-border/30 transition-colors hover:bg-muted/35 ${
+                    i % 2 === 1 ? "bg-muted/10" : ""
+                  } ${
+                    stale && asset.providerType !== "plaid"
+                      ? "opacity-60"
+                      : ""
+                  }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-6 py-3.5 align-middle">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+                {isParent &&
+                  isExpanded &&
+                  asset.children?.map((child) => {
+                    const ticker =
+                      child.providerConfig &&
+                      "ticker" in child.providerConfig
+                        ? (child.providerConfig.ticker as string)
+                        : null;
+                    return (
+                      <tr
+                        key={child.id}
+                        className="border-b border-border/20 transition-colors hover:bg-muted/25 bg-muted/5 cursor-pointer"
+                        onClick={() =>
+                          openAccountDetail(portfolioId, child.id)
+                        }
+                      >
+                        <td className="pl-12 pr-6 py-2.5 align-middle">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm">{child.name}</span>
+                            {ticker && (
+                              <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                {ticker}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-2.5 align-middle text-right tabular-nums">
+                          <MoneyDisplay
+                            amount={Number(child.currentValue)}
+                            currency={baseCurrency}
+                            className="text-sm"
+                          />
+                        </td>
+                        <td className="px-6 py-2.5 align-middle" />
+                      </tr>
+                    );
+                  })}
+              </React.Fragment>
             );
           })}
         </tbody>
