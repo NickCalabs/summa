@@ -10,6 +10,7 @@ interface PortfolioSummary {
 export interface Asset {
   id: string;
   sectionId: string;
+  parentAssetId: string | null;
   name: string;
   type: string;
   sortOrder: number;
@@ -32,6 +33,9 @@ export interface Asset {
   isArchived: boolean;
   createdAt: string;
   updatedAt: string;
+  children?: Asset[];
+  childCount?: number;
+  isChild: boolean;
 }
 
 export interface Section {

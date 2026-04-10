@@ -113,6 +113,7 @@ export function useCreateAsset(portfolioId: string) {
       const tempAsset: Asset = {
         id: tempId(),
         sectionId: data.sectionId,
+        parentAssetId: null,
         name: data.name,
         type: data.type ?? "other",
         sortOrder: 999,
@@ -135,6 +136,7 @@ export function useCreateAsset(portfolioId: string) {
         isArchived: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        isChild: false,
       };
 
       queryClient.setQueryData<Portfolio>(
