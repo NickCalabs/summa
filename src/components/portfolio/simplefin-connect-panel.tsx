@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import {
   Building2Icon,
+  LinkIcon,
   Loader2Icon,
   RefreshCwIcon,
   Trash2Icon,
+  UnlinkIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -13,14 +15,22 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { MoneyDisplay } from "./money-display";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   useCreateSimpleFINConnection,
   useDisconnectSimpleFIN,
   useLinkSimpleFINAccounts,
+  useRelinkSimpleFINAccount,
   useSimpleFINConnections,
   useSyncSimpleFINConnection,
   type SimpleFINAccount,
   type SimpleFINConnection,
 } from "@/hooks/use-simplefin";
+import { usePortfolio } from "@/hooks/use-portfolio";
 import {
   getInstitutionSectionName,
   inferSimpleFINAssetType,
@@ -229,12 +239,30 @@ function SimpleFINConnectionCard({
   isSyncing: boolean;
 }) {
   const [relinkAccountId, setRelinkAccountId] = useState<string | null>(null);
+  const [relinkingTrackedId, setRelinkingTrackedId] = useState<string | null>(null);
+  const relinkMutation = useRelinkSimpleFINAccount();
+  const { data: portfolio } = usePortfolio(portfolioId);
 
   const relinkAccount = relinkAccountId
     ? connection.accounts.find(
         (account) => account.simplefinAccountId === relinkAccountId
       ) ?? null
     : null;
+
+  // Flat list of all portfolio assets for the relink picker
+  const allAssets = useMemo(
+    () =>
+      (portfolio?.sheets ?? []).flatMap((sheet) =>
+        sheet.sections.flatMap((section) =>
+          section.assets.map((a) => ({
+            id: a.id,
+            name: a.name,
+            sectionName: section.name,
+          }))
+        )
+      ),
+    [portfolio]
+  );
 
   return (
     <div className="border rounded-lg p-3 space-y-2">
@@ -303,7 +331,7 @@ function SimpleFINConnectionCard({
                   return (
                     <div
                       key={account.id}
-                      className="flex items-center justify-between gap-3 text-sm py-1"
+                      className="relative flex items-center justify-between gap-3 text-sm py-1"
                     >
                       <span className="min-w-0 flex-1 truncate">
                         {account.accountName}
@@ -316,9 +344,39 @@ function SimpleFINConnectionCard({
                         />
                       )}
                       {account.isTracked ? (
-                        <Badge variant="secondary" className="text-[10px] shrink-0">
-                          {target.sheetType === "debts" ? "Debt" : "Tracked"}
-                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] shrink-0 cursor-pointer hover:bg-muted"
+                              />
+                            }
+                          >
+                            {target.sheetType === "debts" ? "Debt" : "Tracked"} ▾
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                setRelinkingTrackedId(account.id)
+                              }
+                            >
+                              <LinkIcon className="size-3.5 mr-1.5" />
+                              Relink to existing asset
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                relinkMutation.mutate({
+                                  accountId: account.id,
+                                  action: "unlink",
+                                })
+                              }
+                            >
+                              <UnlinkIcon className="size-3.5 mr-1.5" />
+                              Unlink
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       ) : relinkAccountId === account.simplefinAccountId ? (
                         <Button
                           variant="ghost"
@@ -337,6 +395,37 @@ function SimpleFINConnectionCard({
                         >
                           Link
                         </Button>
+                      )}
+                      {relinkingTrackedId === account.id && (
+                        <select
+                          className="absolute right-0 top-full mt-1 z-10 w-64 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-md"
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            relinkMutation.mutate(
+                              {
+                                accountId: account.id,
+                                action: "relink",
+                                assetId: e.target.value,
+                              },
+                              {
+                                onSuccess: () =>
+                                  setRelinkingTrackedId(null),
+                              }
+                            );
+                          }}
+                          onBlur={() => setRelinkingTrackedId(null)}
+                          autoFocus
+                        >
+                          <option value="" disabled>
+                            Select an asset...
+                          </option>
+                          {allAssets.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.name} ({a.sectionName})
+                            </option>
+                          ))}
+                        </select>
                       )}
                     </div>
                   );
