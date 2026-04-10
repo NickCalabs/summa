@@ -232,6 +232,23 @@ export const kuberaImportRequest = z.object({
   actions: z.array(kuberaImportAction).min(1, "At least one account required"),
 });
 
+// ── Brokerage import schemas ──
+
+export const brokerageImportPosition = z.object({
+  symbol: z.string().min(1),
+  name: z.string().min(1),
+  quantity: z.number(),
+  price: z.number(),
+  value: z.number(),
+});
+
+export const brokerageImportRequest = z.object({
+  portfolioId: z.string().uuid(),
+  accountName: z.string().min(1).max(200),
+  sectionId: z.string().uuid(),
+  positions: z.array(brokerageImportPosition).min(1, "At least one position required"),
+});
+
 // ── Parse helper ──
 
 export async function parseBody<T>(
