@@ -6,7 +6,7 @@ import {
   simplefinAccounts,
   simplefinConnections,
 } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import {
   errorResponse,
   handleError,
@@ -134,6 +134,105 @@ export async function POST(
         .where(eq(assets.id, account.assetId));
 
       updatedCount++;
+    }
+
+    // ── Auto-group by institution ──
+    // Fetch all tracked accounts with their linked assets
+    const trackedRows = await db
+      .select({
+        institutionName: simplefinAccounts.institutionName,
+        assetId: simplefinAccounts.assetId,
+        balance: simplefinAccounts.balance,
+      })
+      .from(simplefinAccounts)
+      .where(
+        and(
+          eq(simplefinAccounts.connectionId, id),
+          eq(simplefinAccounts.isTracked, true),
+          isNotNull(simplefinAccounts.assetId)
+        )
+      );
+
+    const trackedAssetIds = trackedRows
+      .map((r) => r.assetId!)
+      .filter(Boolean);
+
+    if (trackedAssetIds.length > 0) {
+      const assetRows = await db
+        .select()
+        .from(assets)
+        .where(inArray(assets.id, trackedAssetIds));
+
+      const assetById = new Map(assetRows.map((a) => [a.id, a]));
+
+      // Group by institution
+      const byInstitution = new Map<
+        string,
+        { assetId: string; balance: string | null; asset: (typeof assetRows)[number] }[]
+      >();
+      for (const row of trackedRows) {
+        const asset = assetById.get(row.assetId!);
+        if (!asset) continue;
+        const inst = row.institutionName ?? "Unknown";
+        const list = byInstitution.get(inst) ?? [];
+        list.push({ assetId: row.assetId!, balance: row.balance, asset });
+        byInstitution.set(inst, list);
+      }
+
+      for (const [institutionName, group] of byInstitution) {
+        if (group.length < 2) continue;
+
+        // Find existing parent or create one
+        const childWithParent = group.find((g) => g.asset.parentAssetId);
+        let parentId: string;
+
+        if (childWithParent) {
+          parentId = childWithParent.asset.parentAssetId!;
+        } else {
+          // Create parent in same section as first child
+          const firstChild = group[0].asset;
+          const [parent] = await db
+            .insert(assets)
+            .values({
+              sectionId: firstChild.sectionId,
+              name: institutionName,
+              type: firstChild.type,
+              currency: firstChild.currency,
+              currentValue: "0",
+              providerType: "simplefin",
+              providerConfig: {
+                isGroupParent: true,
+                institutionName,
+                connectionId: id,
+              },
+              lastSyncedAt: new Date(),
+            })
+            .returning();
+          parentId = parent.id;
+        }
+
+        // Ensure all children point to parent + zero-balance archiving
+        for (const { assetId, balance, asset } of group) {
+          const isZero = !balance || Number(balance) === 0;
+          const updates: Record<string, unknown> = {};
+
+          if (asset.parentAssetId !== parentId) {
+            updates.parentAssetId = parentId;
+          }
+          if (isZero && !asset.isArchived) {
+            updates.isArchived = true;
+          } else if (!isZero && asset.isArchived) {
+            updates.isArchived = false;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await db
+              .update(assets)
+              .set({ ...updates, updatedAt: new Date() })
+              .where(eq(assets.id, assetId));
+          }
+        }
+      }
     }
 
     await db
