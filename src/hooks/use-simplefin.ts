@@ -153,6 +153,48 @@ export function useSyncSimpleFINConnection() {
   });
 }
 
+export function useRelinkSimpleFINAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      accountId: string;
+      action: "unlink" | "relink";
+      assetId?: string;
+    }) => {
+      const res = await fetch(`/api/simplefin/accounts/${data.accountId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          data.action === "unlink"
+            ? { action: "unlink" }
+            : { action: "relink", assetId: data.assetId }
+        ),
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.error ?? "Failed to update account link");
+      }
+      return body;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["simplefin-connections"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      toast.success(
+        variables.action === "unlink"
+          ? "Account unlinked"
+          : "Account relinked"
+      );
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update account link"
+      );
+    },
+  });
+}
+
 export function useDisconnectSimpleFIN() {
   const queryClient = useQueryClient();
 
