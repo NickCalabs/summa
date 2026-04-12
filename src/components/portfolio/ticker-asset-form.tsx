@@ -32,6 +32,7 @@ export function TickerAssetForm({
 }: TickerAssetFormProps) {
   const createAsset = useCreateAsset(portfolioId);
 
+  const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [type, setType] = useState("stock");
   const [quantity, setQuantity] = useState("1");
@@ -41,10 +42,13 @@ export function TickerAssetForm({
     {}
   );
   const [valueError, setValueError] = useState("");
+  const [tickerSelected, setTickerSelected] = useState(false);
 
   function handleTickerSelect(result: SearchResult) {
+    setSearch(result.name);
     setName(result.name);
     setType(result.type);
+    setTickerSelected(true);
     setProviderConfig({
       ticker: result.symbol,
       source: result.source,
@@ -98,12 +102,30 @@ export function TickerAssetForm({
       <div className="space-y-2">
         <label className="text-sm font-medium">Search Ticker</label>
         <TickerSearchCombobox
-          value={name}
-          onChange={setName}
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            if (tickerSelected) {
+              setTickerSelected(false);
+              setProviderConfig({});
+              setPrice("");
+            }
+          }}
           onSelect={handleTickerSelect}
           autoFocus
         />
       </div>
+
+      {tickerSelected && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Name</label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Cold Storage BTC, Coinbase BTC"
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Quantity x Price</label>
