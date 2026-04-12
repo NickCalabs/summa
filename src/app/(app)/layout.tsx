@@ -175,7 +175,7 @@ function SidebarContent({
                 href={
                   firstDebtSheetId
                     ? `/portfolio/${activePortfolio.id}?sheet=${firstDebtSheetId}`
-                    : `/portfolio/${activePortfolio.id}`
+                    : `/portfolio/${activePortfolio.id}?type=debts`
                 }
                 onClick={onNavigate}
                 className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${

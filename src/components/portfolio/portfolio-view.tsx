@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { LayoutGridIcon } from "lucide-react";
+import { LayoutGridIcon, LandmarkIcon } from "lucide-react";
 import { usePortfolio, ApiError } from "@/hooks/use-portfolio";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
 import { getChangeFromSnapshots } from "@/lib/snapshot-utils";
@@ -33,6 +33,8 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   const activeSheetId = useUIStore((s) => s.activeSheetId);
   const setActiveSheet = useUIStore((s) => s.setActiveSheet);
 
+  const requestedType = searchParams.get("type") as "assets" | "debts" | null;
+
   useEffect(() => {
     if (!portfolio || portfolio.sheets.length === 0) return;
 
@@ -46,10 +48,19 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
       return;
     }
 
+    // If ?type=debts but no debt sheets exist, clear active sheet so empty state shows
+    if (requestedType === "debts") {
+      const debtSheets = portfolio.sheets.filter((s) => s.type === "debts");
+      if (debtSheets.length > 0 && activeSheetId !== debtSheets[0].id) {
+        setActiveSheet(debtSheets[0].id);
+      }
+      return;
+    }
+
     if (!activeSheetId) {
       setActiveSheet(portfolio.sheets[0].id);
     }
-  }, [portfolio, searchParams, activeSheetId, setActiveSheet]);
+  }, [portfolio, searchParams, activeSheetId, setActiveSheet, requestedType]);
 
   if (isLoading) {
     return (
@@ -105,7 +116,13 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
   if (!portfolio) return null;
 
-  const activeSheet = portfolio.sheets.find((s) => s.id === activeSheetId) ?? portfolio.sheets[0];
+  const isDebtsView = requestedType === "debts";
+  const debtSheets = portfolio.sheets.filter((s) => s.type === "debts");
+  const showDebtsEmpty = isDebtsView && debtSheets.length === 0;
+
+  const activeSheet = showDebtsEmpty
+    ? null
+    : portfolio.sheets.find((s) => s.id === activeSheetId) ?? portfolio.sheets[0];
   const defaultSectionId = activeSheet?.sections[0]?.id ?? null;
   const allSections = activeSheet?.sections ?? [];
 
@@ -142,25 +159,52 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           />
         )}
 
-        <SheetSummaryRow
-          sheets={portfolio.sheets}
-          activeSheetId={activeSheetId}
-          onSheetChange={setActiveSheet}
-          portfolioId={portfolioId}
-          currency={portfolio.currency}
-        />
-
-        {portfolio.sheets.length === 0 ? (
+        {showDebtsEmpty ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
-            <p className="font-medium text-sm mb-1">Create your first sheet</p>
-            <p className="text-xs text-muted-foreground">
-              Use the <span className="font-medium">⋮</span> menu above to add a sheet
+            <SheetTotalHeader
+              type="debts"
+              total={0}
+              currency={portfolio.currency}
+              changeDay={null}
+              changeYear={null}
+            />
+            <LandmarkIcon className="size-10 text-muted-foreground/40 mb-3 mt-8" />
+            <p className="font-medium text-sm mb-1">No debts tracked</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Track mortgages, loans, credit cards, and other debts
             </p>
+            <SheetSummaryRow
+              sheets={portfolio.sheets}
+              activeSheetId={activeSheetId}
+              onSheetChange={setActiveSheet}
+              portfolioId={portfolioId}
+              currency={portfolio.currency}
+              typeOverride="debts"
+            />
           </div>
-        ) : activeSheet ? (
-          <SheetView sheet={activeSheet} currency={portfolio.currency} portfolioId={portfolioId} />
-        ) : null}
+        ) : (
+          <>
+            <SheetSummaryRow
+              sheets={portfolio.sheets}
+              activeSheetId={activeSheetId}
+              onSheetChange={setActiveSheet}
+              portfolioId={portfolioId}
+              currency={portfolio.currency}
+            />
+
+            {portfolio.sheets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
+                <p className="font-medium text-sm mb-1">Create your first sheet</p>
+                <p className="text-xs text-muted-foreground">
+                  Use the <span className="font-medium">⋮</span> menu above to add a sheet
+                </p>
+              </div>
+            ) : activeSheet ? (
+              <SheetView sheet={activeSheet} currency={portfolio.currency} portfolioId={portfolioId} />
+            ) : null}
+          </>
+        )}
 
         <DetailPanel portfolioId={portfolioId} portfolio={portfolio} />
         <AccountDetailModal />

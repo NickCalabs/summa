@@ -31,6 +31,7 @@ interface SheetSummaryRowProps {
   onSheetChange: (id: string) => void;
   portfolioId: string;
   currency: string;
+  typeOverride?: "assets" | "debts";
 }
 
 export function SheetSummaryRow({
@@ -39,6 +40,7 @@ export function SheetSummaryRow({
   onSheetChange,
   portfolioId,
   currency,
+  typeOverride,
 }: SheetSummaryRowProps) {
   const router = useRouter();
   const { toBase } = useCurrency();
@@ -54,9 +56,9 @@ export function SheetSummaryRow({
 
   const [sheetToDelete, setSheetToDelete] = useState<string | null>(null);
 
-  // Determine the current type from the active sheet
+  // Determine the current type from the active sheet or override
   const activeSheet = sheets.find((s) => s.id === activeSheetId);
-  const currentType = activeSheet?.type ?? "assets";
+  const currentType = typeOverride ?? activeSheet?.type ?? "assets";
 
   // Only show sheets matching the current type
   const visibleSheets = sheets.filter((s) => s.type === currentType);
