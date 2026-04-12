@@ -117,7 +117,6 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
   const moveAsset = useMoveAsset(portfolioId);
 
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
-  const clickTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [expandedParents, setExpandedParents] = useState<Set<string>>(
     new Set()
@@ -210,27 +209,12 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
           const isExpanded = expandedParents.has(asset.id);
 
           return (
-            <div
-              className="select-none flex items-center gap-1.5"
-              onClick={() => {
-                if (isParent) {
-                  toggleExpand(asset.id);
-                  return;
-                }
-                if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-                clickTimerRef.current = setTimeout(
-                  () => openAccountDetail(portfolioId, asset.id),
-                  200
-                );
-              }}
-              onDoubleClick={() => {
-                if (isParent) return;
-                if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-                startEdit(asset.id, "name");
-              }}
-            >
+            <div className="select-none flex items-center gap-1.5">
               {isParent && (
-                <span className="text-muted-foreground shrink-0 -ml-1">
+                <span
+                  className="text-muted-foreground shrink-0 -ml-1 cursor-pointer"
+                  onClick={() => toggleExpand(asset.id)}
+                >
                   {isExpanded ? (
                     <ChevronDownIcon className="size-4" />
                   ) : (
@@ -239,14 +223,24 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                 </span>
               )}
               <span
-                className={`font-medium cursor-pointer ${
+                className={`font-medium cursor-text hover:bg-muted/50 rounded px-1 -mx-1 ${
                   isDisconnected ? "italic text-muted-foreground" : ""
                 }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEdit(asset.id, "name");
+                }}
               >
                 {asset.name}
               </span>
               {isParent && (
-                <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0">
+                <span
+                  className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(asset.id);
+                  }}
+                >
                   {asset.children?.length ?? 0} holding
                   {(asset.children?.length ?? 0) !== 1 ? "s" : ""}
                 </span>
