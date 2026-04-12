@@ -20,7 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { MoneyDisplay } from "./money-display";
-import { useCreateSheet, useUpdateSheet, useDeleteSheet } from "@/hooks/use-sheets";
+import { useCreateSheet, useUpdateSheet, useDeleteSheet, useReorderSheets } from "@/hooks/use-sheets";
 import { useCurrency } from "@/contexts/currency-context";
 import { cn } from "@/lib/utils";
 import type { Sheet } from "@/hooks/use-portfolio";
@@ -47,6 +47,7 @@ export function SheetSummaryRow({
   const createSheet = useCreateSheet(portfolioId);
   const updateSheet = useUpdateSheet(portfolioId);
   const deleteSheet = useDeleteSheet(portfolioId);
+  const reorderSheets = useReorderSheets(portfolioId);
 
   const [addOpen, setAddOpen] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
@@ -105,12 +106,27 @@ export function SheetSummaryRow({
     setSheetToDelete(null);
   }
 
+  function moveSheet(sheetId: string, direction: -1 | 1) {
+    const idx = visibleSheets.findIndex((s) => s.id === sheetId);
+    if (idx < 0) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= visibleSheets.length) return;
+
+    const reordered = [...visibleSheets];
+    [reordered[idx], reordered[targetIdx]] = [reordered[targetIdx], reordered[idx]];
+    reorderSheets.mutate({
+      items: reordered.map((s, i) => ({ id: s.id, sortOrder: i })),
+    });
+  }
+
   return (
     <>
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-        {visibleSheets.map((sheet) => {
+        {visibleSheets.map((sheet, sheetIndex) => {
           const isActive = sheet.id === activeSheetId;
           const total = getSheetTotal(sheet);
+          const canMoveLeft = sheetIndex > 0;
+          const canMoveRight = sheetIndex < visibleSheets.length - 1;
 
           return (
             <div key={sheet.id} className="group/pill flex items-center shrink-0">
@@ -183,6 +199,16 @@ export function SheetSummaryRow({
                   >
                     Rename
                   </DropdownMenuItem>
+                  {canMoveLeft && (
+                    <DropdownMenuItem onSelect={() => moveSheet(sheet.id, -1)}>
+                      Move Left
+                    </DropdownMenuItem>
+                  )}
+                  {canMoveRight && (
+                    <DropdownMenuItem onSelect={() => moveSheet(sheet.id, 1)}>
+                      Move Right
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     className="text-destructive"
                     onSelect={() => setSheetToDelete(sheet.id)}
