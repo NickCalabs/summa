@@ -7,6 +7,9 @@ import {
 } from "@/lib/api-helpers";
 import { refreshPrices, refreshPlaidBalances } from "@/lib/cron";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
+import { db } from "@/lib/db";
+import { simplefinConnections } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 // Per-portfolio in-memory throttle: 30 seconds between syncs.
 // Manual refresh fans out to Yahoo + CoinGecko + Plaid; we don't want a
@@ -44,11 +47,25 @@ export async function POST(
     }
     lastSyncAt.set(id, now);
 
-    // Fan out: prices + Plaid balances run in parallel.
-    // Snapshot runs after both settle so it captures the latest values.
+    // Sync SimpleFIN connections for this user
+    const sfConnections = await db
+      .select({ id: simplefinConnections.id })
+      .from(simplefinConnections)
+      .where(eq(simplefinConnections.userId, user.id));
+
+    const simplefinSyncs = sfConnections.map((c) =>
+      fetch(new URL(`/api/simplefin/connections/${c.id}/sync`, request.url), {
+        method: "POST",
+        headers: { cookie: request.headers.get("cookie") ?? "" },
+      }).catch(() => null)
+    );
+
+    // Fan out: prices + Plaid + SimpleFIN all run in parallel.
+    // Snapshot runs after all settle so it captures the latest values.
     const results = await Promise.allSettled([
       refreshPrices(),
       refreshPlaidBalances(),
+      ...simplefinSyncs,
     ]);
 
     const snapshot = await takePortfolioSnapshot(id);
@@ -57,6 +74,7 @@ export async function POST(
       ok: true,
       prices: results[0].status,
       plaid: results[1].status,
+      simplefin: sfConnections.length > 0 ? "fulfilled" : "skipped",
       snapshot,
     });
   } catch (error) {
