@@ -43,6 +43,7 @@ import {
   useArchiveAsset,
   useDeleteAsset,
   useMoveAsset,
+  useReorderAssets,
 } from "@/hooks/use-assets";
 
 interface AssetTableProps {
@@ -115,6 +116,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
   const archiveAsset = useArchiveAsset(portfolioId);
   const deleteAsset = useDeleteAsset(portfolioId);
   const moveAsset = useMoveAsset(portfolioId);
+  const reorderAssets = useReorderAssets(portfolioId);
 
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -143,6 +145,22 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
         .filter((a) => !a.isArchived)
         .reduce((sum, a) => sum + toBase(Number(a.currentValue), a.currency), 0),
     [assets, toBase]
+  );
+
+  const moveRow = useCallback(
+    (assetId: string, direction: -1 | 1) => {
+      const topLevel = assets.filter((a) => !a.isArchived);
+      const idx = topLevel.findIndex((a) => a.id === assetId);
+      if (idx < 0) return;
+      const targetIdx = idx + direction;
+      if (targetIdx < 0 || targetIdx >= topLevel.length) return;
+      const reordered = [...topLevel];
+      [reordered[idx], reordered[targetIdx]] = [reordered[targetIdx], reordered[idx]];
+      reorderAssets.mutate({
+        items: reordered.map((a, i) => ({ id: a.id, sortOrder: i })),
+      });
+    },
+    [assets, reorderAssets]
   );
 
   const startEdit = useCallback((assetId: string, field: EditField) => {
@@ -341,6 +359,10 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
         cell: ({ row }) => {
           const asset = row.original;
           const otherSections = sections.filter((s) => s.id !== asset.sectionId);
+          const nonArchived = assets.filter((a) => !a.isArchived);
+          const rowIdx = nonArchived.findIndex((a) => a.id === asset.id);
+          const canMoveUp = rowIdx > 0;
+          const canMoveDown = rowIdx >= 0 && rowIdx < nonArchived.length - 1;
 
           return (
             <DropdownMenu>
@@ -361,6 +383,16 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                 >
                   Open account
                 </DropdownMenuItem>
+                {canMoveUp && (
+                  <DropdownMenuItem onSelect={() => moveRow(asset.id, -1)}>
+                    Move Up
+                  </DropdownMenuItem>
+                )}
+                {canMoveDown && (
+                  <DropdownMenuItem onSelect={() => moveRow(asset.id, 1)}>
+                    Move Down
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onSelect={() => archiveAsset.mutate({ id: asset.id })}
                 >
@@ -412,6 +444,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
       portfolioId,
       archiveAsset,
       moveAsset,
+      moveRow,
       sheetType,
       expandedParents,
       toggleExpand,
