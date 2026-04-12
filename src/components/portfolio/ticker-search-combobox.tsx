@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
   CommandList,
@@ -33,7 +32,7 @@ export function TickerSearchCombobox({
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { data: results = [] } = useTickerSearch(value);
 
-  const showPopover = open && results.length > 0;
+  const showDropdown = open && results.length > 0;
 
   function handleSelect(result: SearchResult) {
     onSelect(result);
@@ -50,58 +49,55 @@ export function TickerSearchCombobox({
   }
 
   return (
-    <Popover open={showPopover}>
-      <PopoverTrigger
-        render={
-          <Input
-            value={value}
-            onChange={(e) => {
-              onChange(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            placeholder={placeholder}
-            autoFocus={autoFocus}
-            autoComplete="off"
-          />
-        }
+    <div className="relative">
+      <Input
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        autoComplete="off"
       />
-      <PopoverContent
-        align="start"
-        className="w-[var(--anchor-width)] p-0"
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <Command shouldFilter={false}>
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
-              {results.map((r) => (
-                <CommandItem
-                  key={`${r.source}:${r.symbol}`}
-                  value={`${r.source}:${r.symbol}`}
-                  onSelect={() => handleSelect(r)}
-                >
-                  <span className="font-mono font-bold text-xs">
-                    {r.source === "coingecko" ? r.symbol : r.symbol}
-                  </span>
-                  <span className="truncate text-muted-foreground">
-                    {r.name}
-                  </span>
-                  <div className="ml-auto flex gap-1">
-                    <Badge variant="secondary" className="text-[9px]">
-                      {r.type}
-                    </Badge>
-                    <Badge variant="outline" className="text-[9px]">
-                      {r.source === "yahoo" ? r.exchange : "CoinGecko"}
-                    </Badge>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+      {showDropdown && (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg bg-popover shadow-md ring-1 ring-foreground/10"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <Command shouldFilter={false}>
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup>
+                {results.map((r) => (
+                  <CommandItem
+                    key={`${r.source}:${r.symbol}`}
+                    value={`${r.source}:${r.symbol}`}
+                    onSelect={() => handleSelect(r)}
+                  >
+                    <span className="font-mono font-bold text-xs">
+                      {r.source === "coingecko" ? r.symbol : r.symbol}
+                    </span>
+                    <span className="truncate text-muted-foreground">
+                      {r.name}
+                    </span>
+                    <div className="ml-auto flex gap-1">
+                      <Badge variant="secondary" className="text-[9px]">
+                        {r.type}
+                      </Badge>
+                      <Badge variant="outline" className="text-[9px]">
+                        {r.source === "yahoo" ? r.exchange : "CoinGecko"}
+                      </Badge>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
+      )}
+    </div>
   );
 }
