@@ -42,6 +42,7 @@ import { findAssetInTree } from "@/lib/portfolio-utils";
 import { parseCurrencyInput, formatNumberForInput } from "@/lib/currency";
 import { useCurrency } from "@/contexts/currency-context";
 import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
+import { getCryptoSymbol } from "@/lib/crypto-utils";
 import type { Portfolio } from "@/hooks/use-portfolio";
 
 const PROVIDER_TYPES = [
@@ -300,12 +301,23 @@ function ValueTab({
   const { baseCurrency, toBase } = useCurrency();
   const dc = useOptionalDisplayCurrency();
   const displayCurrency = dc?.displayCurrency ?? "USD";
-  const effectiveDisplay = displayCurrency === "sats" ? "BTC" : displayCurrency;
-  const nativeMatchesDisplay = asset.currency === effectiveDisplay;
-  const baseValue = toBase(Number(asset.currentValue), asset.currency);
 
-  const hasQtyPrice =
-    asset.quantity != null && asset.currentPrice != null;
+  const cryptoSymbol = getCryptoSymbol(asset.providerConfig);
+  const hasQtyPrice = asset.quantity != null && asset.currentPrice != null;
+  const quantityUnit = cryptoSymbol ?? asset.currency;
+
+  const effectiveNative = cryptoSymbol ?? asset.currency;
+  const effectiveDisplay = displayCurrency === "sats" ? "BTC" : displayCurrency;
+  const nativeMatchesDisplay = effectiveNative === effectiveDisplay;
+
+  // For crypto assets, currentValue is already in USD
+  const usdValue = cryptoSymbol
+    ? Number(asset.currentValue)
+    : toBase(Number(asset.currentValue), asset.currency);
+
+  const qtySubtext = hasQtyPrice
+    ? `${Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${quantityUnit}`
+    : null;
 
   function handleValueUpdate(e: React.FormEvent) {
     e.preventDefault();
@@ -315,7 +327,6 @@ function ValueTab({
     if (isNaN(num)) return;
 
     if (hasQtyPrice) {
-      // Editing quantity — recalculate value
       const price = Number(asset.currentPrice);
       updateAsset.mutate({
         id: asset.id,
@@ -323,7 +334,6 @@ function ValueTab({
         currentValue: (num * price).toFixed(2),
       });
     } else {
-      // Manual asset — edit value directly
       updateAsset.mutate({ id: asset.id, currentValue: String(num) });
     }
     setManualValue("");
@@ -332,10 +342,8 @@ function ValueTab({
   return (
     <>
       {nativeMatchesDisplay ? (
-        asset.quantity != null ? (
-          <p className="text-3xl font-bold tabular-nums">
-            {Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} {asset.currency}
-          </p>
+        cryptoSymbol && qtySubtext ? (
+          <p className="text-3xl font-bold tabular-nums">{qtySubtext}</p>
         ) : (
           <MoneyDisplay
             amount={Number(asset.currentValue)}
@@ -346,16 +354,15 @@ function ValueTab({
       ) : (
         <>
           <MoneyDisplay
-            amount={baseValue}
+            amount={usdValue}
             currency={baseCurrency}
             btcUsdRate={btcUsdRate}
             className="text-3xl font-bold"
           />
           <p className="text-sm text-muted-foreground tabular-nums">
-            {asset.quantity != null
-              ? `${Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${asset.currency}`
-              : <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
-            }
+            {qtySubtext ?? (
+              <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
+            )}
           </p>
         </>
       )}
@@ -375,14 +382,14 @@ function ValueTab({
       <form onSubmit={handleValueUpdate} className="flex gap-2">
         <div className="flex-1 flex items-center gap-1.5">
           <Input
-            placeholder={hasQtyPrice ? `Quantity in ${asset.currency}...` : "Update value..."}
+            placeholder={hasQtyPrice ? `Quantity in ${quantityUnit}...` : "Update value..."}
             value={manualValue}
             onChange={(e) => setManualValue(e.target.value)}
             type="text"
             inputMode="decimal"
             className="flex-1"
           />
-          <span className="text-xs text-muted-foreground shrink-0">{asset.currency}</span>
+          <span className="text-xs text-muted-foreground shrink-0">{quantityUnit}</span>
         </div>
         <Button type="submit" size="sm">
           Update

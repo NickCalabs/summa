@@ -38,6 +38,7 @@ import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
 import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
 import { isAssetStale } from "@/lib/portfolio-utils";
+import { getCryptoSymbol } from "@/lib/crypto-utils";
 import type { Asset, Section } from "@/hooks/use-portfolio";
 import {
   useUpdateAsset,
@@ -309,8 +310,14 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           const ownershipPct = Number(asset.ownershipPct ?? 100);
           const isPartialOwnership = ownershipPct < 100;
 
+          // For crypto assets, the quantity unit is BTC/ETH/etc. even though
+          // asset.currency is "USD" (prices stored in USD)
+          const cryptoSymbol = getCryptoSymbol(asset.providerConfig);
+          const hasQtyPrice = asset.quantity != null && asset.currentPrice != null;
+          // The unit the user edits in: crypto symbol for crypto, asset currency otherwise
+          const quantityUnit = cryptoSymbol ?? asset.currency;
+
           if (isEditing) {
-            const hasQtyPrice = asset.quantity != null && asset.currentPrice != null;
             const editValue = hasQtyPrice
               ? String(Number(asset.quantity))
               : String(Number(asset.currentValue));
@@ -325,7 +332,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   inputMode="decimal"
                 />
                 <span className="text-xs text-muted-foreground shrink-0">
-                  {asset.currency}
+                  {quantityUnit}
                 </span>
               </div>
             );
@@ -336,15 +343,21 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             updateAsset.variables?.id === asset.id &&
             "currentValue" in (updateAsset.variables ?? {});
 
-
-          // Determine if native currency matches display currency
-          // Treat sats as BTC for this check
+          // For crypto: the "native" unit is the crypto symbol, not asset.currency
+          // For fiat: the native unit is asset.currency
+          const effectiveNative = cryptoSymbol ?? asset.currency;
           const effectiveDisplay = displayCurrency === "sats" ? "BTC" : displayCurrency;
-          const nativeMatchesDisplay = asset.currency === effectiveDisplay;
-          const baseValue = toBase(Number(asset.currentValue), asset.currency);
+          const nativeMatchesDisplay = effectiveNative === effectiveDisplay;
 
-          const nativeSubtext = asset.quantity != null
-            ? `${Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${asset.currency}`
+          // For crypto assets, currentValue is already in USD (qty * usd_price)
+          // For fiat foreign assets, convert to base
+          const usdValue = cryptoSymbol
+            ? Number(asset.currentValue)  // already USD
+            : toBase(Number(asset.currentValue), asset.currency);
+
+          // Build the quantity subtext (e.g., "0.032 BTC")
+          const qtySubtext = hasQtyPrice
+            ? `${Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${quantityUnit}`
             : null;
 
           return (
@@ -357,21 +370,28 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
                 )}
                 {nativeMatchesDisplay ? (
-                  <span className="font-medium">
-                    {nativeSubtext ?? (
-                      <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
-                    )}
-                  </span>
+                  // Native matches display — show primary value only
+                  cryptoSymbol && qtySubtext ? (
+                    // Crypto asset viewed in its own currency: show qty label
+                    <span className="font-medium">{qtySubtext}</span>
+                  ) : (
+                    <MoneyDisplay
+                      amount={Number(asset.currentValue)}
+                      currency={asset.currency}
+                      className="font-medium"
+                    />
+                  )
                 ) : (
+                  // Native differs from display — main converted, subtext native
                   <div>
                     <MoneyDisplay
-                      amount={baseValue}
+                      amount={usdValue}
                       currency={baseCurrency}
                       btcUsdRate={btcUsdRate}
                       className="font-medium"
                     />
                     <div className="text-xs text-muted-foreground">
-                      {nativeSubtext ?? (
+                      {qtySubtext ?? (
                         <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
                       )}
                     </div>
@@ -382,7 +402,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                 <div className="text-xs text-muted-foreground">
                   Owned {asset.ownershipPct}%{" · "}
                   <MoneyDisplay
-                    amount={baseValue * (ownershipPct / 100)}
+                    amount={usdValue * (ownershipPct / 100)}
                     currency={baseCurrency}
                     btcUsdRate={btcUsdRate}
                   />
