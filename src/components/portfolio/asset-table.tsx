@@ -49,6 +49,7 @@ import {
 interface AssetTableProps {
   assets: Asset[];
   currency: string;
+  btcUsdRate?: number | null;
   portfolioId: string;
   sectionId: string;
   sections: Section[];
@@ -107,7 +108,7 @@ function InlineInput({
   );
 }
 
-export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType = "assets" }: AssetTableProps) {
+export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, sections, sheetType = "assets" }: AssetTableProps) {
   const openAddFlow = useUIStore((s) => s.openAddFlow);
   const openAccountDetail = useUIStore((s) => s.openAccountDetail);
   const router = useRouter();
@@ -320,6 +321,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                     <MoneyDisplay
                       amount={toBase(Number(asset.currentValue), asset.currency)}
                       currency={baseCurrency}
+                      btcUsdRate={btcUsdRate}
                       className="font-medium"
                     />
                     <div className="text-xs text-muted-foreground">
@@ -333,6 +335,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                   <MoneyDisplay
                     amount={Number(asset.currentValue)}
                     currency={baseCurrency}
+                    btcUsdRate={btcUsdRate}
                     className="font-medium"
                   />
                 )}
@@ -346,6 +349,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                       (ownershipPct / 100)
                     }
                     currency={baseCurrency}
+                    btcUsdRate={btcUsdRate}
                   />
                 </div>
               )}
@@ -564,6 +568,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
                           <MoneyDisplay
                             amount={Number(child.currentValue)}
                             currency={baseCurrency}
+                            btcUsdRate={btcUsdRate}
                             className="text-sm"
                           />
                         </td>
@@ -579,7 +584,7 @@ export function AssetTable({ assets, portfolioId, sectionId, sections, sheetType
           <tr className="border-t border-border/50 bg-[#6a6a6a] text-white">
             <td className="px-6 py-3" />
             <td className="px-6 py-3 text-right font-medium tabular-nums">
-              <MoneyDisplay amount={sectionTotal} currency={baseCurrency} />
+              <MoneyDisplay amount={sectionTotal} currency={baseCurrency} btcUsdRate={btcUsdRate} />
             </td>
             <td className="px-6 py-3" />
           </tr>
