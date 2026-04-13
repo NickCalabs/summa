@@ -1,0 +1,1 @@
+ALTER TABLE "portfolio_snapshots" ADD COLUMN "btc_usd_rate" numeric(20, 2);

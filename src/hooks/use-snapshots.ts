@@ -9,6 +9,7 @@ export interface PortfolioSnapshot {
   netWorth: string;
   cashOnHand: string;
   investableTotal: string | null;
+  btcUsdRate: string | null;
   createdAt: string;
 }
 
