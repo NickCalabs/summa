@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  RefreshCwIcon,
+  EyeIcon,
+  EyeOffIcon,
+  SettingsIcon,
+} from "lucide-react";
 import { usePortfolio } from "@/hooks/use-portfolio";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
 import {
@@ -22,6 +28,8 @@ import { RecapSankeyChart } from "./recap-sankey-chart";
 import { CagrCard } from "./cagr-card";
 import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
 import { DisplayCurrencyDropdown } from "@/components/portfolio/display-currency-dropdown";
+import { useSyncPortfolio } from "@/hooks/use-portfolio-mutations";
+import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
 interface DashboardViewProps {
@@ -42,6 +50,9 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
     portfolioId,
     getFromDate("1Y")
   );
+  const syncPortfolio = useSyncPortfolio(portfolioId);
+  const valuesMasked = useUIStore((s) => s.valuesMasked);
+  const toggleValuesMasked = useUIStore((s) => s.toggleValuesMasked);
   const [chartRange, setChartRange] = useState<DateRangeKey>("1Y");
 
   const investableTotal = useMemo(
@@ -109,6 +120,37 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
 
       <div className="relative mx-auto max-w-7xl space-y-8 p-6 md:p-8">
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => syncPortfolio.mutate()}
+            disabled={syncPortfolio.isPending}
+            title="Refresh prices and balances"
+          >
+            <RefreshCwIcon
+              className={`size-3.5 ${syncPortfolio.isPending ? "animate-spin" : ""}`}
+              data-icon="inline-start"
+            />
+            {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
+          </Button>
+
+          <DisplayCurrencyDropdown />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleValuesMasked}
+            title={valuesMasked ? "Show values" : "Hide values"}
+          >
+            {valuesMasked ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+          </Button>
+
+          <Button variant="ghost" size="icon" disabled>
+            <SettingsIcon className="size-4" />
+          </Button>
+        </div>
+
         <section className="overflow-hidden rounded-[32px] border border-border/70 bg-background/90 shadow-[0_1px_0_rgba(255,255,255,0.45)] backdrop-blur">
           <div className="space-y-8 p-6 md:p-8">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
