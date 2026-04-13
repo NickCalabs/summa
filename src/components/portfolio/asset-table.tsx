@@ -36,6 +36,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { MoneyDisplay } from "./money-display";
 import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
+import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
 import { isAssetStale } from "@/lib/portfolio-utils";
 import type { Asset, Section } from "@/hooks/use-portfolio";
 import {
@@ -113,6 +114,8 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
   const openAccountDetail = useUIStore((s) => s.openAccountDetail);
   const router = useRouter();
   const { baseCurrency, toBase } = useCurrency();
+  const dc = useOptionalDisplayCurrency();
+  const displayCurrency = dc?.displayCurrency ?? "USD";
   const updateAsset = useUpdateAsset(portfolioId);
   const archiveAsset = useArchiveAsset(portfolioId);
   const deleteAsset = useDeleteAsset(portfolioId);
@@ -188,8 +191,26 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
         }
       } else if (field === "currentValue") {
         const num = parseFloat(rawValue);
-        if (!isNaN(num) && rawValue !== "" && num !== Number(asset.currentValue)) {
-          updateAsset.mutate({ id: assetId, currentValue: String(num) });
+        if (isNaN(num) || rawValue === "") return;
+
+        const hasQtyPrice = asset.quantity != null && asset.currentPrice != null;
+        if (hasQtyPrice) {
+          // Editing quantity in native units — recalculate value
+          const newQty = num;
+          const price = Number(asset.currentPrice);
+          const newValue = (newQty * price).toFixed(2);
+          if (newQty !== Number(asset.quantity)) {
+            updateAsset.mutate({
+              id: assetId,
+              quantity: String(newQty),
+              currentValue: newValue,
+            });
+          }
+        } else {
+          // Manual asset — edit currentValue directly in native currency
+          if (num !== Number(asset.currentValue)) {
+            updateAsset.mutate({ id: assetId, currentValue: String(num) });
+          }
         }
       }
     },
@@ -285,19 +306,28 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           const isEditing =
             editingCell?.assetId === asset.id &&
             editingCell?.field === "currentValue";
-          const isForeign = asset.currency !== baseCurrency;
           const ownershipPct = Number(asset.ownershipPct ?? 100);
           const isPartialOwnership = ownershipPct < 100;
 
           if (isEditing) {
+            const hasQtyPrice = asset.quantity != null && asset.currentPrice != null;
+            const editValue = hasQtyPrice
+              ? String(Number(asset.quantity))
+              : String(Number(asset.currentValue));
+
             return (
-              <InlineInput
-                initialValue={String(Number(asset.currentValue))}
-                onCommit={(v) => commitEdit(asset.id, "currentValue", v)}
-                onCancel={cancelEdit}
-                align="right"
-                inputMode="decimal"
-              />
+              <div className="flex items-center gap-1 justify-end">
+                <InlineInput
+                  initialValue={editValue}
+                  onCommit={(v) => commitEdit(asset.id, "currentValue", v)}
+                  onCancel={cancelEdit}
+                  align="right"
+                  inputMode="decimal"
+                />
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {asset.currency}
+                </span>
+              </div>
             );
           }
 
@@ -306,6 +336,16 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             updateAsset.variables?.id === asset.id &&
             "currentValue" in (updateAsset.variables ?? {});
 
+
+          // Determine if native currency matches display currency
+          // Treat sats as BTC for this check
+          const effectiveDisplay = displayCurrency === "sats" ? "BTC" : displayCurrency;
+          const nativeMatchesDisplay = asset.currency === effectiveDisplay;
+          const baseValue = toBase(Number(asset.currentValue), asset.currency);
+
+          const nativeSubtext = asset.quantity != null
+            ? `${Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${asset.currency}`
+            : null;
 
           return (
             <div
@@ -316,38 +356,33 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                 {isValueSaving && (
                   <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
                 )}
-                {isForeign ? (
-                  <>
+                {nativeMatchesDisplay ? (
+                  <span className="font-medium">
+                    {nativeSubtext ?? (
+                      <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
+                    )}
+                  </span>
+                ) : (
+                  <div>
                     <MoneyDisplay
-                      amount={toBase(Number(asset.currentValue), asset.currency)}
+                      amount={baseValue}
                       currency={baseCurrency}
                       btcUsdRate={btcUsdRate}
                       className="font-medium"
                     />
                     <div className="text-xs text-muted-foreground">
-                      <MoneyDisplay
-                        amount={Number(asset.currentValue)}
-                        currency={asset.currency}
-                      />
+                      {nativeSubtext ?? (
+                        <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
+                      )}
                     </div>
-                  </>
-                ) : (
-                  <MoneyDisplay
-                    amount={Number(asset.currentValue)}
-                    currency={baseCurrency}
-                    btcUsdRate={btcUsdRate}
-                    className="font-medium"
-                  />
+                  </div>
                 )}
               </div>
               {isPartialOwnership && (
                 <div className="text-xs text-muted-foreground">
                   Owned {asset.ownershipPct}%{" · "}
                   <MoneyDisplay
-                    amount={
-                      toBase(Number(asset.currentValue), asset.currency) *
-                      (ownershipPct / 100)
-                    }
+                    amount={baseValue * (ownershipPct / 100)}
                     currency={baseCurrency}
                     btcUsdRate={btcUsdRate}
                   />
