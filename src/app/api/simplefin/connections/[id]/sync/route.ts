@@ -173,7 +173,9 @@ export async function POST(
       for (const row of trackedRows) {
         const asset = assetById.get(row.assetId!);
         if (!asset) continue;
-        const inst = row.institutionName ?? "Unknown";
+        // Skip grouping for accounts with no institution name
+        const inst = row.institutionName?.trim();
+        if (!inst) continue;
         const list = byInstitution.get(inst) ?? [];
         list.push({ assetId: row.assetId!, balance: row.balance, asset });
         byInstitution.set(inst, list);
@@ -212,14 +214,16 @@ export async function POST(
         }
 
         // Ensure all children point to parent + zero-balance archiving
+        // (only for non-debt assets — a $0 credit card is still active)
         for (const { assetId, balance, asset } of group) {
           const isZero = !balance || Number(balance) === 0;
+          const isDebt = asset.type === "credit_card" || asset.type === "creditcard" || asset.type === "loan";
           const updates: Record<string, unknown> = {};
 
           if (asset.parentAssetId !== parentId) {
             updates.parentAssetId = parentId;
           }
-          if (isZero && !asset.isArchived) {
+          if (!isDebt && isZero && !asset.isArchived) {
             updates.isArchived = true;
           } else if (!isZero && asset.isArchived) {
             updates.isArchived = false;

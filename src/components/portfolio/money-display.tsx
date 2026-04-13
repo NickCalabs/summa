@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/stores/ui-store";
 
 interface MoneyDisplayProps {
   amount: number;
@@ -84,10 +85,11 @@ export function MoneyDisplay({
     };
   }, [amount, animate]);
 
+  const masked = useUIStore((s) => s.valuesMasked);
   const valueToRender = animate ? displayAmount : amount;
   return (
     <span className={cn("tabular-nums", className)}>
-      {formatCurrency(valueToRender, currency)}
+      {masked ? "$•••••" : formatCurrency(valueToRender, currency)}
     </span>
   );
 }

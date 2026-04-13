@@ -150,7 +150,8 @@ export async function POST(
         for (const row of allTracked) {
           const asset = row.assetId ? assetById.get(row.assetId) : null;
           if (!asset) continue;
-          const inst = row.institutionName ?? "Unknown";
+          const inst = row.institutionName?.trim();
+          if (!inst) continue;
           const list = byInstitution.get(inst) ?? [];
           list.push({ assetId: row.assetId!, balance: row.balance, asset });
           byInstitution.set(inst, list);
@@ -190,12 +191,13 @@ export async function POST(
           // Set parentAssetId on children + archive zero-balance
           for (const { assetId, balance, asset } of group) {
             const isZero = !balance || Number(balance) === 0;
+            const isDebt = asset.type === "credit_card" || asset.type === "creditcard" || asset.type === "loan";
             const updates: Record<string, unknown> = {};
 
             if (asset.parentAssetId !== parentId) {
               updates.parentAssetId = parentId;
             }
-            if (isZero) {
+            if (!isDebt && isZero) {
               updates.isArchived = true;
             }
 

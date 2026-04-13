@@ -40,6 +40,9 @@ interface UIStore {
   accountDetailPortfolioId: string | null;
   openAccountDetail: (portfolioId: string, assetId: string) => void;
   closeAccountDetail: () => void;
+
+  valuesMasked: boolean;
+  toggleValuesMasked: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -120,4 +123,7 @@ export const useUIStore = create<UIStore>((set) => ({
     set({ accountDetailPortfolioId: portfolioId, accountDetailAssetId: assetId }),
   closeAccountDetail: () =>
     set({ accountDetailAssetId: null, accountDetailPortfolioId: null }),
+
+  valuesMasked: false,
+  toggleValuesMasked: () => set((state) => ({ valuesMasked: !state.valuesMasked })),
 }));

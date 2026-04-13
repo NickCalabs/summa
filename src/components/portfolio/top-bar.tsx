@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import {
+  EyeIcon,
+  EyeOffIcon,
   PlusIcon,
   SearchIcon,
   SettingsIcon,
@@ -40,6 +42,8 @@ export function TopBar({
   const openAddFlow = useUIStore((s) => s.openAddFlow);
   const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
   const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
+  const valuesMasked = useUIStore((s) => s.valuesMasked);
+  const toggleValuesMasked = useUIStore((s) => s.toggleValuesMasked);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -152,6 +156,15 @@ export function TopBar({
       >
         <PlusIcon className="size-3.5" data-icon="inline-start" />
         Add
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleValuesMasked}
+        title={valuesMasked ? "Show values" : "Hide values"}
+      >
+        {valuesMasked ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
       </Button>
 
       <Button variant="ghost" size="icon" disabled>

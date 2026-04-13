@@ -70,10 +70,27 @@ export async function createLinkToken(
     // Update mode
     request.access_token = accessToken;
   } else {
-    request.products = getPlaidProducts();
+    // Transactions is the baseline product. Investments + liabilities are
+    // optional so Link still works if the Plaid account hasn't been
+    // approved for them yet, but shows those institutions when it has.
+    const all = getPlaidProducts();
+    request.products = all.filter((p) => p === Products.Transactions);
+    const optional = all.filter((p) => p !== Products.Transactions);
+    if (optional.length > 0) request.optional_products = optional;
   }
 
-  const response = await plaid.linkTokenCreate(request);
+  let response;
+  try {
+    response = await plaid.linkTokenCreate(request);
+  } catch (err: any) {
+    // If optional products are rejected, retry with just the required ones
+    if (err?.response?.data?.error_code === "INVALID_PRODUCT" && request.optional_products) {
+      delete request.optional_products;
+      response = await plaid.linkTokenCreate(request);
+    } else {
+      throw err;
+    }
+  }
   return response.data.link_token;
 }
 
