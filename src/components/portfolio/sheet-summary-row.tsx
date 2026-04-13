@@ -31,6 +31,7 @@ interface SheetSummaryRowProps {
   onSheetChange: (id: string) => void;
   portfolioId: string;
   currency: string;
+  btcUsdRate?: number | null;
   typeOverride?: "assets" | "debts";
 }
 
@@ -40,6 +41,7 @@ export function SheetSummaryRow({
   onSheetChange,
   portfolioId,
   currency,
+  btcUsdRate,
   typeOverride,
 }: SheetSummaryRowProps) {
   const router = useRouter();
@@ -170,6 +172,7 @@ export function SheetSummaryRow({
                   <MoneyDisplay
                     amount={total}
                     currency={currency}
+                    btcUsdRate={btcUsdRate}
                     className={cn(
                       "text-xs leading-tight",
                       isActive ? "text-primary/80" : "text-muted-foreground/70"

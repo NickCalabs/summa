@@ -23,6 +23,7 @@ interface SectionHeaderProps {
   section: Section;
   sheetType: "assets" | "debts";
   currency: string;
+  btcUsdRate?: number | null;
   isCollapsed: boolean;
   onToggle: () => void;
   portfolioId: string;
@@ -36,6 +37,7 @@ export function SectionHeader({
   section,
   sheetType,
   currency,
+  btcUsdRate,
   isCollapsed,
   onToggle,
   portfolioId,
@@ -164,7 +166,7 @@ export function SectionHeader({
 
       {!isCollapsed && (
         <div className="pb-1 text-right text-sm font-semibold tabular-nums">
-          <MoneyDisplay amount={sectionTotal} currency={currency} />
+          <MoneyDisplay amount={sectionTotal} currency={currency} btcUsdRate={btcUsdRate} />
         </div>
       )}
 

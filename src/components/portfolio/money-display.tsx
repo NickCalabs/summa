@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
+import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
 
 interface MoneyDisplayProps {
   amount: number;
@@ -15,6 +16,8 @@ interface MoneyDisplayProps {
    * should stay static to avoid visual noise.
    */
   animate?: boolean;
+  /** Today's BTC/USD rate — when provided, enables display-currency conversion */
+  btcUsdRate?: number | null;
 }
 
 const ANIMATION_DURATION_MS = 800;
@@ -43,6 +46,7 @@ export function MoneyDisplay({
   currency,
   className,
   animate = false,
+  btcUsdRate,
 }: MoneyDisplayProps) {
   const [displayAmount, setDisplayAmount] = useState(amount);
   const previousAmount = useRef(amount);
@@ -86,10 +90,24 @@ export function MoneyDisplay({
   }, [amount, animate]);
 
   const masked = useUIStore((s) => s.valuesMasked);
-  const valueToRender = animate ? displayAmount : amount;
+  const dc = useOptionalDisplayCurrency();
+  const rawValue = animate ? displayAmount : amount;
+
+  // If btcUsdRate provided and display currency is non-USD, convert
+  let finalValue = rawValue;
+  let useDisplayFormat = false;
+  if (btcUsdRate && dc && dc.displayCurrency !== "USD") {
+    finalValue = dc.convert(rawValue, btcUsdRate);
+    useDisplayFormat = true;
+  }
+
+  const formatted = useDisplayFormat && dc
+    ? dc.format(finalValue)
+    : formatCurrency(finalValue, currency);
+
   return (
     <span className={cn("tabular-nums", className)}>
-      {masked ? "$•••••" : formatCurrency(valueToRender, currency)}
+      {masked ? "$\u2022\u2022\u2022\u2022\u2022" : formatted}
     </span>
   );
 }

@@ -10,7 +10,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
-import { formatChartDate, formatCompactCurrency } from "@/lib/chart-utils";
+import { useDisplayCurrency } from "@/contexts/display-currency-context";
+import { formatChartDate } from "@/lib/chart-utils";
 import { ChartEmpty } from "./chart-empty";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -22,17 +23,25 @@ interface AssetsDebtsChartProps {
 
 export function AssetsDebtsChart({ portfolioId, from, currency }: AssetsDebtsChartProps) {
   const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
+  const { displayCurrency, convert, formatCompact: dcFormatCompact } = useDisplayCurrency();
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
     return [...snapshots]
       .reverse()
-      .map((s) => ({
-        date: s.date,
-        assets: Number(s.totalAssets),
-        debts: Number(s.totalDebts),
-      }));
-  }, [snapshots]);
+      .filter((s) => {
+        if (displayCurrency === "USD") return true;
+        return s.btcUsdRate != null;
+      })
+      .map((s) => {
+        const rate = s.btcUsdRate ? Number(s.btcUsdRate) : null;
+        return {
+          date: s.date,
+          assets: convert(Number(s.totalAssets), rate),
+          debts: convert(Number(s.totalDebts), rate),
+        };
+      });
+  }, [snapshots, displayCurrency, convert]);
 
   if (isLoading) return <Skeleton className="h-[200px] md:h-[300px] w-full" />;
   if (chartData.length < 2) {
@@ -66,13 +75,13 @@ export function AssetsDebtsChart({ portfolioId, from, currency }: AssetsDebtsCha
             minTickGap={40}
           />
           <YAxis
-            tickFormatter={(v) => formatCompactCurrency(v, currency)}
+            tickFormatter={(v) => dcFormatCompact(v)}
             tick={{ fontSize: 12 }}
             tickLine={false}
             axisLine={false}
             width={70}
           />
-          <Tooltip content={<AssetsDebtsTooltip currency={currency} />} />
+          <Tooltip content={<AssetsDebtsTooltip />} />
           <Area
             type="monotone"
             dataKey="assets"
@@ -97,16 +106,14 @@ function AssetsDebtsTooltip({
   active,
   payload,
   label,
-  currency,
 }: {
   active?: boolean;
   payload?: Array<{ dataKey: string; value: number; color: string }>;
   label?: string;
-  currency: string;
 }) {
+  const { format: dcFormat } = useDisplayCurrency();
   if (!active || !payload?.length) return null;
-  const fmt = (v: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(v);
+  const fmt = (v: number) => dcFormat(v);
   return (
     <div className="rounded-md bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md border">
       <p className="text-muted-foreground">{label ? formatChartDate(label) : ""}</p>

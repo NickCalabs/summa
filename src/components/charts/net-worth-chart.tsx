@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
+import { useDisplayCurrency } from "@/contexts/display-currency-context";
 import { formatChartDate } from "@/lib/chart-utils";
 import { ChartEmpty } from "./chart-empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,15 +34,28 @@ export function NetWorthChart({
   heightClassName,
 }: NetWorthChartProps) {
   const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
+  const { displayCurrency, convert } = useDisplayCurrency();
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
-    return [...snapshots].reverse().map((s) => ({
-      date: s.date,
-      netWorth: Number(s.netWorth),
-      investable: s.investableTotal != null ? Number(s.investableTotal) : null,
-    }));
-  }, [snapshots]);
+    return [...snapshots]
+      .reverse()
+      .filter((s) => {
+        if (displayCurrency === "USD") return true;
+        return s.btcUsdRate != null;
+      })
+      .map((s) => {
+        const rate = s.btcUsdRate ? Number(s.btcUsdRate) : null;
+        return {
+          date: s.date,
+          netWorth: convert(Number(s.netWorth), rate),
+          investable:
+            s.investableTotal != null
+              ? convert(Number(s.investableTotal), rate)
+              : null,
+        };
+      });
+  }, [snapshots, displayCurrency, convert]);
 
   const hasInvestable = chartData.some((d) => d.investable != null);
 
@@ -91,7 +105,7 @@ export function NetWorthChart({
             minTickGap={40}
             dy={10}
           />
-          <Tooltip content={<NetWorthTooltip currency={currency} hasInvestable={hasInvestable} />} />
+          <Tooltip content={<NetWorthTooltip hasInvestable={hasInvestable} />} />
           <Area
             type="natural"
             dataKey="netWorth"
@@ -151,19 +165,17 @@ function NetWorthTooltip({
   active,
   payload,
   label,
-  currency,
   hasInvestable,
 }: {
   active?: boolean;
   payload?: Array<{ dataKey: string; value: number }>;
   label?: string;
-  currency: string;
   hasInvestable: boolean;
 }) {
+  const { format: dcFormat } = useDisplayCurrency();
   if (!active || !payload?.length) return null;
 
-  const fmt = (v: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(v);
+  const fmt = (v: number) => dcFormat(v);
 
   const netWorthEntry = payload.find((p) => p.dataKey === "netWorth");
   const investableEntry = payload.find(

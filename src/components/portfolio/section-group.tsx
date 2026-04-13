@@ -10,6 +10,7 @@ interface SectionGroupProps {
   sheetTotal: number;
   sheetType: "assets" | "debts";
   currency: string;
+  btcUsdRate?: number | null;
   portfolioId: string;
   sections: Section[];
   isFirst: boolean;
@@ -23,6 +24,7 @@ export function SectionGroup({
   section,
   sheetType,
   currency,
+  btcUsdRate,
   portfolioId,
   sections,
   isFirst,
@@ -41,6 +43,7 @@ export function SectionGroup({
           section={section}
           sheetType={sheetType}
           currency={currency}
+          btcUsdRate={btcUsdRate}
           isCollapsed={isCollapsed}
           onToggle={() => toggleSection(section.id)}
           portfolioId={portfolioId}
@@ -54,6 +57,7 @@ export function SectionGroup({
         <AssetTable
           assets={section.assets}
           currency={currency}
+          btcUsdRate={btcUsdRate}
           portfolioId={portfolioId}
           sectionId={section.id}
           sections={sections}

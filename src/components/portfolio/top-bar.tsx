@@ -20,6 +20,7 @@ import {
 } from "@/hooks/use-portfolio-mutations";
 import { useCreateSection } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
+import { DisplayCurrencyDropdown } from "./display-currency-dropdown";
 
 interface TopBarProps {
   portfolioId: string;
@@ -157,6 +158,8 @@ export function TopBar({
         <PlusIcon className="size-3.5" data-icon="inline-start" />
         Add
       </Button>
+
+      <DisplayCurrencyDropdown />
 
       <Button
         variant="ghost"

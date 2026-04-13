@@ -12,6 +12,7 @@ interface NetWorthHeaderProps {
   portfolioId: string;
   aggregates: Aggregates;
   currency: string;
+  btcUsdRate?: number | null;
   sections: Section[];
   rates: Record<string, number>;
   isLoading?: boolean;
@@ -21,6 +22,7 @@ export function NetWorthHeader({
   portfolioId,
   aggregates,
   currency,
+  btcUsdRate,
   sections,
   rates,
   isLoading,
@@ -73,11 +75,12 @@ export function NetWorthHeader({
       <MoneyDisplay
         amount={aggregates.netWorth}
         currency={currency}
+        btcUsdRate={btcUsdRate}
         className="text-4xl font-bold tracking-tight"
       />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <ChangeChip label="1 DAY" change={change1D} currency={currency} />
-        <ChangeChip label="1 YEAR" change={change1Y} currency={currency} />
+        <ChangeChip label="1 DAY" change={change1D} currency={currency} btcUsdRate={btcUsdRate} />
+        <ChangeChip label="1 YEAR" change={change1Y} currency={currency} btcUsdRate={btcUsdRate} />
       </div>
       {sectionTotals.length > 0 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pt-0.5">
@@ -85,7 +88,7 @@ export function NetWorthHeader({
             <span key={s.name} className="flex items-center gap-1.5">
               {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
               <span className="font-medium text-foreground/70">{s.name}</span>
-              <MoneyDisplay amount={s.total} currency={currency} />
+              <MoneyDisplay amount={s.total} currency={currency} btcUsdRate={btcUsdRate} />
             </span>
           ))}
         </div>
@@ -98,10 +101,12 @@ function ChangeChip({
   label,
   change,
   currency,
+  btcUsdRate,
 }: {
   label: string;
   change: { absoluteChange: number; percentChange: number } | null;
   currency: string;
+  btcUsdRate?: number | null;
 }) {
   if (!change) {
     return (
@@ -120,7 +125,7 @@ function ChangeChip({
     <span className={`text-sm font-medium ${colorClass}`}>
       {label}{" "}
       {sign}
-      <MoneyDisplay amount={Math.abs(absoluteChange)} currency={currency} />
+      <MoneyDisplay amount={Math.abs(absoluteChange)} currency={currency} btcUsdRate={btcUsdRate} />
       {" "}({sign}{percentChange.toFixed(1)}%)
     </span>
   );

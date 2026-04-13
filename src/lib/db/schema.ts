@@ -226,6 +226,7 @@ export const portfolioSnapshots = pgTable(
     netWorth: numeric("net_worth", { precision: 20, scale: 2 }).notNull(),
     cashOnHand: numeric("cash_on_hand", { precision: 20, scale: 2 }).notNull(),
     investableTotal: numeric("investable_total", { precision: 20, scale: 2 }),
+    btcUsdRate: numeric("btc_usd_rate", { precision: 20, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [

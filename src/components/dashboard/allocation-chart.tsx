@@ -8,6 +8,7 @@ import { DONUT_COLORS, formatCompactCurrency } from "@/lib/chart-utils";
 import { isLiabilityAsset } from "@/lib/portfolio-utils";
 import { ChartEmpty } from "@/components/charts/chart-empty";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
+import { useDisplayCurrency } from "@/contexts/display-currency-context";
 import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ interface SheetTotal {
 
 export function AllocationChart({ portfolio }: AllocationChartProps) {
   const setActiveSheet = useUIStore((state) => state.setActiveSheet);
+  const { convert, formatCompact: dcFormatCompact, displayCurrency } = useDisplayCurrency();
   const investableTotal = useMemo(
     () => computeInvestableTotal(portfolio),
     [portfolio]
@@ -136,6 +138,7 @@ export function AllocationChart({ portfolio }: AllocationChartProps) {
                 <MoneyDisplay
                   amount={assetTotal}
                   currency={portfolio.currency}
+                  btcUsdRate={portfolio.btcUsdRate}
                   className="mt-2 text-2xl font-semibold tracking-tight"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -148,12 +151,12 @@ export function AllocationChart({ portfolio }: AllocationChartProps) {
           <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70">
             <RingMetric
               label="Investable"
-              value={formatCompactCurrency(investableTotal, portfolio.currency)}
+              value={displayCurrency === "USD" ? formatCompactCurrency(investableTotal, portfolio.currency) : dcFormatCompact(convert(investableTotal, portfolio.btcUsdRate))}
               detail={`${(investableRatio * 100).toFixed(0)}% of assets`}
             />
             <RingMetric
               label="Debt load"
-              value={formatCompactCurrency(debtTotal, portfolio.currency)}
+              value={displayCurrency === "USD" ? formatCompactCurrency(debtTotal, portfolio.currency) : dcFormatCompact(convert(debtTotal, portfolio.btcUsdRate))}
               detail={`${(debtRatio * 100).toFixed(0)}% of assets`}
             />
             <RingMetric
@@ -175,6 +178,7 @@ export function AllocationChart({ portfolio }: AllocationChartProps) {
           subtitle="Sheet-level asset exposure in portfolio currency."
           items={assetSheets}
           currency={portfolio.currency}
+          btcUsdRate={portfolio.btcUsdRate}
           emptyLabel="No asset sheets yet"
           onSelect={setActiveSheet}
         />
@@ -184,6 +188,7 @@ export function AllocationChart({ portfolio }: AllocationChartProps) {
           subtitle="Liability exposure by debt sheet."
           items={debtSheets}
           currency={portfolio.currency}
+          btcUsdRate={portfolio.btcUsdRate}
           emptyLabel="No debt sheets yet"
           onSelect={setActiveSheet}
           debt
@@ -198,6 +203,7 @@ function ReportBlock({
   subtitle,
   items,
   currency,
+  btcUsdRate,
   emptyLabel,
   onSelect,
   debt = false,
@@ -206,6 +212,7 @@ function ReportBlock({
   subtitle: string;
   items: SheetTotal[];
   currency: string;
+  btcUsdRate?: number | null;
   emptyLabel: string;
   onSelect: (sheetId: string) => void;
   debt?: boolean;
@@ -261,7 +268,7 @@ function ReportBlock({
                   {(item.share * 100).toFixed(1)}%
                 </div>
                 <div className="text-right font-medium tabular-nums">
-                  <MoneyDisplay amount={item.total} currency={currency} />
+                  <MoneyDisplay amount={item.total} currency={currency} btcUsdRate={btcUsdRate} />
                 </div>
               </button>
             ))}

@@ -11,6 +11,7 @@ import {
 import { ChartEmpty } from "@/components/charts/chart-empty";
 import type { Portfolio } from "@/hooks/use-portfolio";
 import { formatCompactCurrency } from "@/lib/chart-utils";
+import { useDisplayCurrency } from "@/contexts/display-currency-context";
 import {
   buildPortfolioRecapFlow,
   type PortfolioRecapLink,
@@ -243,7 +244,7 @@ export function RecapSankeyChart({
                   stroke={TONE_STYLES[node.tone].nodeStroke}
                   strokeWidth={1}
                 />
-                <NodeLabel node={node} currency={portfolio.currency} />
+                <NodeLabel node={node} currency={portfolio.currency} btcUsdRate={portfolio.btcUsdRate} />
               </g>
             ))}
           </g>
@@ -261,16 +262,23 @@ export function RecapSankeyChart({
 function NodeLabel({
   node,
   currency,
+  btcUsdRate,
 }: {
   node: RecapSankeyNode;
   currency: string;
+  btcUsdRate: number | null;
 }) {
+  const { convert, formatCompact: dcFormatCompact, displayCurrency } = useDisplayCurrency();
   const x0 = node.x0 ?? 0;
   const x1 = node.x1 ?? 0;
   const y0 = node.y0 ?? 0;
   const y1 = node.y1 ?? 0;
   const centerY = (y0 + y1) / 2;
-  const amount = formatCompactCurrency(node.value ?? 0, currency);
+  const rawValue = node.value ?? 0;
+  const converted = displayCurrency === "USD" ? rawValue : convert(rawValue, btcUsdRate);
+  const amount = displayCurrency === "USD"
+    ? formatCompactCurrency(converted, currency)
+    : dcFormatCompact(converted);
 
   if (node.column === "final") {
     return (

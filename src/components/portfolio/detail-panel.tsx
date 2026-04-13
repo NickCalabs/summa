@@ -137,6 +137,7 @@ export function DetailPanel({ portfolioId, portfolio }: DetailPanelProps) {
                 <ValueTab
                   asset={asset}
                   currency={portfolio.currency}
+                  btcUsdRate={portfolio.btcUsdRate}
                   updateAsset={updateAsset}
                 />
               </TabsContent>
@@ -286,10 +287,12 @@ function PanelHeader({
 function ValueTab({
   asset,
   currency,
+  btcUsdRate,
   updateAsset,
 }: {
   asset: NonNullable<ReturnType<typeof findAssetInTree>>;
   currency: string;
+  btcUsdRate?: number | null;
   updateAsset: ReturnType<typeof useUpdateAsset>;
 }) {
   const [manualValue, setManualValue] = useState("");
@@ -315,6 +318,7 @@ function ValueTab({
           <MoneyDisplay
             amount={toBase(Number(asset.currentValue), asset.currency)}
             currency={baseCurrency}
+            btcUsdRate={btcUsdRate}
             className="text-3xl font-bold"
           />
           <p className="text-sm text-muted-foreground tabular-nums">
@@ -328,6 +332,7 @@ function ValueTab({
         <MoneyDisplay
           amount={Number(asset.currentValue)}
           currency={baseCurrency}
+          btcUsdRate={btcUsdRate}
           className="text-3xl font-bold"
         />
       )}

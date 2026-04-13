@@ -9,6 +9,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
+import { getCurrentBtcUsd } from "@/lib/providers/cryptocompare";
 import { convertToBase } from "@/lib/currency";
 import { isLiabilityAsset } from "@/lib/portfolio-utils";
 
@@ -138,6 +139,9 @@ export async function takePortfolioSnapshot(portfolioId: string) {
 
   const netWorth = totalAssets - totalDebts;
 
+  // Fetch today's BTC/USD rate for historical chart re-denomination
+  const btcUsdRate = await getCurrentBtcUsd();
+
   // Upsert portfolio snapshot
   const [portfolioSnap] = await db
     .insert(portfolioSnapshots)
@@ -149,6 +153,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
       netWorth: netWorth.toFixed(2),
       cashOnHand: cashOnHand.toFixed(2),
       investableTotal: investableTotal.toFixed(2),
+      btcUsdRate: btcUsdRate != null ? btcUsdRate.toFixed(2) : null,
     })
     .onConflictDoUpdate({
       target: [portfolioSnapshots.portfolioId, portfolioSnapshots.date],
@@ -158,6 +163,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
         netWorth: netWorth.toFixed(2),
         cashOnHand: cashOnHand.toFixed(2),
         investableTotal: investableTotal.toFixed(2),
+        ...(btcUsdRate != null ? { btcUsdRate: btcUsdRate.toFixed(2) } : {}),
       },
     })
     .returning();

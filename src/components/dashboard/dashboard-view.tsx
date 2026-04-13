@@ -20,6 +20,8 @@ import { AllocationChart } from "./allocation-chart";
 import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
 import { CagrCard } from "./cagr-card";
+import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
+import { DisplayCurrencyDropdown } from "@/components/portfolio/display-currency-dropdown";
 import { cn } from "@/lib/utils";
 
 interface DashboardViewProps {
@@ -102,6 +104,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   const oneYearNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 365);
 
   return (
+    <DisplayCurrencyProvider>
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
 
@@ -124,6 +127,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                   <MoneyDisplay
                     amount={portfolio.aggregates.netWorth}
                     currency={portfolio.currency}
+                    btcUsdRate={portfolio.btcUsdRate}
                     animate
                     className="text-4xl font-semibold tracking-tight sm:text-5xl xl:text-6xl"
                   />
@@ -131,16 +135,15 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <ChangeIndicator
                       change={oneDayNetWorth}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                       label="1D"
                     />
                     <ChangeIndicator
                       change={oneYearNetWorth}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                       label="1Y"
                     />
-                    <span className="text-muted-foreground">
-                      Base currency {portfolio.currency}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -181,6 +184,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                         <MoneyDisplay
                           amount={portfolio.aggregates.netWorth}
                           currency={portfolio.currency}
+                          btcUsdRate={portfolio.btcUsdRate}
                           animate
                         />
                       </span>
@@ -188,6 +192,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <ChangeIndicator
                       change={oneDayNetWorth}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                       label="1D"
                     />
                     {investableTotal > 0 && (
@@ -198,6 +203,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                           <MoneyDisplay
                             amount={investableTotal}
                             currency={portfolio.currency}
+                            btcUsdRate={portfolio.btcUsdRate}
                           />
                         </span>
                       </div>
@@ -261,6 +267,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <MoneyDisplay
                       amount={portfolio.aggregates.netWorth}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                     />
                   }
                 />
@@ -270,6 +277,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <MoneyDisplay
                       amount={investableTotal}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                     />
                   }
                   detail={`${percentage(investableTotal, portfolio.aggregates.totalAssets)} of assets`}
@@ -280,6 +288,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <MoneyDisplay
                       amount={portfolio.aggregates.totalAssets}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                     />
                   }
                 />
@@ -289,6 +298,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <MoneyDisplay
                       amount={portfolio.aggregates.totalDebts}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                     />
                   }
                   detail={`${percentage(portfolio.aggregates.totalDebts, portfolio.aggregates.totalAssets)} of assets`}
@@ -299,6 +309,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     <MoneyDisplay
                       amount={portfolio.aggregates.cashOnHand}
                       currency={portfolio.currency}
+                      btcUsdRate={portfolio.btcUsdRate}
                     />
                   }
                   detail={`${percentage(portfolio.aggregates.cashOnHand, portfolio.aggregates.totalAssets)} of assets`}
@@ -325,6 +336,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
         </section>
       </div>
     </div>
+    </DisplayCurrencyProvider>
   );
 }
 
