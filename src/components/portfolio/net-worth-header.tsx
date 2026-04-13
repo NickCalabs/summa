@@ -76,7 +76,7 @@ export function NetWorthHeader({
         amount={aggregates.netWorth}
         currency={currency}
         btcUsdRate={btcUsdRate}
-        className="text-4xl font-bold tracking-tight"
+        className="text-4xl font-normal tracking-[-0.015em] tabular-lining"
       />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <ChangeChip label="1 DAY" change={change1D} currency={currency} btcUsdRate={btcUsdRate} />

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -108,14 +107,11 @@ export function SectionHeader({
           ) : (
             <div className="flex items-center gap-1">
               <span
-                className="cursor-pointer text-lg font-semibold tracking-tight"
+                className="cursor-pointer text-[11px] font-bold uppercase tracking-wide opacity-70"
                 onDoubleClick={startRenaming}
               >
                 {section.name}
               </span>
-              <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-                {section.assets.length}
-              </Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
@@ -163,12 +159,6 @@ export function SectionHeader({
           Add Asset
         </Button>
       </div>
-
-      {!isCollapsed && (
-        <div className="pb-1 text-right text-sm font-semibold tabular-nums">
-          <MoneyDisplay amount={sectionTotal} currency={currency} btcUsdRate={btcUsdRate} />
-        </div>
-      )}
 
       <ConfirmDialog
         open={deleteOpen}

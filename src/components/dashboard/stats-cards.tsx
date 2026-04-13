@@ -95,7 +95,7 @@ function SummaryCell({
           amount={value}
           currency={currency}
           btcUsdRate={btcUsdRate}
-          className="text-2xl font-semibold tracking-tight"
+          className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
       <div className="mt-2">

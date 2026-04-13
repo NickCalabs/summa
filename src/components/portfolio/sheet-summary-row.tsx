@@ -163,7 +163,7 @@ export function SheetSummaryRow({
                 >
                   <span
                     className={cn(
-                      "text-sm leading-tight",
+                      "text-[11px] uppercase tracking-wide leading-tight",
                       isActive ? "font-semibold" : "font-medium"
                     )}
                   >
@@ -174,7 +174,7 @@ export function SheetSummaryRow({
                     currency={currency}
                     btcUsdRate={btcUsdRate}
                     className={cn(
-                      "text-xs leading-tight",
+                      "text-base font-normal tabular-lining leading-tight",
                       isActive ? "text-primary/80" : "text-muted-foreground/70"
                     )}
                   />

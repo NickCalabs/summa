@@ -154,3 +154,7 @@
     @apply font-sans;
   }
 }
+
+.tabular-lining {
+  font-feature-settings: "pnum", "lnum", "ss01", "calt" 0;
+}

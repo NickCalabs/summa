@@ -43,7 +43,7 @@ export function SheetTotalHeader({
         amount={total}
         currency={currency}
         btcUsdRate={btcUsdRate}
-        className="text-4xl font-bold tracking-tight"
+        className="text-4xl font-normal tracking-[-0.015em] tabular-lining"
       />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
         <ChangeIndicator change={changeDay ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1D" invertColor={invertColor} />

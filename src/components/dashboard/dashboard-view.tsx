@@ -129,7 +129,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                     currency={portfolio.currency}
                     btcUsdRate={portfolio.btcUsdRate}
                     animate
-                    className="text-4xl font-semibold tracking-tight sm:text-5xl xl:text-6xl"
+                    className="text-4xl font-normal tracking-[-0.015em] tabular-lining sm:text-5xl xl:text-6xl"
                   />
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                     <ChangeIndicator

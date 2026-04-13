@@ -123,6 +123,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
   const moveAsset = useMoveAsset(portfolioId);
   const reorderAssets = useReorderAssets(portfolioId);
 
+  const valuesMasked = useUIStore((s) => s.valuesMasked);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [expandedParents, setExpandedParents] = useState<Set<string>>(
@@ -373,7 +374,9 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   // Native matches display — show primary value only
                   cryptoSymbol && qtySubtext ? (
                     // Crypto asset viewed in its own currency: show qty label
-                    <span className="font-medium">{qtySubtext}</span>
+                    <span className="font-medium">
+                      {valuesMasked ? `\u2022\u2022\u2022\u2022\u2022\u2022 ${quantityUnit}` : qtySubtext}
+                    </span>
                   ) : (
                     <MoneyDisplay
                       amount={Number(asset.currentValue)}
@@ -391,7 +394,9 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                       className="font-medium"
                     />
                     <div className="text-xs text-muted-foreground">
-                      {qtySubtext ?? (
+                      {qtySubtext ? (
+                        valuesMasked ? `\u2022\u2022\u2022\u2022\u2022\u2022 ${quantityUnit}` : qtySubtext
+                      ) : (
                         <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
                       )}
                     </div>
@@ -507,6 +512,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       sheetType,
       expandedParents,
       toggleExpand,
+      valuesMasked,
     ]
   );
 
@@ -538,15 +544,15 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
 
   return (
     <>
-    <div className="overflow-x-auto border border-border/60 bg-background">
+    <div className="overflow-x-auto border border-border/40 bg-background">
       <table className="w-full text-sm">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border/40">
+            <tr key={headerGroup.id} className="border-b border-border/30">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-6 py-6 text-left text-[11px] font-medium tracking-[0.18em] text-muted-foreground"
+                  className="px-4 py-3 text-left text-[11px] font-medium tracking-[0.18em] text-muted-foreground"
                   style={{
                     width: header.column.columnDef.size
                       ? `${header.column.columnDef.size}px`
@@ -577,15 +583,13 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               <React.Fragment key={row.id}>
                 <tr
                   className={`border-b border-border/30 transition-colors hover:bg-muted/35 ${
-                    i % 2 === 1 ? "bg-muted/10" : ""
-                  } ${
                     stale && asset.providerType !== "plaid"
                       ? "opacity-60"
                       : ""
                   }`}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-6 py-3.5 align-middle">
+                    <td key={cell.id} className="px-4 py-2.5 align-middle">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -609,7 +613,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                           openAccountDetail(portfolioId, child.id)
                         }
                       >
-                        <td className="pl-12 pr-6 py-2.5 align-middle">
+                        <td className="pl-10 pr-4 py-2 align-middle">
                           <div className="flex items-center gap-1.5">
                             <span className="text-sm">{child.name}</span>
                             {ticker && (
@@ -619,7 +623,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-2.5 align-middle text-right tabular-nums">
+                        <td className="px-4 py-2 align-middle text-right tabular-nums">
                           <MoneyDisplay
                             amount={Number(child.currentValue)}
                             currency={baseCurrency}
@@ -627,7 +631,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                             className="text-sm"
                           />
                         </td>
-                        <td className="px-6 py-2.5 align-middle" />
+                        <td className="px-4 py-2 align-middle" />
                       </tr>
                     );
                   })}
@@ -637,11 +641,11 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
         </tbody>
         <tfoot>
           <tr className="border-t border-border/50 bg-[#6a6a6a] text-white">
-            <td className="px-6 py-3" />
-            <td className="px-6 py-3 text-right font-medium tabular-nums">
+            <td className="px-4 py-2.5" />
+            <td className="px-4 py-2.5 text-right font-medium tabular-nums">
               <MoneyDisplay amount={sectionTotal} currency={baseCurrency} btcUsdRate={btcUsdRate} />
             </td>
-            <td className="px-6 py-3" />
+            <td className="px-4 py-2.5" />
           </tr>
         </tfoot>
       </table>
