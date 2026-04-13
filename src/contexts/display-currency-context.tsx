@@ -106,3 +106,8 @@ export function useDisplayCurrency() {
     );
   return v;
 }
+
+/** Safe version that returns null when no provider is present (e.g. sidebar) */
+export function useOptionalDisplayCurrency() {
+  return useContext(Ctx);
+}

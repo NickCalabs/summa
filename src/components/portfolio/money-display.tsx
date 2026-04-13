@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
-import { useDisplayCurrency } from "@/contexts/display-currency-context";
+import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
 
 interface MoneyDisplayProps {
   amount: number;
@@ -90,18 +90,18 @@ export function MoneyDisplay({
   }, [amount, animate]);
 
   const masked = useUIStore((s) => s.valuesMasked);
-  const dc = useDisplayCurrency();
+  const dc = useOptionalDisplayCurrency();
   const rawValue = animate ? displayAmount : amount;
 
   // If btcUsdRate provided and display currency is non-USD, convert
   let finalValue = rawValue;
   let useDisplayFormat = false;
-  if (btcUsdRate && dc.displayCurrency !== "USD") {
+  if (btcUsdRate && dc && dc.displayCurrency !== "USD") {
     finalValue = dc.convert(rawValue, btcUsdRate);
     useDisplayFormat = true;
   }
 
-  const formatted = useDisplayFormat
+  const formatted = useDisplayFormat && dc
     ? dc.format(finalValue)
     : formatCurrency(finalValue, currency);
 
