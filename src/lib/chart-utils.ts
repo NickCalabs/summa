@@ -38,6 +38,17 @@ export function formatCompactCurrency(
   }).format(value);
 }
 
+export function formatCompactDisplayCurrency(
+  value: number,
+  displayCurrency: string,
+  formatCompactFn: (val: number) => string,
+): string {
+  if (displayCurrency === "USD") {
+    return formatCompactCurrency(value, "USD");
+  }
+  return formatCompactFn(value);
+}
+
 export const DONUT_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
