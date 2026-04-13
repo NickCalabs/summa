@@ -21,6 +21,7 @@ import { AccountDetailModal } from "./account-detail-modal";
 import { PlaidConnectDialog } from "./plaid-connect-dialog";
 import { CsvImportDialog } from "./csv-import-dialog";
 import { CurrencyProvider } from "@/contexts/currency-context";
+import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
 
 interface PortfolioViewProps {
   portfolioId: string;
@@ -128,6 +129,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
   return (
     <CurrencyProvider baseCurrency={portfolio.currency} rates={portfolio.rates ?? {}}>
+    <DisplayCurrencyProvider>
       <div className="p-6 space-y-6">
         <TopBar
           portfolioId={portfolioId}
@@ -220,6 +222,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           sections={allSections}
         />
       </div>
+    </DisplayCurrencyProvider>
     </CurrencyProvider>
   );
 }

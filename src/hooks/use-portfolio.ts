@@ -76,6 +76,7 @@ export interface Portfolio {
   aggregates: Aggregates;
   rates: Record<string, number>;
   ratesBase: string;
+  btcUsdRate: number | null;
 }
 
 export class ApiError extends Error {
