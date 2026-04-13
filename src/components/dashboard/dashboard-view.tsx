@@ -21,6 +21,7 @@ import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
 import { CagrCard } from "./cagr-card";
 import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
+import { DisplayCurrencyDropdown } from "@/components/portfolio/display-currency-dropdown";
 import { cn } from "@/lib/utils";
 
 interface DashboardViewProps {
