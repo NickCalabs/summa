@@ -15,6 +15,7 @@ import {
 } from "@/lib/api-helpers";
 import { parseBody, updatePortfolio } from "@/types";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
+import { getCurrentBtcUsd } from "@/lib/providers/cryptocompare";
 import { convertToBase } from "@/lib/currency";
 import { isLiabilityAsset } from "@/lib/portfolio-utils";
 
@@ -140,9 +141,15 @@ export async function GET(
     const hasMixedCurrencies = assetRows.some(
       (a) => a.currency !== portfolio.currency
     );
-    const rates = hasMixedCurrencies
+    const rates: Record<string, number> = hasMixedCurrencies
       ? await getExchangeRates(portfolio.currency)
       : {};
+
+    // Always include BTC so crypto assets convert correctly
+    const btcUsdRate = await getCurrentBtcUsd();
+    if (btcUsdRate) {
+      rates.BTC = 1 / btcUsdRate;
+    }
 
     // Compute aggregates with currency conversion
     let totalAssets = 0;
@@ -178,6 +185,7 @@ export async function GET(
       sheets: tree,
       rates,
       ratesBase: portfolio.currency,
+      btcUsdRate: btcUsdRate ?? null,
       aggregates: {
         totalAssets: Number(totalAssets.toFixed(2)),
         totalDebts: Number(totalDebts.toFixed(2)),

@@ -37,3 +37,28 @@ describe("convertCurrency", () => {
     expect(convertCurrency(100, "EUR", "EUR", rates, "USD")).toBe(100);
   });
 });
+
+describe("BTC conversion", () => {
+  // BTC rate: 1 USD = 1/65000 BTC ≈ 0.00001538 BTC
+  const btcRates: Record<string, number> = { EUR: 0.92, GBP: 0.79, BTC: 1 / 65000 };
+
+  it("converts 0.1 BTC to USD (the pre-existing bug)", () => {
+    // 0.1 BTC → USD: 0.1 / (1/65000) = 6500
+    expect(convertCurrency(0.1, "BTC", "USD", btcRates, "USD")).toBeCloseTo(6500, 0);
+  });
+
+  it("converts 6500 USD to BTC", () => {
+    // 6500 USD → BTC: 6500 * (1/65000) = 0.1
+    expect(convertCurrency(6500, "USD", "BTC", btcRates, "USD")).toBeCloseTo(0.1, 6);
+  });
+
+  it("converts BTC to EUR cross-rate", () => {
+    // 0.1 BTC → USD → EUR = (0.1 / (1/65000)) * 0.92 = 5980
+    expect(convertCurrency(0.1, "BTC", "EUR", btcRates, "USD")).toBeCloseTo(5980, 0);
+  });
+
+  it("convertToBase handles BTC → USD", () => {
+    // 0.1 BTC → USD = 0.1 / (1/65000) = 6500
+    expect(convertToBase(0.1, "BTC", "USD", btcRates)).toBeCloseTo(6500, 0);
+  });
+});
