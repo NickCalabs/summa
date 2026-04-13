@@ -41,6 +41,7 @@ import {
 import { findAssetInTree } from "@/lib/portfolio-utils";
 import { parseCurrencyInput, formatNumberForInput } from "@/lib/currency";
 import { useCurrency } from "@/contexts/currency-context";
+import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
 import type { Portfolio } from "@/hooks/use-portfolio";
 
 const PROVIDER_TYPES = [
@@ -297,44 +298,66 @@ function ValueTab({
 }) {
   const [manualValue, setManualValue] = useState("");
   const { baseCurrency, toBase } = useCurrency();
-  const isForeign = asset.currency !== baseCurrency;
+  const dc = useOptionalDisplayCurrency();
+  const displayCurrency = dc?.displayCurrency ?? "USD";
+  const effectiveDisplay = displayCurrency === "sats" ? "BTC" : displayCurrency;
+  const nativeMatchesDisplay = asset.currency === effectiveDisplay;
+  const baseValue = toBase(Number(asset.currentValue), asset.currency);
 
   const hasQtyPrice =
     asset.quantity != null && asset.currentPrice != null;
 
   function handleValueUpdate(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = parseCurrencyInput(manualValue, currency);
-    if (parsed.amount !== 0 || manualValue.trim() === "0") {
-      updateAsset.mutate({ id: asset.id, currentValue: parsed.amount.toString() });
-      setManualValue("");
+    const trimmed = manualValue.trim();
+    if (!trimmed) return;
+    const num = parseFloat(trimmed);
+    if (isNaN(num)) return;
+
+    if (hasQtyPrice) {
+      // Editing quantity — recalculate value
+      const price = Number(asset.currentPrice);
+      updateAsset.mutate({
+        id: asset.id,
+        quantity: String(num),
+        currentValue: (num * price).toFixed(2),
+      });
+    } else {
+      // Manual asset — edit value directly
+      updateAsset.mutate({ id: asset.id, currentValue: String(num) });
     }
+    setManualValue("");
   }
 
   return (
     <>
-      {isForeign ? (
+      {nativeMatchesDisplay ? (
+        asset.quantity != null ? (
+          <p className="text-3xl font-bold tabular-nums">
+            {Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} {asset.currency}
+          </p>
+        ) : (
+          <MoneyDisplay
+            amount={Number(asset.currentValue)}
+            currency={asset.currency}
+            className="text-3xl font-bold"
+          />
+        )
+      ) : (
         <>
           <MoneyDisplay
-            amount={toBase(Number(asset.currentValue), asset.currency)}
+            amount={baseValue}
             currency={baseCurrency}
             btcUsdRate={btcUsdRate}
             className="text-3xl font-bold"
           />
           <p className="text-sm text-muted-foreground tabular-nums">
-            <MoneyDisplay
-              amount={Number(asset.currentValue)}
-              currency={asset.currency}
-            />
+            {asset.quantity != null
+              ? `${Number(asset.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${asset.currency}`
+              : <MoneyDisplay amount={Number(asset.currentValue)} currency={asset.currency} />
+            }
           </p>
         </>
-      ) : (
-        <MoneyDisplay
-          amount={Number(asset.currentValue)}
-          currency={baseCurrency}
-          btcUsdRate={btcUsdRate}
-          className="text-3xl font-bold"
-        />
       )}
 
       {hasQtyPrice && (
@@ -350,14 +373,17 @@ function ValueTab({
       <AssetSparkline assetId={asset.id} />
 
       <form onSubmit={handleValueUpdate} className="flex gap-2">
-        <Input
-          placeholder="Update value..."
-          value={manualValue}
-          onChange={(e) => setManualValue(e.target.value)}
-          type="text"
-          inputMode="decimal"
-          className="flex-1"
-        />
+        <div className="flex-1 flex items-center gap-1.5">
+          <Input
+            placeholder={hasQtyPrice ? `Quantity in ${asset.currency}...` : "Update value..."}
+            value={manualValue}
+            onChange={(e) => setManualValue(e.target.value)}
+            type="text"
+            inputMode="decimal"
+            className="flex-1"
+          />
+          <span className="text-xs text-muted-foreground shrink-0">{asset.currency}</span>
+        </div>
         <Button type="submit" size="sm">
           Update
         </Button>
