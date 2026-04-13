@@ -7,6 +7,7 @@ interface ChangeIndicatorProps {
   currency: string;
   label: string;
   invertColor?: boolean;
+  btcUsdRate?: number | null;
 }
 
 export function ChangeIndicator({
@@ -14,6 +15,7 @@ export function ChangeIndicator({
   currency,
   label,
   invertColor = false,
+  btcUsdRate,
 }: ChangeIndicatorProps) {
   if (!change) {
     return <span className="text-xs text-muted-foreground">{label}: —</span>;
@@ -37,7 +39,7 @@ export function ChangeIndicator({
   return (
     <span className={`inline-flex items-center gap-1 text-xs ${colorClass}`}>
       {label}: <Icon className="size-3" />
-      <MoneyDisplay amount={Math.abs(absoluteChange)} currency={currency} />
+      <MoneyDisplay amount={Math.abs(absoluteChange)} currency={currency} btcUsdRate={btcUsdRate} />
       ({percentChange > 0 ? "+" : ""}
       {percentChange.toFixed(1)}%)
     </span>
