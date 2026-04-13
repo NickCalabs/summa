@@ -148,6 +148,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
                 : portfolio.aggregates.totalDebts
             }
             currency={portfolio.currency}
+            btcUsdRate={portfolio.btcUsdRate}
             changeDay={getChangeFromSnapshots(
               snapshots,
               activeSheet.type === "assets" ? "totalAssets" : "totalDebts",
@@ -167,6 +168,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
               type="debts"
               total={0}
               currency={portfolio.currency}
+              btcUsdRate={portfolio.btcUsdRate}
               changeDay={null}
               changeYear={null}
             />
@@ -181,6 +183,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
               onSheetChange={setActiveSheet}
               portfolioId={portfolioId}
               currency={portfolio.currency}
+              btcUsdRate={portfolio.btcUsdRate}
               typeOverride="debts"
             />
           </div>
@@ -192,6 +195,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
               onSheetChange={setActiveSheet}
               portfolioId={portfolioId}
               currency={portfolio.currency}
+              btcUsdRate={portfolio.btcUsdRate}
             />
 
             {portfolio.sheets.length === 0 ? (
@@ -203,7 +207,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
                 </p>
               </div>
             ) : activeSheet ? (
-              <SheetView sheet={activeSheet} currency={portfolio.currency} portfolioId={portfolioId} />
+              <SheetView sheet={activeSheet} currency={portfolio.currency} btcUsdRate={portfolio.btcUsdRate} portfolioId={portfolioId} />
             ) : null}
           </>
         )}

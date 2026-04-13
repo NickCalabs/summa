@@ -9,6 +9,7 @@ interface SheetTotalHeaderProps {
   type: "assets" | "debts";
   total: number;
   currency: string;
+  btcUsdRate?: number | null;
   isLoading?: boolean;
   changeDay?: Change | null;
   changeYear?: Change | null;
@@ -18,6 +19,7 @@ export function SheetTotalHeader({
   type,
   total,
   currency,
+  btcUsdRate,
   isLoading,
   changeDay,
   changeYear,
@@ -40,11 +42,12 @@ export function SheetTotalHeader({
       <MoneyDisplay
         amount={total}
         currency={currency}
+        btcUsdRate={btcUsdRate}
         className="text-4xl font-bold tracking-tight"
       />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
-        <ChangeIndicator change={changeDay ?? null} currency={currency} label="1D" invertColor={invertColor} />
-        <ChangeIndicator change={changeYear ?? null} currency={currency} label="1Y" invertColor={invertColor} />
+        <ChangeIndicator change={changeDay ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1D" invertColor={invertColor} />
+        <ChangeIndicator change={changeYear ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1Y" invertColor={invertColor} />
       </div>
     </div>
   );

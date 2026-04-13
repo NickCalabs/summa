@@ -18,10 +18,11 @@ import type { Sheet } from "@/hooks/use-portfolio";
 interface SheetViewProps {
   sheet: Sheet;
   currency: string;
+  btcUsdRate?: number | null;
   portfolioId: string;
 }
 
-export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
+export function SheetView({ sheet, currency, btcUsdRate, portfolioId }: SheetViewProps) {
   const createSection = useCreateSection(portfolioId);
   const reorderSections = useReorderSections(portfolioId);
   const openAddFlow = useUIStore((s) => s.openAddFlow);
@@ -162,6 +163,7 @@ export function SheetView({ sheet, currency, portfolioId }: SheetViewProps) {
           sheetTotal={sheetTotal}
           sheetType={sheet.type}
           currency={currency}
+          btcUsdRate={btcUsdRate}
           portfolioId={portfolioId}
           sections={sheet.sections}
           isFirst={index === 0}
