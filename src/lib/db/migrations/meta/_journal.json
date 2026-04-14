@@ -92,6 +92,13 @@
       "when": 1776178584243,
       "tag": "0012_known_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776186638576,
+      "tag": "0013_confused_iron_patriot",
+      "breakpoints": true
     }
   ]
 }

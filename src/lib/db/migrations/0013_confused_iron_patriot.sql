@@ -1,0 +1,2 @@
+ALTER TABLE "coinbase_connections" ADD COLUMN "section_id" uuid;--> statement-breakpoint
+ALTER TABLE "coinbase_connections" ADD CONSTRAINT "coinbase_connections_section_id_sections_id_fk" FOREIGN KEY ("section_id") REFERENCES "public"."sections"("id") ON DELETE set null ON UPDATE no action;
