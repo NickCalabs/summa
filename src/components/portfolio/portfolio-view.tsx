@@ -21,7 +21,6 @@ import { AccountDetailModal } from "./account-detail-modal";
 import { PlaidConnectDialog } from "./plaid-connect-dialog";
 import { CsvImportDialog } from "./csv-import-dialog";
 import { CurrencyProvider } from "@/contexts/currency-context";
-import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
 
 interface PortfolioViewProps {
   portfolioId: string;
@@ -127,9 +126,24 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   const defaultSectionId = activeSheet?.sections[0]?.id ?? null;
   const allSections = activeSheet?.sections ?? [];
 
+  // Compute most recent lastSyncedAt across all assets
+  const lastSyncedAt = (() => {
+    let latest: number | null = null;
+    for (const sheet of portfolio.sheets) {
+      for (const section of sheet.sections) {
+        for (const asset of section.assets) {
+          if (asset.lastSyncedAt) {
+            const ts = new Date(asset.lastSyncedAt).getTime();
+            if (latest == null || ts > latest) latest = ts;
+          }
+        }
+      }
+    }
+    return latest != null ? new Date(latest) : null;
+  })();
+
   return (
     <CurrencyProvider baseCurrency={portfolio.currency} rates={portfolio.rates ?? {}}>
-    <DisplayCurrencyProvider>
       <div className="p-6 space-y-6">
         <TopBar
           portfolioId={portfolioId}
@@ -137,6 +151,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           defaultSectionId={defaultSectionId}
           activeSheetId={activeSheet?.id ?? null}
           activeSheetType={activeSheet?.type ?? null}
+          lastSyncedAt={lastSyncedAt}
         />
 
         {activeSheet && (
@@ -226,7 +241,6 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           sections={allSections}
         />
       </div>
-    </DisplayCurrencyProvider>
     </CurrencyProvider>
   );
 }

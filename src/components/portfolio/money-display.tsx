@@ -26,11 +26,13 @@ function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3);
 }
 
-function formatCurrency(amount: number, currency: string): string {
+function formatCurrency(amount: number, currency: string, compact: boolean): string {
+  const useCompact = compact && Math.abs(amount) >= 10_000;
   try {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
+      ...(useCompact ? { notation: "compact", maximumFractionDigits: 2 } : {}),
     }).format(amount);
   } catch {
     // Fallback for invalid currency codes (e.g. "BTC", empty string)
@@ -90,6 +92,7 @@ export function MoneyDisplay({
   }, [amount, animate]);
 
   const masked = useUIStore((s) => s.valuesMasked);
+  const compact = useUIStore((s) => s.compactNumbers);
   const dc = useOptionalDisplayCurrency();
   const rawValue = animate ? displayAmount : amount;
 
@@ -102,8 +105,8 @@ export function MoneyDisplay({
   }
 
   const formatted = useDisplayFormat && dc
-    ? dc.format(finalValue)
-    : formatCurrency(finalValue, currency);
+    ? dc.format(finalValue, compact)
+    : formatCurrency(finalValue, currency, compact);
 
   return (
     <span className={cn("tabular-nums", className)}>
