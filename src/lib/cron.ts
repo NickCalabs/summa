@@ -16,6 +16,7 @@ import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
 import { refreshBtcWallets, refreshEthWallets, refreshSolWallets } from "@/lib/wallets";
 import { syncCoinbaseConnection } from "@/lib/coinbase-sync";
+import { recomputeParentValues } from "@/lib/parent-value-recalc";
 
 let started = false;
 
@@ -140,6 +141,19 @@ export async function refreshPrices(opts: { sources?: string[] } = {}) {
         }
       } catch (error) {
         console.error(`[cron] ${ts} Error refreshing group ${key}:`, error);
+      }
+    }
+
+    if (updatedCount > 0) {
+      try {
+        const parentsUpdated = await recomputeParentValues();
+        if (parentsUpdated > 0) {
+          console.log(
+            `[cron] ${ts} Recomputed ${parentsUpdated} parent asset values`
+          );
+        }
+      } catch (error) {
+        console.error(`[cron] ${ts} Parent value recompute failed:`, error);
       }
     }
 
