@@ -2,13 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRightIcon,
-  RefreshCwIcon,
-  EyeIcon,
-  EyeOffIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { usePortfolio } from "@/hooks/use-portfolio";
 import { usePortfolioSnapshots } from "@/hooks/use-snapshots";
 import {
@@ -26,9 +20,7 @@ import { AllocationChart } from "./allocation-chart";
 import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
 import { CagrCard } from "./cagr-card";
-import { DisplayCurrencyDropdown } from "@/components/portfolio/display-currency-dropdown";
-import { useSyncPortfolio } from "@/hooks/use-portfolio-mutations";
-import { useUIStore } from "@/stores/ui-store";
+import { ToolbarActions } from "@/components/toolbar-actions";
 import { cn } from "@/lib/utils";
 
 interface DashboardViewProps {
@@ -49,9 +41,6 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
     portfolioId,
     getFromDate("1Y")
   );
-  const syncPortfolio = useSyncPortfolio(portfolioId);
-  const valuesMasked = useUIStore((s) => s.valuesMasked);
-  const toggleValuesMasked = useUIStore((s) => s.toggleValuesMasked);
   const [chartRange, setChartRange] = useState<DateRangeKey>("1Y");
 
   const investableTotal = useMemo(
@@ -113,40 +102,29 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   const oneDayNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 1);
   const oneYearNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 365);
 
+  // Compute most recent lastSyncedAt across all assets for the "synced N ago" label
+  const lastSyncedAt = (() => {
+    let latest: number | null = null;
+    for (const sheet of portfolio.sheets) {
+      for (const section of sheet.sections) {
+        for (const asset of section.assets) {
+          if (asset.lastSyncedAt) {
+            const ts = new Date(asset.lastSyncedAt).getTime();
+            if (latest == null || ts > latest) latest = ts;
+          }
+        }
+      }
+    }
+    return latest != null ? new Date(latest) : null;
+  })();
+
   return (
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
 
       <div className="relative mx-auto max-w-7xl space-y-8 p-6 md:p-8">
         <div className="flex items-center justify-end gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => syncPortfolio.mutate()}
-            disabled={syncPortfolio.isPending}
-            title="Refresh prices and balances"
-          >
-            <RefreshCwIcon
-              className={`size-3.5 ${syncPortfolio.isPending ? "animate-spin" : ""}`}
-              data-icon="inline-start"
-            />
-            {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
-          </Button>
-
-          <DisplayCurrencyDropdown />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleValuesMasked}
-            title={valuesMasked ? "Show values" : "Hide values"}
-          >
-            {valuesMasked ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
-          </Button>
-
-          <Button variant="ghost" size="icon" disabled>
-            <SettingsIcon className="size-4" />
-          </Button>
+          <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
         </div>
 
         <section className="overflow-hidden rounded-[32px] border border-border/70 bg-background/90 shadow-[0_1px_0_rgba(255,255,255,0.45)] backdrop-blur">
