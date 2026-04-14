@@ -10,6 +10,7 @@ import {
 import { decrypt } from "@/lib/encryption";
 import {
   getCoinbaseAccounts,
+  getCoinbaseSpotPrices,
   type CoinbaseAccountInfo,
   CoinbaseProviderError,
 } from "@/lib/providers/coinbase";
@@ -172,6 +173,14 @@ export async function syncCoinbaseConnection(
     if (cbId) childByAccountId.set(cbId, child);
   }
 
+  // Fetch authoritative USD spot prices from Coinbase for every currency we
+  // see. The CDP-authenticated /v2/accounts endpoint doesn't return
+  // native_balance, so Yahoo Finance was our only other option — and Yahoo
+  // doesn't cover many altcoins (PENGU, BOND, ANKR, etc.), leaving them at $0.
+  // Coinbase's public spot endpoint covers every coin they list.
+  const currencies = accounts.map((a) => a.currency).filter(Boolean);
+  const spotPrices = await getCoinbaseSpotPrices(currencies);
+
   let created = 0;
   let synced = 0;
   let archived = 0;
@@ -181,8 +190,6 @@ export async function syncCoinbaseConnection(
     seenAccountIds.add(account.accountId);
 
     const balance = Number(account.balance);
-    const nativeBalance =
-      account.nativeBalance != null ? Number(account.nativeBalance) : null;
     const existing = childByAccountId.get(account.accountId);
 
     // Skip zero-balance accounts we're not already tracking.
@@ -191,37 +198,26 @@ export async function syncCoinbaseConnection(
     const nativeCurrency = account.currency || "USD";
     const ticker = `${nativeCurrency.toUpperCase()}-USD`;
 
-    // Derive per-unit USD price only when Coinbase supplies a real USD value.
-    // If Coinbase can't price the coin (e.g. obscure wallet), leave the
-    // currentValue at 0 and wait for Yahoo to fill in the price on its next
-    // refresh — NEVER fall back to the native quantity as a fake USD value.
-    const derivedPrice =
-      nativeBalance != null && balance > 0 ? nativeBalance / balance : null;
-
-    // Preserve a previously-known price if this pass didn't return one, so an
-    // in-flight Yahoo price doesn't get wiped on sync.
+    // Price priority:
+    //   1. Fresh Coinbase spot price (authoritative, covers every Coinbase coin)
+    //   2. Previously-stored currentPrice (preserves a usable value when
+    //      spot lookup failed this pass — e.g. transient network blip)
+    //   3. null (no way to value the asset yet)
+    const spot = spotPrices.get(nativeCurrency.toUpperCase()) ?? null;
     const priceToStore =
-      derivedPrice != null
-        ? asFixed(derivedPrice, 8)
+      spot != null
+        ? asFixed(spot, 8)
         : existing?.currentPrice ?? null;
 
-    // Compute the stored USD value. Order of preference:
-    //   1. Coinbase-provided native_balance (authoritative when present)
-    //   2. quantity × known currentPrice (from a prior Coinbase sync or
-    //      Yahoo refresh — keeps the value sensible while Coinbase is silent)
-    //   3. 0 (honest — no way to value this asset yet)
+    // USD value = quantity × known price; 0 if no price is available.
+    // Never fall back to the native quantity as a fake dollar value.
     const currentValueUsd =
-      nativeBalance != null
-        ? nativeBalance
-        : priceToStore != null
-          ? Number(priceToStore) * balance
-          : 0;
+      priceToStore != null ? Number(priceToStore) * balance : 0;
 
     // All Summa ticker-provider assets store currentValue in USD and set
-    // currency = "USD". The native crypto unit is encoded in quantity +
-    // providerConfig.ticker, not in the currency field. Using the native
-    // symbol as the currency (previous behavior) breaks the app's FX
-    // conversion path, which then displays quantity as USD.
+    // currency = "USD". The native crypto unit lives in quantity +
+    // providerConfig.nativeCurrency; using the native symbol as the
+    // currency breaks the app's FX conversion path.
     const currency = "USD";
     const isStable = STABLECOINS.has(nativeCurrency.toUpperCase());
 
@@ -239,7 +235,7 @@ export async function syncCoinbaseConnection(
         providerConfig: {
           ...(existing.providerConfig ?? {}),
           ticker,
-          source: "yahoo",
+          source: "coinbase",
           connectionId,
           coinbaseAccountId: account.accountId,
           nativeCurrency,
@@ -269,7 +265,7 @@ export async function syncCoinbaseConnection(
         providerType: "ticker",
         providerConfig: {
           ticker,
-          source: "yahoo",
+          source: "coinbase",
           connectionId,
           coinbaseAccountId: account.accountId,
           nativeCurrency,

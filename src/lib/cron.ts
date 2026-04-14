@@ -10,6 +10,7 @@ import {
 import { eq, isNull, isNotNull, ne, and, or, lt } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
+import { getCoinbaseSpotPrices } from "@/lib/providers/coinbase";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
 import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
@@ -131,6 +132,47 @@ export async function refreshPrices(opts: { sources?: string[] } = {}) {
               .update(assets)
               .set({
                 currentPrice: result.price.toFixed(8),
+                currentValue: newValue,
+                lastSyncedAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(assets.id, asset.id));
+            updatedCount++;
+          }
+        } else if (source === "coinbase") {
+          // providerConfig.nativeCurrency is the underlying coin symbol
+          // (e.g. "BTC", "PENGU"). The ticker field looks like "BTC-USD"
+          // but we need just the symbol for the spot price lookup.
+          const symbols = groupAssets
+            .map(
+              (a) =>
+                (a.providerConfig as { nativeCurrency?: string } | null)
+                  ?.nativeCurrency ??
+                (a.providerConfig?.ticker?.split("-")[0] ?? null)
+            )
+            .filter((s): s is string => !!s);
+          if (symbols.length === 0) continue;
+
+          const prices = await getCoinbaseSpotPrices(symbols);
+
+          for (const asset of groupAssets) {
+            const symbol =
+              (asset.providerConfig as { nativeCurrency?: string } | null)
+                ?.nativeCurrency ??
+              asset.providerConfig?.ticker?.split("-")[0] ??
+              null;
+            if (!symbol) continue;
+            const price = prices.get(symbol.toUpperCase());
+            if (price == null) continue;
+
+            const qty = asset.quantity ? Number(asset.quantity) : null;
+            const newValue =
+              qty != null ? (qty * price).toFixed(2) : price.toFixed(2);
+
+            await db
+              .update(assets)
+              .set({
+                currentPrice: price.toFixed(8),
                 currentValue: newValue,
                 lastSyncedAt: new Date(),
                 updatedAt: new Date(),
@@ -385,14 +427,14 @@ export function startCronJobs() {
       .finally(() => { running.prices = false; });
   });
 
-  // Every minute — refresh crypto prices via CoinGecko.
-  // Crypto moves continuously and CoinGecko's batch endpoint lets us
-  // pull every holding in a single request, so this comfortably fits
-  // inside the 25 req/min token bucket.
+  // Every minute — refresh crypto prices via CoinGecko + Coinbase.
+  // Crypto moves continuously and both providers support single-round
+  // pulls for every holding, so this comfortably fits inside their
+  // rate limits (CoinGecko 25 req/min bucket, Coinbase 10k req/hr).
   cron.schedule("* * * * *", () => {
     if (running.cryptoPrices) return;
     running.cryptoPrices = true;
-    refreshPrices({ sources: ["coingecko"] })
+    refreshPrices({ sources: ["coingecko", "coinbase"] })
       .catch((err) =>
         console.error("[cron] Unhandled error in crypto refreshPrices:", err)
       )

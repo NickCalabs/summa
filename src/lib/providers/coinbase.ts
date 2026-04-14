@@ -228,6 +228,50 @@ interface CoinbaseAccountsResponse {
   pagination?: { next_uri?: string | null };
 }
 
+// Coinbase's /v2/prices/<currency>-USD/spot endpoint is public (no auth
+// required) and returns an authoritative spot price for every coin
+// Coinbase lists — including altcoins Yahoo Finance doesn't index. The
+// CDP-authenticated /v2/accounts endpoint dropped native_balance from its
+// response, so we price Coinbase holdings ourselves rather than relying
+// on Yahoo to reconstruct values.
+//
+// Returns a map of currency code → USD spot price. Entries where the
+// price lookup fails are omitted; callers should treat a missing entry
+// as "unknown price".
+export async function getCoinbaseSpotPrices(
+  currencies: string[]
+): Promise<Map<string, number>> {
+  const unique = [...new Set(currencies.map((c) => c.toUpperCase()))].filter(
+    (c) => c && c !== "USD"
+  );
+  const out = new Map<string, number>();
+
+  const results = await Promise.all(
+    unique.map(async (currency) => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/v2/prices/${encodeURIComponent(currency)}-USD/spot`
+        );
+        if (!res.ok) return null;
+        const data = (await res.json()) as {
+          data?: { amount?: string | number };
+        };
+        const amount = data?.data?.amount;
+        const price = amount != null ? Number(amount) : NaN;
+        if (!Number.isFinite(price) || price <= 0) return null;
+        return [currency, price] as const;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  for (const entry of results) {
+    if (entry) out.set(entry[0], entry[1]);
+  }
+  return out;
+}
+
 export async function getCoinbaseAccounts(
   keyName: string,
   privateKeyPem: string

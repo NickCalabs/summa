@@ -46,7 +46,15 @@ interface UIStore {
 
   compactNumbers: boolean;
   toggleCompactNumbers: () => void;
+
+  hideDust: boolean;
+  toggleHideDust: () => void;
 }
+
+// Assets whose current value is below this threshold are considered dust and
+// hidden when the dust filter is on. Kept as a constant so every caller
+// (portfolio table, detail totals, etc.) uses the same cutoff.
+export const DUST_THRESHOLD_USD = 1;
 
 export const useUIStore = create<UIStore>((set) => ({
   activeSheetId: null,
@@ -132,4 +140,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   compactNumbers: true,
   toggleCompactNumbers: () => set((state) => ({ compactNumbers: !state.compactNumbers })),
+
+  hideDust: false,
+  toggleHideDust: () => set((state) => ({ hideDust: !state.hideDust })),
 }));
