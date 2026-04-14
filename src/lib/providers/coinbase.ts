@@ -1,7 +1,10 @@
-import { createHmac } from "crypto";
+import { randomBytes } from "crypto";
+import { importPKCS8, importJWK, SignJWT } from "jose";
 
-const BASE_URL = "https://api.coinbase.com";
-const API_VERSION = "2024-01-01";
+type SigningKey = Awaited<ReturnType<typeof importJWK>>;
+
+const API_HOST = "api.coinbase.com";
+const BASE_URL = `https://${API_HOST}`;
 
 export class CoinbaseProviderError extends Error {
   status: number;
@@ -25,39 +28,145 @@ export interface CoinbaseAccountInfo {
   type: string;
 }
 
-export function signCoinbaseRequest(input: {
-  secret: string;
-  timestamp: string;
+// Coinbase's JSON key download escapes newlines as literal "\n" and often
+// wraps the whole blob in quotes. Unescape + strip before loading.
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+  key = key.replace(/\\n/g, "\n");
+  return key;
+}
+
+async function loadPrivateKey(pem: string): Promise<SigningKey> {
+  const normalized = normalizePrivateKey(pem);
+
+  // CDP retail keys are issued as EC (P-256) in SEC1 format:
+  //   -----BEGIN EC PRIVATE KEY-----
+  // jose's importPKCS8 only handles PKCS#8 ("BEGIN PRIVATE KEY"), so for
+  // SEC1 we convert via a lightweight parser into a JWK.
+  if (normalized.includes("BEGIN EC PRIVATE KEY")) {
+    const jwk = sec1PemToJwk(normalized);
+    return await importJWK(jwk, "ES256");
+  }
+
+  if (normalized.includes("BEGIN PRIVATE KEY")) {
+    return await importPKCS8(normalized, "ES256");
+  }
+
+  throw new CoinbaseProviderError(
+    "Unrecognized private key format — expected an EC/PKCS#8 PEM block",
+    400,
+    "INVALID_KEY_FORMAT"
+  );
+}
+
+// Decode SEC1 EC PRIVATE KEY PEM → JWK (P-256 / ES256 only).
+// RFC 5915 ECPrivateKey ::= SEQUENCE {
+//   version INTEGER,
+//   privateKey OCTET STRING,         -- 32 bytes for P-256
+//   parameters [0] ECParameters OPTIONAL,
+//   publicKey  [1] BIT STRING OPTIONAL   -- uncompressed: 0x04 || X || Y
+// }
+// Rather than a full ASN.1 parser, locate the 32-byte privateKey OCTET STRING
+// (tag 0x04, length 0x20) and the 66-byte publicKey BIT STRING
+// (tag 0x03, length 0x42, unused-bits 0x00, uncompressed marker 0x04, X, Y).
+export function sec1PemToJwk(pem: string): {
+  kty: "EC";
+  crv: "P-256";
+  d: string;
+  x: string;
+  y: string;
+} {
+  const base64 = pem
+    .replace(/-----BEGIN EC PRIVATE KEY-----/g, "")
+    .replace(/-----END EC PRIVATE KEY-----/g, "")
+    .replace(/\s+/g, "");
+  const der = Buffer.from(base64, "base64");
+
+  let privKey: Buffer | null = null;
+  let pubKey: Buffer | null = null;
+
+  for (let i = 0; i < der.length - 34; i++) {
+    if (!privKey && der[i] === 0x04 && der[i + 1] === 0x20) {
+      privKey = der.subarray(i + 2, i + 2 + 32);
+      i += 33;
+      continue;
+    }
+    if (
+      !pubKey &&
+      der[i] === 0x03 &&
+      der[i + 1] === 0x42 &&
+      der[i + 2] === 0x00 &&
+      der[i + 3] === 0x04
+    ) {
+      pubKey = der.subarray(i + 4, i + 4 + 64);
+      i += 67;
+      continue;
+    }
+    if (privKey && pubKey) break;
+  }
+
+  if (!privKey || !pubKey) {
+    throw new CoinbaseProviderError(
+      "Could not parse EC private key — expected P-256 SEC1 PEM",
+      400,
+      "INVALID_KEY_PARSE"
+    );
+  }
+
+  return {
+    kty: "EC",
+    crv: "P-256",
+    d: privKey.toString("base64url"),
+    x: pubKey.subarray(0, 32).toString("base64url"),
+    y: pubKey.subarray(32, 64).toString("base64url"),
+  };
+}
+
+export async function buildCoinbaseJwt(input: {
+  keyName: string;
+  privateKeyPem: string;
   method: string;
   path: string;
-  body: string;
-}): string {
-  const message = input.timestamp + input.method.toUpperCase() + input.path + input.body;
-  return createHmac("sha256", input.secret).update(message).digest("hex");
+}): Promise<string> {
+  const key = await loadPrivateKey(input.privateKeyPem);
+  const nonce = randomBytes(16).toString("hex");
+  const uri = `${input.method.toUpperCase()} ${API_HOST}${input.path}`;
+
+  return await new SignJWT({ uri })
+    .setProtectedHeader({ alg: "ES256", typ: "JWT", kid: input.keyName, nonce })
+    .setIssuer("cdp")
+    .setSubject(input.keyName)
+    .setNotBefore("0s")
+    .setExpirationTime("2m")
+    .sign(key);
 }
 
 async function coinbaseFetch(input: {
-  apiKey: string;
-  apiSecret: string;
+  keyName: string;
+  privateKeyPem: string;
   method: "GET";
   path: string;
 }): Promise<unknown> {
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const signature = signCoinbaseRequest({
-    secret: input.apiSecret,
-    timestamp,
+  // Coinbase signs the path only, not the query component.
+  const pathOnly = input.path.split("?")[0];
+
+  const jwt = await buildCoinbaseJwt({
+    keyName: input.keyName,
+    privateKeyPem: input.privateKeyPem,
     method: input.method,
-    path: input.path,
-    body: "",
+    path: pathOnly,
   });
 
   const res = await fetch(BASE_URL + input.path, {
     method: input.method,
     headers: {
-      "CB-ACCESS-KEY": input.apiKey,
-      "CB-ACCESS-SIGN": signature,
-      "CB-ACCESS-TIMESTAMP": timestamp,
-      "CB-VERSION": API_VERSION,
+      Authorization: `Bearer ${jwt}`,
       "Content-Type": "application/json",
     },
   });
@@ -68,9 +177,13 @@ async function coinbaseFetch(input: {
     try {
       const data = (await res.json()) as {
         errors?: Array<{ id?: string; message?: string }>;
+        error?: string;
+        message?: string;
       };
       const firstError = data?.errors?.[0];
       if (firstError?.message) errorMessage = firstError.message;
+      else if (data?.message) errorMessage = data.message;
+      else if (data?.error) errorMessage = data.error;
       if (firstError?.id) errorCode = firstError.id;
     } catch {
       // Non-JSON error body — fall back to generic message.
@@ -90,10 +203,15 @@ async function coinbaseFetch(input: {
 }
 
 export async function verifyCoinbaseCredentials(
-  apiKey: string,
-  apiSecret: string
+  keyName: string,
+  privateKeyPem: string
 ): Promise<void> {
-  await coinbaseFetch({ apiKey, apiSecret, method: "GET", path: "/v2/user" });
+  await coinbaseFetch({
+    keyName,
+    privateKeyPem,
+    method: "GET",
+    path: "/v2/user",
+  });
 }
 
 interface CoinbaseAccountRaw {
@@ -111,16 +229,16 @@ interface CoinbaseAccountsResponse {
 }
 
 export async function getCoinbaseAccounts(
-  apiKey: string,
-  apiSecret: string
+  keyName: string,
+  privateKeyPem: string
 ): Promise<CoinbaseAccountInfo[]> {
   const all: CoinbaseAccountInfo[] = [];
   let path: string | null = "/v2/accounts?limit=100";
 
   while (path) {
     const data = (await coinbaseFetch({
-      apiKey,
-      apiSecret,
+      keyName,
+      privateKeyPem,
       method: "GET",
       path,
     })) as CoinbaseAccountsResponse;

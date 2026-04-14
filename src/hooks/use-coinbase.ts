@@ -11,8 +11,8 @@ export interface CoinbaseConnection {
 }
 
 export interface CreateCoinbaseInput {
-  apiKey: string;
-  apiSecret: string;
+  keyName: string;
+  privateKey: string;
   label?: string;
 }
 

@@ -192,8 +192,16 @@ export const simplefinLinkAccounts = z.object({
 // ── Coinbase schemas ──
 
 export const coinbaseCreateConnection = z.object({
-  apiKey: z.string().trim().min(1, "API key is required").max(256),
-  apiSecret: z.string().trim().min(1, "API secret is required").max(256),
+  keyName: z
+    .string()
+    .trim()
+    .min(1, "API key name is required")
+    .max(512),
+  privateKey: z
+    .string()
+    .trim()
+    .min(1, "Private key is required")
+    .max(4096),
   label: z.string().trim().min(1).max(100).optional(),
 });
 

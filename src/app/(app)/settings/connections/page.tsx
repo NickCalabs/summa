@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -357,19 +358,21 @@ function CoinbaseRow({
 // ── Coinbase connect form ──
 
 function CoinbaseConnectForm() {
-  const [apiKey, setApiKey] = useState("");
-  const [apiSecret, setApiSecret] = useState("");
+  const [keyName, setKeyName] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
   const createCoinbase = useCreateCoinbaseConnection();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!apiKey.trim() || !apiSecret.trim()) return;
+    if (!keyName.trim() || !privateKey.trim()) return;
     createCoinbase.mutate(
-      { apiKey: apiKey.trim(), apiSecret: apiSecret.trim() },
+      { keyName: keyName.trim(), privateKey: privateKey.trim() },
       {
-        onSuccess: () => {
-          setApiKey("");
-          setApiSecret("");
+        onSuccess: (data) => {
+          if (!data.connection.errorCode) {
+            setKeyName("");
+            setPrivateKey("");
+          }
         },
       }
     );
@@ -387,41 +390,42 @@ function CoinbaseConnectForm() {
         >
           coinbase.com/settings/api
         </a>{" "}
-        with the &ldquo;View&rdquo; permission, then paste the key and secret
-        below.
+        with the &ldquo;View&rdquo; permission, then paste the API key name
+        and private key below.
       </p>
       <div className="space-y-1.5">
-        <label className="text-xs font-medium" htmlFor="coinbase-api-key">
-          API Key
+        <label className="text-xs font-medium" htmlFor="coinbase-key-name">
+          API Key Name
         </label>
         <Input
-          id="coinbase-api-key"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="Coinbase API key"
+          id="coinbase-key-name"
+          value={keyName}
+          onChange={(e) => setKeyName(e.target.value)}
+          placeholder="organizations/…/apiKeys/…"
           autoComplete="off"
           spellCheck={false}
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-xs font-medium" htmlFor="coinbase-api-secret">
-          API Secret
+        <label className="text-xs font-medium" htmlFor="coinbase-private-key">
+          Private Key
         </label>
-        <Input
-          id="coinbase-api-secret"
-          type="password"
-          value={apiSecret}
-          onChange={(e) => setApiSecret(e.target.value)}
-          placeholder="Coinbase API secret"
+        <Textarea
+          id="coinbase-private-key"
+          value={privateKey}
+          onChange={(e) => setPrivateKey(e.target.value)}
+          placeholder={"-----BEGIN EC PRIVATE KEY-----\n…\n-----END EC PRIVATE KEY-----"}
           autoComplete="off"
           spellCheck={false}
+          rows={6}
+          className="font-mono text-xs"
         />
       </div>
       <Button
         type="submit"
         size="sm"
         disabled={
-          createCoinbase.isPending || !apiKey.trim() || !apiSecret.trim()
+          createCoinbase.isPending || !keyName.trim() || !privateKey.trim()
         }
       >
         {createCoinbase.isPending ? (
