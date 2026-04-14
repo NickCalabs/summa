@@ -339,6 +339,9 @@ export const coinbaseConnections = pgTable("coinbase_connections", {
   label: text("label").notNull().default("Coinbase"),
   apiKeyEnc: text("api_key_enc").notNull(),
   apiSecretEnc: text("api_secret_enc").notNull(),
+  sectionId: uuid("section_id").references(() => sections.id, {
+    onDelete: "set null",
+  }),
   errorCode: text("error_code"),
   errorMessage: text("error_message"),
   lastSyncedAt: timestamp("last_synced_at"),

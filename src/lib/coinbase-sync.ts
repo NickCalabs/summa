@@ -1,6 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { assets, coinbaseConnections, portfolios } from "@/lib/db/schema";
+import {
+  assets,
+  coinbaseConnections,
+  portfolios,
+  sections,
+  sheets,
+} from "@/lib/db/schema";
 import { decrypt } from "@/lib/encryption";
 import {
   getCoinbaseAccounts,
@@ -82,11 +88,33 @@ export async function syncCoinbaseConnection(
     throw error;
   }
 
-  const section = await ensurePortfolioInstitutionSection({
-    portfolioId: portfolio.id,
-    sheetType: "assets",
-    institutionName: connection.label,
-  });
+  // Prefer the user-pinned section (set at connect time / remembered from
+  // previous syncs). Verify it still exists and still belongs to this user's
+  // portfolio before using it — fall back to the auto-created institution
+  // section if the pinned one was deleted or moved out of the portfolio.
+  let section: { id: string; sheetId: string; name: string } | null = null;
+  if (connection.sectionId) {
+    const [owned] = await db
+      .select({ id: sections.id, sheetId: sections.sheetId, name: sections.name })
+      .from(sections)
+      .innerJoin(sheets, eq(sheets.id, sections.sheetId))
+      .where(
+        and(
+          eq(sections.id, connection.sectionId),
+          eq(sheets.portfolioId, portfolio.id)
+        )
+      )
+      .limit(1);
+    if (owned) section = owned;
+  }
+
+  if (!section) {
+    section = await ensurePortfolioInstitutionSection({
+      portfolioId: portfolio.id,
+      sheetType: "assets",
+      institutionName: connection.label,
+    });
+  }
 
   const existingParents = await db
     .select()
@@ -111,13 +139,17 @@ export async function syncCoinbaseConnection(
   );
 
   let parentId: string;
+  // If the parent exists, keep it (and its children) where the user put it.
+  // If we're creating a new parent/child, follow the pinned section.
+  const targetSectionId = existingParent?.sectionId ?? section.id;
+
   if (existingParent) {
     parentId = existingParent.id;
   } else {
     const [created] = await db
       .insert(assets)
       .values({
-        sectionId: section.id,
+        sectionId: targetSectionId,
         name: connection.label,
         type: "crypto",
         currency: "USD",
@@ -226,7 +258,7 @@ export async function syncCoinbaseConnection(
       synced++;
     } else {
       await db.insert(assets).values({
-        sectionId: section.id,
+        sectionId: targetSectionId,
         parentAssetId: parentId,
         name: account.name,
         type: "crypto",
