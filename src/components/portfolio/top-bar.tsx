@@ -1,29 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import {
-  EyeIcon,
-  EyeOffIcon,
-  PlusIcon,
-  SearchIcon,
-  SettingsIcon,
-  BuildingIcon,
-  UploadIcon,
-  DownloadIcon,
-  RefreshCwIcon,
-  Minimize2Icon,
-  Maximize2Icon,
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { PlusIcon, SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  useUpdatePortfolio,
-  useSyncPortfolio,
-} from "@/hooks/use-portfolio-mutations";
+import { useUpdatePortfolio } from "@/hooks/use-portfolio-mutations";
 import { useCreateSection } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
-import { DisplayCurrencyDropdown } from "./display-currency-dropdown";
+import { ToolbarActions } from "@/components/toolbar-actions";
 
 interface TopBarProps {
   portfolioId: string;
@@ -43,15 +27,8 @@ export function TopBar({
   lastSyncedAt,
 }: TopBarProps) {
   const updatePortfolio = useUpdatePortfolio(portfolioId);
-  const syncPortfolio = useSyncPortfolio(portfolioId);
   const createSection = useCreateSection(portfolioId);
   const openAddFlow = useUIStore((s) => s.openAddFlow);
-  const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
-  const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
-  const valuesMasked = useUIStore((s) => s.valuesMasked);
-  const toggleValuesMasked = useUIStore((s) => s.toggleValuesMasked);
-  const compactNumbers = useUIStore((s) => s.compactNumbers);
-  const toggleCompactNumbers = useUIStore((s) => s.toggleCompactNumbers);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -110,51 +87,6 @@ export function TopBar({
         />
       </div>
 
-      <div className="flex flex-col items-start">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => syncPortfolio.mutate()}
-          disabled={syncPortfolio.isPending}
-          title="Refresh prices and balances"
-        >
-          <RefreshCwIcon
-            className={`size-3.5 ${syncPortfolio.isPending ? "animate-spin" : ""}`}
-            data-icon="inline-start"
-          />
-          {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
-        </Button>
-        {lastSyncedAt && !syncPortfolio.isPending && (
-          <span
-            className="text-[10px] text-muted-foreground/70 mt-0.5 px-1 leading-none"
-            title={lastSyncedAt.toLocaleString()}
-          >
-            synced {formatDistanceToNow(lastSyncedAt, { addSuffix: true })}
-          </span>
-        )}
-      </div>
-
-      <Button variant="outline" size="sm" onClick={openPlaidDialog}>
-        <BuildingIcon className="size-3.5" data-icon="inline-start" />
-        Connect Bank
-      </Button>
-
-      <Button variant="outline" size="sm" onClick={openCsvImportDialog}>
-        <UploadIcon className="size-3.5" data-icon="inline-start" />
-        Import
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() =>
-          (window.location.href = `/api/portfolios/${portfolioId}/export-csv`)
-        }
-      >
-        <DownloadIcon className="size-3.5" data-icon="inline-start" />
-        Export
-      </Button>
-
       <Button
         size="sm"
         disabled={createSection.isPending || !activeSheetId}
@@ -176,29 +108,7 @@ export function TopBar({
         Add
       </Button>
 
-      <DisplayCurrencyDropdown />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleCompactNumbers}
-        title={compactNumbers ? "Show full numbers" : "Compact numbers (1.2M)"}
-      >
-        {compactNumbers ? <Minimize2Icon className="size-4" /> : <Maximize2Icon className="size-4" />}
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleValuesMasked}
-        title={valuesMasked ? "Show values" : "Hide values"}
-      >
-        {valuesMasked ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
-      </Button>
-
-      <Button variant="ghost" size="icon" disabled>
-        <SettingsIcon className="size-4" />
-      </Button>
+      <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
     </div>
   );
 }
