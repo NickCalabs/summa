@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     const body = await parseBody(request, coinbaseCreateConnection);
 
     try {
-      await verifyCoinbaseCredentials(body.apiKey, body.apiSecret);
+      await verifyCoinbaseCredentials(body.keyName, body.privateKey);
     } catch (error) {
       if (error instanceof CoinbaseProviderError) {
         return errorResponse(error.message, error.status, { code: error.code });
@@ -58,8 +58,8 @@ export async function POST(request: Request) {
       .values({
         userId: user.id,
         label: body.label ?? "Coinbase",
-        apiKeyEnc: encrypt(body.apiKey),
-        apiSecretEnc: encrypt(body.apiSecret),
+        apiKeyEnc: encrypt(body.keyName),
+        apiSecretEnc: encrypt(body.privateKey),
       })
       .returning();
 

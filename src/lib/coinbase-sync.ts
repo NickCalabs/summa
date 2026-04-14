@@ -63,12 +63,12 @@ export async function syncCoinbaseConnection(
     );
   }
 
-  const apiKey = decrypt(connection.apiKeyEnc);
-  const apiSecret = decrypt(connection.apiSecretEnc);
+  const keyName = decrypt(connection.apiKeyEnc);
+  const privateKey = decrypt(connection.apiSecretEnc);
 
   let accounts: CoinbaseAccountInfo[];
   try {
-    accounts = await getCoinbaseAccounts(apiKey, apiSecret);
+    accounts = await getCoinbaseAccounts(keyName, privateKey);
   } catch (error) {
     const providerError = error as CoinbaseProviderError;
     await db
