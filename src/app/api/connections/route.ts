@@ -5,6 +5,7 @@ import {
   plaidAccounts,
   simplefinConnections,
   simplefinAccounts,
+  coinbaseConnections,
   exchangeRates,
 } from "@/lib/db/schema";
 import { eq, and, sql, count } from "drizzle-orm";
@@ -33,6 +34,7 @@ const INTERVALS = {
   wallet: 30 * 60 * 1000, // 30 min
   plaid: 6 * 60 * 60 * 1000, // 6 hours
   simplefin: 6 * 60 * 60 * 1000, // 6 hours (manual-only, generous window)
+  coinbase: 15 * 60 * 1000, // 15 min
   yahoo: 15 * 60 * 1000, // 15 min
   coingecko: 60 * 1000, // 1 min
   frankfurter: 24 * 60 * 60 * 1000, // 24 hours
@@ -159,6 +161,48 @@ export async function GET(request: Request) {
       })
     );
 
+    // --- Coinbase ---
+    const cbConnections = await db
+      .select()
+      .from(coinbaseConnections)
+      .where(eq(coinbaseConnections.userId, user.id));
+
+    const coinbase = await Promise.all(
+      cbConnections.map(async (c) => {
+        // Account count = non-archived ticker-provider assets scoped to this connection
+        const tickerAssets = await db
+          .select({
+            id: assets.id,
+            providerConfig: assets.providerConfig,
+            isArchived: assets.isArchived,
+          })
+          .from(assets)
+          .where(eq(assets.providerType, "ticker"));
+
+        const accountCount = tickerAssets.filter(
+          (a) =>
+            !a.isArchived &&
+            (a.providerConfig as { connectionId?: string } | null)
+              ?.connectionId === c.id
+        ).length;
+
+        return {
+          id: c.id,
+          label: c.label,
+          lastSyncedAt: c.lastSyncedAt?.toISOString() ?? null,
+          status: computeStatus(
+            c.lastSyncedAt,
+            c.errorCode,
+            c.errorMessage,
+            INTERVALS.coinbase
+          ),
+          errorCode: c.errorCode,
+          errorMessage: c.errorMessage,
+          accountCount,
+        };
+      })
+    );
+
     // --- Price feeds (read-only status) ---
     // Yahoo — find the most recently synced ticker asset with source=yahoo
     const [latestYahoo] = await db
@@ -249,6 +293,7 @@ export async function GET(request: Request) {
       wallets,
       plaid,
       simplefin,
+      coinbase,
       priceFeeds,
       providerStatus,
     });

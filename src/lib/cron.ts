@@ -1,6 +1,12 @@
 import cron from "node-cron";
 import { db } from "@/lib/db";
-import { assets, portfolios, plaidConnections, plaidAccounts } from "@/lib/db/schema";
+import {
+  assets,
+  portfolios,
+  plaidConnections,
+  plaidAccounts,
+  coinbaseConnections,
+} from "@/lib/db/schema";
 import { eq, isNull, isNotNull, ne, and, or, lt } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
@@ -9,6 +15,7 @@ import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
 import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
 import { refreshBtcWallets, refreshEthWallets, refreshSolWallets } from "@/lib/wallets";
+import { syncCoinbaseConnection } from "@/lib/coinbase-sync";
 
 let started = false;
 
@@ -17,6 +24,7 @@ const running = {
   prices: false,
   cryptoPrices: false,
   plaid: false,
+  coinbase: false,
   snapshots: false,
   btcWallets: false,
   ethWallets: false,
@@ -315,6 +323,36 @@ export async function refreshPlaidBalances() {
   }
 }
 
+export async function refreshCoinbaseConnections() {
+  const ts = new Date().toISOString();
+  console.log(`[cron] ${ts} Starting Coinbase sync...`);
+
+  try {
+    const connections = await db.select().from(coinbaseConnections);
+
+    if (connections.length === 0) return;
+
+    let total = 0;
+    for (const connection of connections) {
+      try {
+        const result = await syncCoinbaseConnection(connection.id);
+        total += result.synced + result.created;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(
+          `[cron] ${ts} Coinbase sync failed for connection ${connection.id}:`,
+          message
+      }
+    }
+
+    console.log(
+      `[cron] ${ts} Coinbase sync complete: ${total} assets updated across ${connections.length} connections`
+    );
+  } catch (error) {
+    console.error(`[cron] ${ts} Coinbase sync failed:`, error);
+  }
+}
+
 export function startCronJobs() {
   if (started) return;
   started = true;
@@ -355,6 +393,21 @@ export function startCronJobs() {
     refreshPlaidBalances()
       .catch((err) => console.error("[cron] Unhandled error in refreshPlaidBalances:", err))
       .finally(() => { running.plaid = false; });
+  });
+
+  // Every 15 minutes — refresh Coinbase balances.
+  // Coinbase allows 10,000 req/hr and balance reads are cheap, so a tight
+  // cadence keeps the portfolio fresh with the crypto market.
+  cron.schedule("*/15 * * * *", () => {
+    if (running.coinbase) return;
+    running.coinbase = true;
+    refreshCoinbaseConnections()
+      .catch((err) =>
+        console.error("[cron] Unhandled error in refreshCoinbaseConnections:", err)
+      )
+      .finally(() => {
+        running.coinbase = false;
+      });
   });
 
   // Every 30 minutes — refresh BTC watch-only wallets via Blockstream.

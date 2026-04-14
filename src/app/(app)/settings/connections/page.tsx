@@ -9,6 +9,7 @@ import {
   WalletIcon,
   LandmarkIcon,
   BanknoteIcon,
+  BitcoinIcon,
   ActivityIcon,
   Loader2Icon,
   TrashIcon,
@@ -21,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -35,12 +37,18 @@ import {
   useSyncWallet,
   useSyncPlaid,
   useSyncSimpleFIN,
+  useSyncCoinbase,
   type ConnectionStatus,
   type WalletConnection,
   type PlaidConnectionSummary,
   type SimpleFINConnectionSummary,
+  type CoinbaseConnectionSummary,
   type PriceFeedStatus,
 } from "@/hooks/use-connections";
+import {
+  useCreateCoinbaseConnection,
+  useDisconnectCoinbase,
+} from "@/hooks/use-coinbase";
 
 // ── Status dot ──
 
@@ -275,6 +283,156 @@ function SimpleFINRow({
   );
 }
 
+// ── Coinbase row ──
+
+function CoinbaseRow({
+  connection,
+  syncing,
+  disconnecting,
+  onSync,
+  onDisconnect,
+}: {
+  connection: CoinbaseConnectionSummary;
+  syncing: boolean;
+  disconnecting: boolean;
+  onSync: () => void;
+  onDisconnect: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm">
+      <StatusDot status={connection.status} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium truncate">{connection.label}</span>
+          <span className="text-xs text-muted-foreground">
+            {connection.accountCount} holding
+            {connection.accountCount !== 1 ? "s" : ""}
+          </span>
+        </div>
+        <div className="text-xs">
+          <TimeAgo date={connection.lastSyncedAt} />
+        </div>
+        {connection.errorMessage && (
+          <p className="text-xs text-destructive mt-0.5">
+            {connection.errorCode}: {connection.errorMessage}
+          </p>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        disabled={syncing}
+        onClick={onSync}
+      >
+        {syncing ? (
+          <Loader2Icon className="size-3.5 animate-spin" />
+        ) : (
+          <RefreshCwIcon className="size-3.5" />
+        )}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" />
+          }
+        >
+          <MoreHorizontalIcon className="size-3.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={onDisconnect}
+            disabled={disconnecting}
+            className="text-destructive focus:text-destructive"
+          >
+            <TrashIcon className="size-3.5 mr-2" />
+            Disconnect
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+// ── Coinbase connect form ──
+
+function CoinbaseConnectForm() {
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
+  const createCoinbase = useCreateCoinbaseConnection();
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!apiKey.trim() || !apiSecret.trim()) return;
+    createCoinbase.mutate(
+      { apiKey: apiKey.trim(), apiSecret: apiSecret.trim() },
+      {
+        onSuccess: () => {
+          setApiKey("");
+          setApiSecret("");
+        },
+      }
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-2 pt-2">
+      <p className="text-xs text-muted-foreground">
+        Create a read-only API key at{" "}
+        <a
+          href="https://www.coinbase.com/settings/api"
+          target="_blank"
+          rel="noreferrer"
+          className="underline hover:text-foreground"
+        >
+          coinbase.com/settings/api
+        </a>{" "}
+        with the &ldquo;View&rdquo; permission, then paste the key and secret
+        below.
+      </p>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium" htmlFor="coinbase-api-key">
+          API Key
+        </label>
+        <Input
+          id="coinbase-api-key"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="Coinbase API key"
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium" htmlFor="coinbase-api-secret">
+          API Secret
+        </label>
+        <Input
+          id="coinbase-api-secret"
+          type="password"
+          value={apiSecret}
+          onChange={(e) => setApiSecret(e.target.value)}
+          placeholder="Coinbase API secret"
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </div>
+      <Button
+        type="submit"
+        size="sm"
+        disabled={
+          createCoinbase.isPending || !apiKey.trim() || !apiSecret.trim()
+        }
+      >
+        {createCoinbase.isPending ? (
+          <Loader2Icon className="size-4 animate-spin mr-1.5" />
+        ) : null}
+        Connect Coinbase
+      </Button>
+    </form>
+  );
+}
+
 // ── Price feed row ──
 
 const feedLabels: Record<string, string> = {
@@ -303,6 +461,8 @@ export default function ConnectionsPage() {
   const syncWallet = useSyncWallet();
   const syncPlaid = useSyncPlaid();
   const syncSimpleFIN = useSyncSimpleFIN();
+  const syncCoinbase = useSyncCoinbase();
+  const disconnectCoinbase = useDisconnectCoinbase();
 
   if (isLoading) {
     return (
@@ -326,6 +486,7 @@ export default function ConnectionsPage() {
   const wallets = data?.wallets ?? [];
   const plaid = data?.plaid ?? [];
   const simplefin = data?.simplefin ?? [];
+  const coinbase = data?.coinbase ?? [];
   const priceFeeds = data?.priceFeeds ?? [];
 
   const walletsByChain = new Map<string, WalletConnection[]>();
@@ -336,7 +497,8 @@ export default function ConnectionsPage() {
     walletsByChain.set(chain, group);
   }
 
-  const totalConnections = wallets.length + plaid.length + simplefin.length;
+  const totalConnections =
+    wallets.length + plaid.length + simplefin.length + coinbase.length;
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
@@ -363,18 +525,8 @@ export default function ConnectionsPage() {
 
       <Separator />
 
-      {totalConnections === 0 && priceFeeds.every((f) => f.status === "never") ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            <p>No connections yet.</p>
-            <p className="text-sm mt-1">
-              Add wallets, banks, or other data sources from your portfolio page.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
             {/* Wallets */}
             {wallets.length > 0 && (
               <ConnectionSection
@@ -448,10 +600,38 @@ export default function ConnectionsPage() {
               </>
             )}
 
+            {/* Coinbase */}
+            {(wallets.length > 0 ||
+              plaid.length > 0 ||
+              simplefin.length > 0) && <Separator className="my-2" />}
+            <ConnectionSection
+              title="Coinbase"
+              icon={BitcoinIcon}
+              count={coinbase.length}
+              defaultOpen
+            >
+              {coinbase.map((c) => (
+                <CoinbaseRow
+                  key={c.id}
+                  connection={c}
+                  syncing={
+                    syncCoinbase.isPending && syncCoinbase.variables === c.id
+                  }
+                  disconnecting={
+                    disconnectCoinbase.isPending &&
+                    disconnectCoinbase.variables === c.id
+                  }
+                  onSync={() => syncCoinbase.mutate(c.id)}
+                  onDisconnect={() => disconnectCoinbase.mutate(c.id)}
+                />
+              ))}
+              {coinbase.length === 0 && <CoinbaseConnectForm />}
+            </ConnectionSection>
+
             {/* Price feeds */}
             {priceFeeds.length > 0 && (
               <>
-                {totalConnections > 0 && <Separator className="my-2" />}
+                <Separator className="my-2" />
                 <ConnectionSection
                   title="Price feeds"
                   icon={ActivityIcon}
@@ -464,9 +644,8 @@ export default function ConnectionsPage() {
                 </ConnectionSection>
               </>
             )}
-          </CardContent>
-        </Card>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -35,6 +35,16 @@ export interface SimpleFINConnectionSummary {
   accountCount: number;
 }
 
+export interface CoinbaseConnectionSummary {
+  id: string;
+  label: string;
+  lastSyncedAt: string | null;
+  status: ConnectionStatus;
+  errorCode: string | null;
+  errorMessage: string | null;
+  accountCount: number;
+}
+
 export interface PriceFeedStatus {
   name: "yahoo" | "coingecko" | "frankfurter";
   lastFetchAt: string | null;
@@ -45,6 +55,7 @@ export interface ConnectionsData {
   wallets: WalletConnection[];
   plaid: PlaidConnectionSummary[];
   simplefin: SimpleFINConnectionSummary[];
+  coinbase: CoinbaseConnectionSummary[];
   priceFeeds: PriceFeedStatus[];
   providerStatus: {
     plaid: boolean;
@@ -160,6 +171,31 @@ export function useSyncSimpleFIN() {
       toast.error(
         error instanceof Error ? error.message : "Failed to sync"
       );
+    },
+  });
+}
+
+export function useSyncCoinbase() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (connectionId: string) => {
+      const res = await fetch(
+        `/api/coinbase/connections/${connectionId}/sync`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Failed to sync");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["connections"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["coinbase-connections"] });
+      toast.success("Coinbase synced");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to sync");
     },
   });
 }
