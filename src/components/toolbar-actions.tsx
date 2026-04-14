@@ -11,6 +11,7 @@ import {
   BuildingIcon,
   UploadIcon,
   DownloadIcon,
+  FilterIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -36,6 +37,8 @@ export function ToolbarActions({ portfolioId, lastSyncedAt }: ToolbarActionsProp
   const toggleValuesMasked = useUIStore((s) => s.toggleValuesMasked);
   const compactNumbers = useUIStore((s) => s.compactNumbers);
   const toggleCompactNumbers = useUIStore((s) => s.toggleCompactNumbers);
+  const hideDust = useUIStore((s) => s.hideDust);
+  const toggleHideDust = useUIStore((s) => s.toggleHideDust);
   const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
   const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
 
@@ -98,6 +101,11 @@ export function ToolbarActions({ portfolioId, lastSyncedAt }: ToolbarActionsProp
               <Minimize2Icon className="size-4 mr-2" />
             )}
             {compactNumbers ? "Full numbers" : "Compact numbers (1.2M)"}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={toggleHideDust}>
+            <FilterIcon className="size-4 mr-2" />
+            {hideDust ? "Show dust (< $1)" : "Hide dust (< $1)"}
           </DropdownMenuItem>
 
           {portfolioId && (

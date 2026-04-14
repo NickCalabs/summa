@@ -124,6 +124,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
   const reorderAssets = useReorderAssets(portfolioId);
 
   const valuesMasked = useUIStore((s) => s.valuesMasked);
+  const hideDust = useUIStore((s) => s.hideDust);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [expandedParents, setExpandedParents] = useState<Set<string>>(
@@ -516,8 +517,37 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
     ]
   );
 
+  // When the dust filter is on, hide rows whose current value (converted to
+  // base) is under $1. Do the conversion with the same toBase() the render
+  // path uses so decisions line up with displayed totals. For parents, also
+  // strip dust children so an expanded parent doesn't show a long list of
+  // ~$0 wallets.
+  const visibleAssets = useMemo(() => {
+    if (!hideDust) return assets;
+    const THRESHOLD = 1;
+    return assets
+      .map((asset) => {
+        if (asset.children && asset.children.length > 0) {
+          const visibleChildren = asset.children.filter(
+            (c) => Math.abs(toBase(Number(c.currentValue), c.currency)) >= THRESHOLD
+          );
+          return { ...asset, children: visibleChildren };
+        }
+        return asset;
+      })
+      .filter((asset) => {
+        const baseValue = Math.abs(
+          toBase(Number(asset.currentValue), asset.currency)
+        );
+        // Parents keep showing as long as any child survived the filter, even
+        // if their computed total rounds under $1 (it won't, typically).
+        if (asset.children && asset.children.length > 0) return true;
+        return baseValue >= THRESHOLD;
+      });
+  }, [assets, hideDust, toBase]);
+
   const table = useReactTable({
-    data: assets,
+    data: visibleAssets,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
