@@ -85,6 +85,13 @@
       "when": 1776045632293,
       "tag": "0011_good_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776178584243,
+      "tag": "0012_known_monster_badoon",
+      "breakpoints": true
     }
   ]
 }

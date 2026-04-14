@@ -85,6 +85,7 @@ export const createAsset = z.object({
       "vin",
       "custom",
       "plaid",
+      "coinbase",
     ])
     .optional(),
   providerConfig: z.record(z.string(), z.unknown()).optional(),
@@ -116,6 +117,7 @@ export const updateAsset = z.object({
       "vin",
       "custom",
       "plaid",
+      "coinbase",
     ])
     .optional(),
   providerConfig: z.record(z.string(), z.unknown()).optional(),
@@ -185,6 +187,14 @@ export const simplefinLinkAccounts = z.object({
       sectionId: z.string().uuid().optional(),
     })
   ),
+});
+
+// ── Coinbase schemas ──
+
+export const coinbaseCreateConnection = z.object({
+  apiKey: z.string().trim().min(1, "API key is required").max(256),
+  apiSecret: z.string().trim().min(1, "API secret is required").max(256),
+  label: z.string().trim().min(1).max(100).optional(),
 });
 
 // ── CSV schemas ──

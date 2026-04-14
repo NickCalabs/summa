@@ -27,6 +27,7 @@ export const providerTypeEnum = pgEnum("provider_type", [
   "vin",
   "custom",
   "plaid",
+  "coinbase",
 ]);
 export const snapshotSourceEnum = pgEnum("snapshot_source", [
   "provider",
@@ -167,6 +168,7 @@ export const assets = pgTable("assets", {
       connectionId?: string;
       plaidAccountId?: string;
       simplefinAccountId?: string;
+      coinbaseAccountId?: string;
       // v0.2 wallet fields
       chain?: "btc" | "eth" | "sol";
       address?: string;
@@ -325,6 +327,23 @@ export const simplefinAccounts = pgTable(
     ),
   ]
 );
+
+// ── Coinbase Connections ──
+
+export const coinbaseConnections = pgTable("coinbase_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  label: text("label").notNull().default("Coinbase"),
+  apiKeyEnc: text("api_key_enc").notNull(),
+  apiSecretEnc: text("api_secret_enc").notNull(),
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  lastSyncedAt: timestamp("last_synced_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 // ── Transactions ──
 
