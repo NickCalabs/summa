@@ -101,14 +101,22 @@ export async function GET(
 
       if (isParent) {
         const activeChildren = activeChildrenByParent.get(asset.id) ?? [];
-        const computedValue = activeChildren.reduce(
+        // Order children within a parent group by value descending so the
+        // biggest holdings sit at the top of the expanded row. Users rarely
+        // care about the ingestion order the provider returned (which is how
+        // Coinbase/Fidelity holdings land — effectively random). Top-level
+        // assets still respect their user-set sortOrder.
+        const sortedChildren = [...activeChildren].sort(
+          (a, b) => Number(b.currentValue) - Number(a.currentValue)
+        );
+        const computedValue = sortedChildren.reduce(
           (sum, c) => sum + Number(c.currentValue),
           0
         );
         assetRows.push({
           ...asset,
           currentValue: computedValue.toFixed(2),
-          children: activeChildren.map((c) => ({ ...c, isChild: true as const })),
+          children: sortedChildren.map((c) => ({ ...c, isChild: true as const })),
           childCount: allChildrenByParent.get(asset.id)!.length,
           isChild: false,
         });
