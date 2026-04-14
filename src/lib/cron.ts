@@ -342,6 +342,7 @@ export async function refreshCoinbaseConnections() {
         console.error(
           `[cron] ${ts} Coinbase sync failed for connection ${connection.id}:`,
           message
+        );
       }
     }
 
