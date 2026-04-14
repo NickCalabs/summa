@@ -156,12 +156,42 @@ export async function syncCoinbaseConnection(
     // Skip zero-balance accounts we're not already tracking.
     if ((!Number.isFinite(balance) || balance === 0) && !existing) continue;
 
-    const currency = account.currency || "USD";
-    const ticker = `${currency.toUpperCase()}-USD`;
-    const price =
+    const nativeCurrency = account.currency || "USD";
+    const ticker = `${nativeCurrency.toUpperCase()}-USD`;
+
+    // Derive per-unit USD price only when Coinbase supplies a real USD value.
+    // If Coinbase can't price the coin (e.g. obscure wallet), leave the
+    // currentValue at 0 and wait for Yahoo to fill in the price on its next
+    // refresh — NEVER fall back to the native quantity as a fake USD value.
+    const derivedPrice =
       nativeBalance != null && balance > 0 ? nativeBalance / balance : null;
-    const currentValueUsd = nativeBalance != null ? nativeBalance : balance;
-    const isStable = STABLECOINS.has(currency.toUpperCase());
+
+    // Preserve a previously-known price if this pass didn't return one, so an
+    // in-flight Yahoo price doesn't get wiped on sync.
+    const priceToStore =
+      derivedPrice != null
+        ? asFixed(derivedPrice, 8)
+        : existing?.currentPrice ?? null;
+
+    // Compute the stored USD value. Order of preference:
+    //   1. Coinbase-provided native_balance (authoritative when present)
+    //   2. quantity × known currentPrice (from a prior Coinbase sync or
+    //      Yahoo refresh — keeps the value sensible while Coinbase is silent)
+    //   3. 0 (honest — no way to value this asset yet)
+    const currentValueUsd =
+      nativeBalance != null
+        ? nativeBalance
+        : priceToStore != null
+          ? Number(priceToStore) * balance
+          : 0;
+
+    // All Summa ticker-provider assets store currentValue in USD and set
+    // currency = "USD". The native crypto unit is encoded in quantity +
+    // providerConfig.ticker, not in the currency field. Using the native
+    // symbol as the currency (previous behavior) breaks the app's FX
+    // conversion path, which then displays quantity as USD.
+    const currency = "USD";
+    const isStable = STABLECOINS.has(nativeCurrency.toUpperCase());
 
     if (existing) {
       const shouldArchive = balance === 0;
@@ -169,7 +199,7 @@ export async function syncCoinbaseConnection(
         name: account.name,
         quantity: asFixed(balance, 8),
         currentValue: asFixed(currentValueUsd, 2),
-        currentPrice: price != null ? asFixed(price, 8) : existing.currentPrice,
+        currentPrice: priceToStore,
         currency,
         parentAssetId: parentId,
         lastSyncedAt: new Date(),
@@ -180,6 +210,7 @@ export async function syncCoinbaseConnection(
           source: "yahoo",
           connectionId,
           coinbaseAccountId: account.accountId,
+          nativeCurrency,
         },
         isCashEquivalent: isStable,
       };
@@ -202,13 +233,14 @@ export async function syncCoinbaseConnection(
         currency,
         quantity: asFixed(balance, 8),
         currentValue: asFixed(currentValueUsd, 2),
-        currentPrice: price != null ? asFixed(price, 8) : null,
+        currentPrice: priceToStore,
         providerType: "ticker",
         providerConfig: {
           ticker,
           source: "yahoo",
           connectionId,
           coinbaseAccountId: account.accountId,
+          nativeCurrency,
         },
         isCashEquivalent: isStable,
         lastSyncedAt: new Date(),

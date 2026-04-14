@@ -169,6 +169,7 @@ export const assets = pgTable("assets", {
       plaidAccountId?: string;
       simplefinAccountId?: string;
       coinbaseAccountId?: string;
+      nativeCurrency?: string;
       // v0.2 wallet fields
       chain?: "btc" | "eth" | "sol";
       address?: string;
