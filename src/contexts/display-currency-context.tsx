@@ -9,8 +9,8 @@ interface DisplayCurrencyContextValue {
   setDisplayCurrency: (c: DisplayCurrency) => void;
   /** Convert a USD amount to display currency using a given BTC/USD rate */
   convert: (usdAmount: number, btcUsdRate: number | null) => number;
-  /** Format a value already in display currency */
-  format: (displayValue: number) => string;
+  /** Format a value already in display currency. When compact=true, uses compact notation for large values. */
+  format: (displayValue: number, compact?: boolean) => string;
   /** Format a compact value (for chart axes) */
   formatCompact: (displayValue: number) => string;
 }
@@ -47,18 +47,38 @@ export function DisplayCurrencyProvider({
     return displayCurrency === "sats" ? btc * 1e8 : btc;
   };
 
-  const format = (val: number) => {
+  const format = (val: number, compact = false) => {
+    const useCompact = compact && Math.abs(val) >= 10_000;
     if (displayCurrency === "USD") {
       return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
+        ...(useCompact ? { notation: "compact", maximumFractionDigits: 2 } : {}),
       }).format(val);
     }
     if (displayCurrency === "BTC") {
+      if (useCompact) {
+        return (
+          "\u20bf" +
+          new Intl.NumberFormat("en-US", {
+            notation: "compact",
+            maximumFractionDigits: 2,
+          }).format(val)
+        );
+      }
       return `\u20bf${val >= 1 ? val.toFixed(4) : val.toFixed(6)}`;
     }
     // sats
-    return `${Math.round(val).toLocaleString("en-US")} sats`;
+    const rounded = Math.round(val);
+    if (useCompact) {
+      return (
+        new Intl.NumberFormat("en-US", {
+          notation: "compact",
+          maximumFractionDigits: 2,
+        }).format(rounded) + " sats"
+      );
+    }
+    return `${rounded.toLocaleString("en-US")} sats`;
   };
 
   const formatCompact = (val: number) => {

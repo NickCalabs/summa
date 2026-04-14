@@ -43,6 +43,9 @@ interface UIStore {
 
   valuesMasked: boolean;
   toggleValuesMasked: () => void;
+
+  compactNumbers: boolean;
+  toggleCompactNumbers: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -126,4 +129,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   valuesMasked: false,
   toggleValuesMasked: () => set((state) => ({ valuesMasked: !state.valuesMasked })),
+
+  compactNumbers: true,
+  toggleCompactNumbers: () => set((state) => ({ compactNumbers: !state.compactNumbers })),
 }));

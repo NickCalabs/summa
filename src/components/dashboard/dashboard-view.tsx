@@ -26,7 +26,6 @@ import { AllocationChart } from "./allocation-chart";
 import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
 import { CagrCard } from "./cagr-card";
-import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
 import { DisplayCurrencyDropdown } from "@/components/portfolio/display-currency-dropdown";
 import { useSyncPortfolio } from "@/hooks/use-portfolio-mutations";
 import { useUIStore } from "@/stores/ui-store";
@@ -115,7 +114,6 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   const oneYearNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 365);
 
   return (
-    <DisplayCurrencyProvider>
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
 
@@ -378,7 +376,6 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
         </section>
       </div>
     </div>
-    </DisplayCurrencyProvider>
   );
 }
 

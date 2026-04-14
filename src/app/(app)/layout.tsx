@@ -16,6 +16,7 @@ import { authClient } from "@/lib/auth-client";
 import { usePortfolio, usePortfolios } from "@/hooks/use-portfolio";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
+import { DisplayCurrencyProvider } from "@/contexts/display-currency-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -100,6 +101,7 @@ function SidebarContent({
         id: string;
         name: string;
         currency: string;
+        btcUsdRate: number | null;
         aggregates: { totalAssets: number; totalDebts: number; netWorth: number };
         sheets: { id: string; name: string; type: "assets" | "debts" }[];
       }
@@ -141,6 +143,7 @@ function SidebarContent({
                 <MoneyDisplay
                   amount={activePortfolio.aggregates.netWorth}
                   currency={activePortfolio.currency}
+                  btcUsdRate={activePortfolio.btcUsdRate}
                   className="text-sm tabular-nums"
                 />
               </Link>
@@ -167,6 +170,7 @@ function SidebarContent({
                 <MoneyDisplay
                   amount={activePortfolio.aggregates.totalAssets}
                   currency={activePortfolio.currency}
+                  btcUsdRate={activePortfolio.btcUsdRate}
                   className="text-sm tabular-nums"
                 />
               </Link>
@@ -193,6 +197,7 @@ function SidebarContent({
                 <MoneyDisplay
                   amount={activePortfolio.aggregates.totalDebts}
                   currency={activePortfolio.currency}
+                  btcUsdRate={activePortfolio.btcUsdRate}
                   className="text-sm tabular-nums"
                 />
               </Link>
@@ -357,9 +362,11 @@ function SidebarContent({
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense>
-      <AppLayoutInner>{children}</AppLayoutInner>
-    </Suspense>
+    <DisplayCurrencyProvider>
+      <Suspense>
+        <AppLayoutInner>{children}</AppLayoutInner>
+      </Suspense>
+    </DisplayCurrencyProvider>
   );
 }
 
@@ -396,6 +403,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
                   id: activePortfolio.id,
                   name: activePortfolio.name,
                   currency: activePortfolio.currency,
+                  btcUsdRate: activePortfolio.btcUsdRate ?? null,
                   aggregates: activePortfolio.aggregates,
                   sheets: activePortfolio.sheets.map((sheet) => ({
                     id: sheet.id,
@@ -442,6 +450,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
                     id: activePortfolio.id,
                     name: activePortfolio.name,
                     currency: activePortfolio.currency,
+                    btcUsdRate: activePortfolio.btcUsdRate ?? null,
                     aggregates: activePortfolio.aggregates,
                     sheets: activePortfolio.sheets.map((sheet) => ({
                       id: sheet.id,
