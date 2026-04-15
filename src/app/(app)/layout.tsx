@@ -117,10 +117,10 @@ function SidebarContent({
     <>
       <div className="p-5 space-y-1">
         <h1 className="text-xl font-bold tracking-tight">Summa</h1>
-        <p className="text-xs text-white/45">The balance sheet you actually own.</p>
+        <p className="text-xs text-sidebar-foreground/60">The balance sheet you actually own.</p>
       </div>
 
-      <Separator className="bg-white/10" />
+      <Separator className="bg-sidebar-border" />
 
       <div className="flex-1 overflow-y-auto p-3">
         {/* Summary nav — Kubera-style totals */}
@@ -203,7 +203,7 @@ function SidebarContent({
               </Link>
             </nav>
 
-            <Separator className="my-4 bg-white/10" />
+            <Separator className="my-4 bg-sidebar-border" />
           </>
         )}
 
@@ -249,7 +249,7 @@ function SidebarContent({
 
         {!activePortfolio && (
           <>
-            <Separator className="my-4 bg-white/10" />
+            <Separator className="my-4 bg-sidebar-border" />
             <nav className="space-y-1">
               <Link
                 href="/dashboard"
@@ -267,7 +267,7 @@ function SidebarContent({
           </>
         )}
 
-        <Separator className="my-4 bg-white/10" />
+        <Separator className="my-4 bg-sidebar-border" />
 
         <div className="space-y-4">
           <div>
@@ -391,7 +391,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 flex-col bg-[#1E1E2E] text-white">
+      <aside className="hidden md:flex w-sidebar flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <SidebarContent
           pathname={pathname}
           activeSheetId={activeSheetId}
@@ -414,7 +414,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
               : undefined
           }
         />
-        <Separator className="bg-white/10" />
+        <Separator className="bg-sidebar-border" />
         <div className="px-3 pt-2 pb-0">
           <VersionBadge />
         </div>
@@ -436,7 +436,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent
           side="left"
-          className="w-60 p-0 bg-[#1E1E2E] text-white border-none"
+          className="w-sidebar p-0 bg-sidebar text-sidebar-foreground border-none"
           showCloseButton={false}
         >
           <SidebarContent
@@ -462,7 +462,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
             }
             onNavigate={() => setSidebarOpen(false)}
           />
-          <Separator className="bg-white/10" />
+          <Separator className="bg-sidebar-border" />
           <div className="px-3 pt-2 pb-0">
             <VersionBadge />
           </div>
