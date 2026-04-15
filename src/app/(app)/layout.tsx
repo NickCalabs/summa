@@ -130,10 +130,10 @@ function SidebarContent({
               <Link
                 href="/dashboard"
                 onClick={onNavigate}
-                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                className={`group flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
                   pathname === "/dashboard"
-                    ? "bg-white text-[#1E1E2E]"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                    ? "active-nav bg-sidebar-accent text-sidebar-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -144,7 +144,7 @@ function SidebarContent({
                   amount={activePortfolio.aggregates.netWorth}
                   currency={activePortfolio.currency}
                   btcUsdRate={activePortfolio.btcUsdRate}
-                  className="text-sm tabular-nums"
+                  className="text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
 
@@ -155,12 +155,12 @@ function SidebarContent({
                     : `/portfolio/${activePortfolio.id}`
                 }
                 onClick={onNavigate}
-                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                className={`group flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
                   pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
                   activeSheetId &&
                   assetSheets.some((s) => s.id === activeSheetId)
-                    ? "bg-white text-[#1E1E2E]"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                    ? "active-nav bg-sidebar-accent text-sidebar-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -171,7 +171,7 @@ function SidebarContent({
                   amount={activePortfolio.aggregates.totalAssets}
                   currency={activePortfolio.currency}
                   btcUsdRate={activePortfolio.btcUsdRate}
-                  className="text-sm tabular-nums"
+                  className="text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
 
@@ -182,12 +182,12 @@ function SidebarContent({
                     : `/portfolio/${activePortfolio.id}?type=debts`
                 }
                 onClick={onNavigate}
-                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                className={`group flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
                   pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
                   activeSheetId &&
                   debtSheets.some((s) => s.id === activeSheetId)
-                    ? "bg-white text-[#1E1E2E]"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                    ? "active-nav bg-sidebar-accent text-sidebar-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -198,7 +198,7 @@ function SidebarContent({
                   amount={activePortfolio.aggregates.totalDebts}
                   currency={activePortfolio.currency}
                   btcUsdRate={activePortfolio.btcUsdRate}
-                  className="text-sm tabular-nums"
+                  className="text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
             </nav>
