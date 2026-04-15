@@ -43,3 +43,6 @@ yarn-error.log*
 next-env.d.ts
 screenshot references/
 backups/
+
+# superpowers brainstorming workspace
+.superpowers/
