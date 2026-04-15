@@ -212,10 +212,10 @@ function SidebarContent({
           <Link
             href="/settings"
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+            className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
               pathname === "/settings"
-                ? "bg-white text-[#1E1E2E]"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
+                ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             }`}
           >
             <SettingsIcon className="size-4" />
@@ -224,10 +224,10 @@ function SidebarContent({
           <Link
             href="/settings/connections"
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+            className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
               pathname === "/settings/connections"
-                ? "bg-white text-[#1E1E2E]"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
+                ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             }`}
           >
             <PlugIcon className="size-4" />
@@ -236,10 +236,10 @@ function SidebarContent({
           <Link
             href="/import/kubera"
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+            className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
               pathname === "/import/kubera"
-                ? "bg-white text-[#1E1E2E]"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
+                ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             }`}
           >
             <UploadIcon className="size-4" />
@@ -254,10 +254,10 @@ function SidebarContent({
               <Link
                 href="/dashboard"
                 onClick={onNavigate}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
                   pathname === "/dashboard"
-                    ? "bg-white text-[#1E1E2E]"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                    ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 }`}
               >
                 <LayoutGridIcon className="size-4" />
