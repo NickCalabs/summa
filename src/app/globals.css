@@ -49,6 +49,19 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --text-nano: var(--font-size-nano);
+  --text-micro: var(--font-size-micro);
+  --text-tiny: var(--font-size-tiny);
+  --text-small: var(--font-size-small);
+  --text-hero: var(--font-size-hero);
+
+  --tracking-upper: var(--letter-spacing-upper);
+
+  --spacing-sidebar: var(--sidebar-width);
+  --spacing-topbar: var(--topbar-height);
+  --spacing-row: var(--row-height);
+  --radius-card: var(--card-radius);
 }
 
 :root {
@@ -63,7 +76,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.145 0 0 / 0.5);  /* 50% alpha of --foreground; Kubera pattern */
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -88,6 +101,25 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Kubera-aligned typography scale — see docs/kubera-audit Section 1.1 */
+  --font-size-nano: 10px;       /* uppercase column headers, 1-DAY/1-YEAR micro labels */
+  --font-size-micro: 11px;      /* secondary labels, pill badges */
+  --font-size-tiny: 12px;       /* sheet tabs */
+  --font-size-small: 13px;      /* dense table text */
+  --font-size-base: 16px;       /* body default */
+  --font-size-hero: 36px;       /* page totals */
+
+  /* Typography utilities */
+  --letter-spacing-upper: 0.05em;  /* uppercase column headers, tab pills */
+  --font-weight-tab: 800;          /* sheet-tab heavy weight per Kubera measurement */
+
+  /* Layout primitives — see docs/kubera-audit Section 1.3 */
+  --sidebar-width: 222px;
+  --topbar-height: 90px;
+  --row-height: 40px;
+  --row-padding-x: 16px;
+  --card-radius: 4px;
 }
 
 .dark {
@@ -102,7 +134,7 @@
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.985 0 0 / 0.5);  /* 50% alpha of dark --foreground */
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -126,6 +158,23 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Kubera-aligned typography scale */
+  --font-size-nano: 10px;
+  --font-size-micro: 11px;
+  --font-size-tiny: 12px;
+  --font-size-small: 13px;
+  --font-size-base: 16px;
+  --font-size-hero: 36px;
+
+  --letter-spacing-upper: 0.05em;
+  --font-weight-tab: 800;
+
+  --sidebar-width: 222px;
+  --topbar-height: 90px;
+  --row-height: 40px;
+  --row-padding-x: 16px;
+  --card-radius: 4px;
 }
 
 @theme inline {
