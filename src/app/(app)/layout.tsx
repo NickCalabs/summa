@@ -68,7 +68,7 @@ function VersionBadge() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION;
   const sha = process.env.NEXT_PUBLIC_GIT_SHA;
   return (
-    <p className="px-2 text-[10px] text-white/25 font-mono leading-none" title={`Build: ${sha}`}>
+    <p className="px-2 text-nano text-sidebar-foreground/30 font-mono leading-none" title={`Build: ${sha}`}>
       v{version} · {sha}
     </p>
   );
@@ -277,8 +277,8 @@ function SidebarContent({
             <div className="mt-1 space-y-1">
               {portfoliosLoading ? (
                 <>
-                  <Skeleton className="h-9 w-full bg-white/5" />
-                  <Skeleton className="h-9 w-full bg-white/5" />
+                  <Skeleton className="h-9 w-full bg-sidebar-accent/40" />
+                  <Skeleton className="h-9 w-full bg-sidebar-accent/40" />
                 </>
               ) : (
                 portfolioList?.map((p) => {
@@ -423,7 +423,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/5"
+            className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
             onClick={handleLogout}
           >
             <LogOutIcon />
@@ -471,7 +471,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/5"
+              className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
               onClick={handleLogout}
             >
               <LogOutIcon />
