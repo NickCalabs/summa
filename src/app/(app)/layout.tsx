@@ -271,7 +271,7 @@ function SidebarContent({
 
         <div className="space-y-4">
           <div>
-            <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
+            <p className="px-2 py-1 text-nano font-medium uppercase tracking-upper text-sidebar-foreground/45">
               Portfolio
             </p>
             <div className="mt-1 space-y-1">
@@ -288,14 +288,14 @@ function SidebarContent({
                       key={p.id}
                       href={`/portfolio/${p.id}`}
                       onClick={onNavigate}
-                      className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                      className={`flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
                         isActive
-                          ? "bg-white/10 text-white"
-                          : "text-white/65 hover:bg-white/5 hover:text-white"
+                          ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                          : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                       }`}
                     >
                       <span className="truncate">{p.name}</span>
-                      <ChevronRightIcon className="size-4 shrink-0 text-white/30" />
+                      <ChevronRightIcon className="size-4 shrink-0 text-sidebar-foreground/40" />
                     </Link>
                   );
                 })
@@ -305,7 +305,7 @@ function SidebarContent({
 
           {activePortfolio && assetSheets.length > 1 && (
             <div>
-              <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
+              <p className="px-2 py-1 text-nano font-medium uppercase tracking-upper text-sidebar-foreground/45">
                 Asset Sheets
               </p>
               <div className="mt-1 space-y-1">
@@ -314,14 +314,14 @@ function SidebarContent({
                     key={sheet.id}
                     href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
                     onClick={onNavigate}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
                       pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
                       activeSheetId === sheet.id
-                        ? "bg-white/10 text-white"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                        ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                     }`}
                   >
-                    <WalletCardsIcon className="size-4 shrink-0 text-white/45" />
+                    <WalletCardsIcon className="size-4 shrink-0 text-sidebar-foreground/45" />
                     <span className="truncate">{sheet.name}</span>
                   </Link>
                 ))}
@@ -331,7 +331,7 @@ function SidebarContent({
 
           {activePortfolio && debtSheets.length > 1 && (
             <div>
-              <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-white/35">
+              <p className="px-2 py-1 text-nano font-medium uppercase tracking-upper text-sidebar-foreground/45">
                 Debt Sheets
               </p>
               <div className="mt-1 space-y-1">
@@ -340,14 +340,14 @@ function SidebarContent({
                     key={sheet.id}
                     href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
                     onClick={onNavigate}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
                       pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
                       activeSheetId === sheet.id
-                        ? "bg-white/10 text-white"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                        ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                     }`}
                   >
-                    <LandmarkIcon className="size-4 shrink-0 text-white/45" />
+                    <LandmarkIcon className="size-4 shrink-0 text-sidebar-foreground/45" />
                     <span className="truncate">{sheet.name}</span>
                   </Link>
                 ))}
