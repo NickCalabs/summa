@@ -47,14 +47,14 @@ export function TopBar({
   }
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex items-center gap-2 md:gap-3">
       {isEditing ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();
             commitName();
           }}
-          className="flex-shrink-0"
+          className="flex-shrink-0 hidden md:block"
         >
           <Input
             value={editValue}
@@ -69,7 +69,7 @@ export function TopBar({
         </form>
       ) : (
         <h2
-          className="text-lg font-semibold cursor-pointer hover:text-foreground/80 transition-colors"
+          className="hidden md:block text-lg font-semibold cursor-pointer hover:text-foreground/80 transition-colors"
           onClick={startEditing}
         >
           {portfolioName}
@@ -105,7 +105,7 @@ export function TopBar({
         }}
       >
         <PlusIcon className="size-3.5" data-icon="inline-start" />
-        Add
+        <span className="hidden md:inline">Add</span>
       </Button>
 
       <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
