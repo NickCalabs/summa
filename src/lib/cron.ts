@@ -7,7 +7,7 @@ import {
   plaidAccounts,
   coinbaseConnections,
 } from "@/lib/db/schema";
-import { eq, isNull, isNotNull, ne, and, or, lt } from "drizzle-orm";
+import { eq, isNull, isNotNull, ne, and, or, lt, sql } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
 import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
 import { getCoinbaseSpotPrices } from "@/lib/providers/coinbase";
@@ -304,16 +304,22 @@ export async function refreshPlaidBalances() {
             .set({
               currentBalance: balance.currentBalance?.toFixed(2) ?? null,
               availableBalance: balance.availableBalance?.toFixed(2) ?? null,
+              creditLimit: balance.limit?.toFixed(2) ?? null,
               updatedAt: new Date(),
             })
             .where(eq(plaidAccounts.plaidAccountId, balance.accountId))
             .returning();
 
           if (updated?.assetId && balance.currentBalance != null) {
+            const limitPatch =
+              balance.limit != null ? { creditLimit: balance.limit } : null;
             await db
               .update(assets)
               .set({
                 currentValue: Math.abs(balance.currentBalance).toFixed(2),
+                ...(limitPatch && {
+                  providerConfig: sql`coalesce(${assets.providerConfig}, '{}'::jsonb) || ${JSON.stringify(limitPatch)}::jsonb`,
+                }),
                 lastSyncedAt: new Date(),
                 updatedAt: new Date(),
               })

@@ -20,6 +20,7 @@ import {
   PlusIcon,
   ChevronRightIcon,
   ChevronDownIcon,
+  Link2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,7 @@ import { MoneyDisplay } from "./money-display";
 import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
 import { useOptionalDisplayCurrency } from "@/contexts/display-currency-context";
-import { isAssetStale } from "@/lib/portfolio-utils";
+import { isAssetStale, isAssetAutoTracked } from "@/lib/portfolio-utils";
 import { getCryptoSymbol } from "@/lib/crypto-utils";
 import type { Asset, Section } from "@/hooks/use-portfolio";
 import {
@@ -230,7 +231,20 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           const isEditing =
             editingCell?.assetId === asset.id && editingCell?.field === "name";
           const stale = isAssetStale(asset);
-          const isDisconnected = asset.providerType === "plaid" && stale;
+          const isDisconnected =
+            (asset.providerType === "plaid" ||
+              asset.providerType === "simplefin") &&
+            stale;
+          const autoTracked = isAssetAutoTracked(asset.providerType);
+          const showSyncBadge = autoTracked && !isDisconnected;
+          const creditLimit =
+            typeof asset.providerConfig?.creditLimit === "number"
+              ? asset.providerConfig.creditLimit
+              : null;
+          const availableCredit =
+            sheetType === "debts" && creditLimit != null
+              ? Math.max(0, creditLimit - Number(asset.currentValue))
+              : null;
 
           if (isEditing) {
             return (
@@ -276,6 +290,31 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               >
                 {asset.name}
               </span>
+              {showSyncBadge && (
+                <span
+                  title="Auto-synced"
+                  aria-label="Auto-synced"
+                  className="shrink-0 leading-none"
+                >
+                  <Link2Icon className="size-3 text-muted-foreground/60 -rotate-45" />
+                </span>
+              )}
+              {availableCredit != null && (
+                <span
+                  className="inline-block shrink-0 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-center text-[10px] leading-tight text-muted-foreground"
+                  title={`${creditLimit?.toLocaleString()} ${asset.currency} limit`}
+                >
+                  <MoneyDisplay
+                    amount={toBase(availableCredit, asset.currency)}
+                    currency={baseCurrency}
+                    btcUsdRate={btcUsdRate}
+                    className="block font-medium tabular-nums text-foreground/80"
+                  />
+                  <span className="block text-[9px] tracking-[0.15em]">
+                    AVAILABLE
+                  </span>
+                </span>
+              )}
               {isParent && (
                 <span
                   className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer"

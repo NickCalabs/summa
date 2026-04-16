@@ -176,6 +176,8 @@ export const assets = pgTable("assets", {
       // v0.3 holdings expansion — SimpleFIN group parents
       isGroupParent?: boolean;
       institutionName?: string;
+      // Credit-line metadata for debt accounts (Plaid balances.limit)
+      creditLimit?: number;
     }>()
     .default({}),
   ownershipPct: numeric("ownership_pct", { precision: 5, scale: 2 })
@@ -274,6 +276,7 @@ export const plaidAccounts = pgTable("plaid_accounts", {
   mask: text("mask"),
   currentBalance: numeric("current_balance", { precision: 20, scale: 2 }),
   availableBalance: numeric("available_balance", { precision: 20, scale: 2 }),
+  creditLimit: numeric("credit_limit", { precision: 20, scale: 2 }),
   isoCurrencyCode: text("iso_currency_code").default("USD"),
   isTracked: boolean("is_tracked").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
