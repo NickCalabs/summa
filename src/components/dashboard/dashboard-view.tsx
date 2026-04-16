@@ -123,11 +123,11 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
           <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
         </div>
 
-        <section className="overflow-hidden rounded-card border border-border bg-card">
-          <div className="space-y-8 p-6 md:p-8">
+        <section className="overflow-hidden md:rounded-card md:border md:border-border md:bg-card">
+          <div className="space-y-8 md:p-6 lg:p-8">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="space-y-4">
-                <div className="space-y-2">
+                <div className="hidden md:block space-y-2">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     Recap
                   </p>
@@ -162,7 +162,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                 </div>
               </div>
 
-              <div className="flex flex-col items-start gap-3 xl:items-end">
+              <div className="hidden xl:flex flex-col items-start gap-3 xl:items-end">
                 <p className="text-sm text-muted-foreground">Hi, {userName}</p>
                 <Link
                   href={`/portfolio/${portfolioId}`}
@@ -334,7 +334,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
           </div>
         </section>
 
-        <section className="rounded-card border border-border bg-card p-6 md:p-8">
+        <section className="md:rounded-card md:border md:border-border md:bg-card md:p-6 lg:md:p-8">
           <div className="mb-6 space-y-1">
             <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
               Allocation
@@ -363,7 +363,7 @@ function DashboardSurface({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-card border border-border bg-card/50 p-5 md:p-6">
+    <section className="md:rounded-card md:border md:border-border md:bg-card/50 md:p-6">
       <div className="mb-5 space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
         {description ? (

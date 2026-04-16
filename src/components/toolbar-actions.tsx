@@ -61,11 +61,13 @@ export function ToolbarActions({ portfolioId, lastSyncedAt }: ToolbarActionsProp
               className={`size-3.5 ${syncPortfolio.isPending ? "animate-spin" : ""}`}
               data-icon="inline-start"
             />
-            {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
+            <span className="hidden md:inline">
+              {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
+            </span>
           </Button>
           {lastSyncedAt && !syncPortfolio.isPending && (
             <span
-              className="text-[10px] text-muted-foreground/70 mt-0.5 px-1 leading-none"
+              className="hidden md:inline text-[10px] text-muted-foreground/70 mt-0.5 px-1 leading-none"
               title={lastSyncedAt.toLocaleString()}
             >
               synced {formatDistanceToNow(lastSyncedAt, { addSuffix: true })}
