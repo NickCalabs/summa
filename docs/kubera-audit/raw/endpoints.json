@@ -1,0 +1,149 @@
+{
+  "GET https://app.kubera.com/recap-worker-v5.js": {
+    "count": 15,
+    "statuses": {
+      "200": 15
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/external-worker-dependencies.bundled.js": {
+    "count": 15,
+    "statuses": {
+      "200": 15
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/inter.css": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/static/vendor.LqnfaZ2d.css": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/static/main.C7QbpPI5.css": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/generate-splash-screen.js": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/status/tool.js": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/static/vendor.CmbC2v9c.js": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/static/main.vJ74djcN.js": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/font-files/Inter-roman.var.woff2": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/font-files/Inter-SemiBold.woff2": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/font-files/Inter-Regular.woff2": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/font-files/Inter-Bold.woff2": {
+    "count": 12,
+    "statuses": {
+      "200": 12
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/status/config.json": {
+    "count": 11,
+    "statuses": {
+      "200": 11
+    },
+    "sampleBody": ""
+  },
+  "GET https://cdn.kubera.com/r/wlk/kubera/logo.png": {
+    "count": 11,
+    "statuses": {
+      "200": 11
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/": {
+    "count": 4,
+    "statuses": {
+      "200": 4
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/portfolio": {
+    "count": 4,
+    "statuses": {
+      "200": 4
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/recap": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/insights": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/beneficiary": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": ""
+  },
+  "GET https://app.kubera.com/settings": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": ""
+  }
+}

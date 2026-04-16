@@ -1,0 +1,3 @@
+{
+  "/api/simplefin/connections/[id]/accounts/route": "app/api/simplefin/connections/[id]/accounts/route.js"
+}

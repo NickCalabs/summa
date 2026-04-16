@@ -1,0 +1,3 @@
+{
+  "/api/portfolios/[id]/import-csv/route": "app/api/portfolios/[id]/import-csv/route.js"
+}

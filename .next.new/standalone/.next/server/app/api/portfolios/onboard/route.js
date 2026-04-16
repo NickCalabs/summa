@@ -1,0 +1,13 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/portfolios/onboard/route.js")
+R.c("server/chunks/[root-of-the-server]__d563df64._.js")
+R.c("server/chunks/node_modules__pnpm_69bcdb1c._.js")
+R.c("server/chunks/d1f63_kysely_dist_esm_a06549db._.js")
+R.c("server/chunks/7d23e_drizzle-orm_84cc7812._.js")
+R.c("server/chunks/[root-of-the-server]__eca6dd16._.js")
+R.c("server/chunks/d1f63_kysely_dist_esm_32d00c42._.js")
+R.c("server/chunks/_dc97496a._.js")
+R.c("server/chunks/_47a7a638._.js")
+R.c("server/chunks/e7d5e_@better-auth_kysely-adapter_dist_index_mjs_92753479._.js")
+R.c("server/chunks/_next-internal_server_app_api_portfolios_onboard_route_actions_3e12515d.js")
+R.m(2226)
+module.exports=R.m(2226).exports

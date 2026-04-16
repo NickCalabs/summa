@@ -303,57 +303,6 @@ function SidebarContent({
             </div>
           </div>
 
-          {activePortfolio && assetSheets.length > 1 && (
-            <div>
-              <p className="px-2 py-1 text-nano font-medium uppercase tracking-upper text-sidebar-foreground/45">
-                Asset Sheets
-              </p>
-              <div className="mt-1 space-y-1">
-                {assetSheets.map((sheet) => (
-                  <Link
-                    key={sheet.id}
-                    href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
-                    onClick={onNavigate}
-                    className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
-                      pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
-                      activeSheetId === sheet.id
-                        ? "bg-sidebar-accent/60 text-sidebar-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
-                    }`}
-                  >
-                    <WalletCardsIcon className="size-4 shrink-0 text-sidebar-foreground/45" />
-                    <span className="truncate">{sheet.name}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activePortfolio && debtSheets.length > 1 && (
-            <div>
-              <p className="px-2 py-1 text-nano font-medium uppercase tracking-upper text-sidebar-foreground/45">
-                Debt Sheets
-              </p>
-              <div className="mt-1 space-y-1">
-                {debtSheets.map((sheet) => (
-                  <Link
-                    key={sheet.id}
-                    href={`/portfolio/${activePortfolio.id}?sheet=${sheet.id}`}
-                    onClick={onNavigate}
-                    className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
-                      pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
-                      activeSheetId === sheet.id
-                        ? "bg-sidebar-accent/60 text-sidebar-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
-                    }`}
-                  >
-                    <LandmarkIcon className="size-4 shrink-0 text-sidebar-foreground/45" />
-                    <span className="truncate">{sheet.name}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </>

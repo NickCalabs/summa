@@ -1,0 +1,13 @@
+var R=require("../../../../../chunks/[turbopack]_runtime.js")("server/app/api/assets/[id]/snapshots/route.js")
+R.c("server/chunks/[root-of-the-server]__3e8cac7a._.js")
+R.c("server/chunks/node_modules__pnpm_69bcdb1c._.js")
+R.c("server/chunks/d1f63_kysely_dist_esm_a06549db._.js")
+R.c("server/chunks/7d23e_drizzle-orm_84cc7812._.js")
+R.c("server/chunks/[root-of-the-server]__eca6dd16._.js")
+R.c("server/chunks/d1f63_kysely_dist_esm_32d00c42._.js")
+R.c("server/chunks/_dc97496a._.js")
+R.c("server/chunks/_47a7a638._.js")
+R.c("server/chunks/e7d5e_@better-auth_kysely-adapter_dist_index_mjs_92753479._.js")
+R.c("server/chunks/_next-internal_server_app_api_assets_[id]_snapshots_route_actions_f1ac2048.js")
+R.m(61103)
+module.exports=R.m(61103).exports

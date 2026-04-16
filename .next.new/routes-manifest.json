@@ -1,0 +1,430 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/assets/[id]",
+      "regex": "^/api/assets/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/assets/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/assets/[id]/move",
+      "regex": "^/api/assets/([^/]+?)/move(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/assets/(?<nxtPid>[^/]+?)/move(?:/)?$"
+    },
+    {
+      "page": "/api/assets/[id]/refresh",
+      "regex": "^/api/assets/([^/]+?)/refresh(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/assets/(?<nxtPid>[^/]+?)/refresh(?:/)?$"
+    },
+    {
+      "page": "/api/assets/[id]/snapshots",
+      "regex": "^/api/assets/([^/]+?)/snapshots(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/assets/(?<nxtPid>[^/]+?)/snapshots(?:/)?$"
+    },
+    {
+      "page": "/api/assets/[id]/transactions",
+      "regex": "^/api/assets/([^/]+?)/transactions(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/assets/(?<nxtPid>[^/]+?)/transactions(?:/)?$"
+    },
+    {
+      "page": "/api/auth/[...all]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPall": "nxtPall"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPall>.+?)(?:/)?$"
+    },
+    {
+      "page": "/api/connections/wallet/[id]/sync",
+      "regex": "^/api/connections/wallet/([^/]+?)/sync(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/connections/wallet/(?<nxtPid>[^/]+?)/sync(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/connections/[id]",
+      "regex": "^/api/plaid/connections/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/plaid/connections/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/connections/[id]/accounts",
+      "regex": "^/api/plaid/connections/([^/]+?)/accounts(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/plaid/connections/(?<nxtPid>[^/]+?)/accounts(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/connections/[id]/sync",
+      "regex": "^/api/plaid/connections/([^/]+?)/sync(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/plaid/connections/(?<nxtPid>[^/]+?)/sync(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]",
+      "regex": "^/api/portfolios/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/assets",
+      "regex": "^/api/portfolios/([^/]+?)/assets(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/assets(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/assets/reorder",
+      "regex": "^/api/portfolios/([^/]+?)/assets/reorder(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/assets/reorder(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/export-csv",
+      "regex": "^/api/portfolios/([^/]+?)/export\\-csv(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/export\\-csv(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/import-csv",
+      "regex": "^/api/portfolios/([^/]+?)/import\\-csv(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/import\\-csv(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/import-csv/confirm",
+      "regex": "^/api/portfolios/([^/]+?)/import\\-csv/confirm(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/import\\-csv/confirm(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/sections",
+      "regex": "^/api/portfolios/([^/]+?)/sections(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/sections(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/sections/reorder",
+      "regex": "^/api/portfolios/([^/]+?)/sections/reorder(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/sections/reorder(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/sheets",
+      "regex": "^/api/portfolios/([^/]+?)/sheets(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/sheets(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/sheets/reorder",
+      "regex": "^/api/portfolios/([^/]+?)/sheets/reorder(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/sheets/reorder(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/snapshots",
+      "regex": "^/api/portfolios/([^/]+?)/snapshots(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/snapshots(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/[id]/sync",
+      "regex": "^/api/portfolios/([^/]+?)/sync(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/portfolios/(?<nxtPid>[^/]+?)/sync(?:/)?$"
+    },
+    {
+      "page": "/api/simplefin/connections/[id]",
+      "regex": "^/api/simplefin/connections/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/simplefin/connections/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/simplefin/connections/[id]/accounts",
+      "regex": "^/api/simplefin/connections/([^/]+?)/accounts(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/simplefin/connections/(?<nxtPid>[^/]+?)/accounts(?:/)?$"
+    },
+    {
+      "page": "/api/simplefin/connections/[id]/sync",
+      "regex": "^/api/simplefin/connections/([^/]+?)/sync(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/simplefin/connections/(?<nxtPid>[^/]+?)/sync(?:/)?$"
+    },
+    {
+      "page": "/portfolio/[portfolioId]",
+      "regex": "^/portfolio/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPportfolioId": "nxtPportfolioId"
+      },
+      "namedRegex": "^/portfolio/(?<nxtPportfolioId>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/portfolio/[portfolioId]/asset/[assetId]",
+      "regex": "^/portfolio/([^/]+?)/asset/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPportfolioId": "nxtPportfolioId",
+        "nxtPassetId": "nxtPassetId"
+      },
+      "namedRegex": "^/portfolio/(?<nxtPportfolioId>[^/]+?)/asset/(?<nxtPassetId>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/auth/check-user",
+      "regex": "^/api/auth/check\\-user(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/check\\-user(?:/)?$"
+    },
+    {
+      "page": "/api/connections",
+      "regex": "^/api/connections(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/connections(?:/)?$"
+    },
+    {
+      "page": "/api/connections/sync",
+      "regex": "^/api/connections/sync(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/connections/sync(?:/)?$"
+    },
+    {
+      "page": "/api/exchange-rates",
+      "regex": "^/api/exchange\\-rates(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/exchange\\-rates(?:/)?$"
+    },
+    {
+      "page": "/api/health",
+      "regex": "^/api/health(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/health(?:/)?$"
+    },
+    {
+      "page": "/api/import/kubera",
+      "regex": "^/api/import/kubera(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/import/kubera(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/connections",
+      "regex": "^/api/plaid/connections(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/plaid/connections(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/exchange-token",
+      "regex": "^/api/plaid/exchange\\-token(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/plaid/exchange\\-token(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/fix-misplaced-liabilities",
+      "regex": "^/api/plaid/fix\\-misplaced\\-liabilities(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/plaid/fix\\-misplaced\\-liabilities(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/link-token",
+      "regex": "^/api/plaid/link\\-token(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/plaid/link\\-token(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/status",
+      "regex": "^/api/plaid/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/plaid/status(?:/)?$"
+    },
+    {
+      "page": "/api/plaid/webhook",
+      "regex": "^/api/plaid/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/plaid/webhook(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios",
+      "regex": "^/api/portfolios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/portfolios(?:/)?$"
+    },
+    {
+      "page": "/api/portfolios/onboard",
+      "regex": "^/api/portfolios/onboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/portfolios/onboard(?:/)?$"
+    },
+    {
+      "page": "/api/prices/quote",
+      "regex": "^/api/prices/quote(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/prices/quote(?:/)?$"
+    },
+    {
+      "page": "/api/prices/search",
+      "regex": "^/api/prices/search(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/prices/search(?:/)?$"
+    },
+    {
+      "page": "/api/simplefin/connections",
+      "regex": "^/api/simplefin/connections(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/simplefin/connections(?:/)?$"
+    },
+    {
+      "page": "/api/snapshots/take",
+      "regex": "^/api/snapshots/take(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/snapshots/take(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/import/kubera",
+      "regex": "^/import/kubera(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/import/kubera(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/register",
+      "regex": "^/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/register(?:/)?$"
+    },
+    {
+      "page": "/settings",
+      "regex": "^/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings(?:/)?$"
+    },
+    {
+      "page": "/settings/connections",
+      "regex": "^/settings/connections(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings/connections(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
