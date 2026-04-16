@@ -1,3 +1,0 @@
-{
-  "/api/plaid/connections/[id]/route": "app/api/plaid/connections/[id]/route.js"
-}
