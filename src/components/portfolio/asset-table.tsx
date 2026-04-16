@@ -574,7 +574,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
 
   return (
     <>
-    <div className="overflow-x-auto border border-border/40 bg-background">
+    <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
