@@ -670,12 +670,12 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t border-border">
+          <tr className="bg-neutral-500 text-white">
             <td className="px-4 py-2.5">
               <button
                 type="button"
                 onClick={() => openAddFlow(sheetType, sectionId)}
-                className="text-nano font-semibold uppercase tracking-upper text-muted-foreground hover:text-foreground transition-colors"
+                className="text-nano font-semibold uppercase tracking-upper text-white/70 hover:text-white transition-colors"
               >
                 + Add {sheetType === "debts" ? "Debt" : "Asset"}
               </button>

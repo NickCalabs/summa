@@ -204,32 +204,26 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           </div>
         ) : (
           <>
-            <section className="overflow-hidden rounded-card border border-border bg-card">
-              <div className="border-b border-border px-4 py-3 md:px-6">
-                <SheetSummaryRow
-                  sheets={portfolio.sheets}
-                  activeSheetId={activeSheetId}
-                  onSheetChange={setActiveSheet}
-                  portfolioId={portfolioId}
-                  currency={portfolio.currency}
-                  btcUsdRate={portfolio.btcUsdRate}
-                />
-              </div>
+            <SheetSummaryRow
+              sheets={portfolio.sheets}
+              activeSheetId={activeSheetId}
+              onSheetChange={setActiveSheet}
+              portfolioId={portfolioId}
+              currency={portfolio.currency}
+              btcUsdRate={portfolio.btcUsdRate}
+            />
 
-              <div className="p-4 md:p-6">
-                {portfolio.sheets.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
-                    <p className="font-medium text-sm mb-1">Create your first sheet</p>
-                    <p className="text-xs text-muted-foreground">
-                      Use the <span className="font-medium">⋮</span> menu above to add a sheet
-                    </p>
-                  </div>
-                ) : activeSheet ? (
-                  <SheetView sheet={activeSheet} currency={portfolio.currency} btcUsdRate={portfolio.btcUsdRate} portfolioId={portfolioId} />
-                ) : null}
+            {portfolio.sheets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
+                <p className="font-medium text-sm mb-1">Create your first sheet</p>
+                <p className="text-xs text-muted-foreground">
+                  Use the <span className="font-medium">⋮</span> menu above to add a sheet
+                </p>
               </div>
-            </section>
+            ) : activeSheet ? (
+              <SheetView sheet={activeSheet} currency={portfolio.currency} btcUsdRate={portfolio.btcUsdRate} portfolioId={portfolioId} />
+            ) : null}
           </>
         )}
 
