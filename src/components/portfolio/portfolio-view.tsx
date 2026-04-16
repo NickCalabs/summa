@@ -64,7 +64,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 md:px-6 md:py-6">
+      <div className="mx-auto max-w-6xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <div className="space-y-2">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-5 w-96" />
@@ -144,7 +144,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
   return (
     <CurrencyProvider baseCurrency={portfolio.currency} rates={portfolio.rates ?? {}}>
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 md:px-6 md:py-6">
+      <div className="mx-auto max-w-6xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <TopBar
           portfolioId={portfolioId}
           portfolioName={portfolio.name}
