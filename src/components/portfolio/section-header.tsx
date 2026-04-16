@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -14,7 +13,6 @@ import {
 import { MoneyDisplay } from "./money-display";
 import { ConfirmDialog } from "./confirm-dialog";
 import { useUpdateSection, useDeleteSection } from "@/hooks/use-sections";
-import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
 import type { Section } from "@/hooks/use-portfolio";
 
@@ -47,7 +45,6 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   const updateSection = useUpdateSection(portfolioId);
   const deleteSection = useDeleteSection(portfolioId);
-  const openAddFlow = useUIStore((s) => s.openAddFlow);
   const { toBase } = useCurrency();
 
   const [isRenaming, setIsRenaming] = useState(false);
@@ -150,14 +147,6 @@ export function SectionHeader({
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs text-muted-foreground"
-          onClick={() => openAddFlow(sheetType, section.id)}
-        >
-          Add Asset
-        </Button>
       </div>
 
       <ConfirmDialog
