@@ -621,7 +621,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       <table className="w-full text-sm">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border">
+            <tr key={headerGroup.id} className="hidden md:table-row border-b border-border">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
