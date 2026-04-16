@@ -123,23 +123,23 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.09 0 0);             /* Kubera page bg ≈ rgb(12,12,12) */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.145 0 0);                  /* Kubera card/sheet ≈ rgb(26,26,26) */
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.205 0 0);               /* Keep elevated for menus */
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.18 0 0);              /* Kubera table-header band ≈ rgb(36,36,36) */
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.18 0 0);                  /* Match secondary */
   --muted-foreground: oklch(0.985 0 0 / 0.5);  /* 50% alpha of dark --foreground */
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.16 0 0);                 /* Kubera hover/alt-row ≈ rgb(30,30,30) */
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 14%);              /* Bump from 10% for visibility on darker bg */
+  --input: oklch(1 0 0 / 18%);               /* Bump proportionally */
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -150,13 +150,13 @@
   --chart-7: oklch(0.65 0.2 330);
   --chart-8: oklch(0.75 0.15 80);
   --chart-net-worth: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.125 0 0);               /* Kubera sidebar ≈ rgb(21,21,21) */
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.16 0 0);         /* Match --accent */
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 14%);      /* Match --border */
   --sidebar-ring: oklch(0.556 0 0);
 
   /* Kubera-aligned typography scale */
