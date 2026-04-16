@@ -670,9 +670,17 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t border-border/50 bg-muted text-foreground font-semibold">
-            <td className="px-4 py-2.5" />
-            <td className="px-4 py-2.5 text-right font-medium tabular-nums">
+          <tr className="border-t border-border/50">
+            <td className="px-4 py-2.5">
+              <button
+                type="button"
+                onClick={() => openAddFlow(sheetType, sectionId)}
+                className="text-nano font-semibold uppercase tracking-upper text-muted-foreground hover:text-foreground transition-colors"
+              >
+                + Add {sheetType === "debts" ? "Debt" : "Asset"}
+              </button>
+            </td>
+            <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
               <MoneyDisplay amount={sectionTotal} currency={baseCurrency} btcUsdRate={btcUsdRate} />
             </td>
             <td className="px-4 py-2.5" />
