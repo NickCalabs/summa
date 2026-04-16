@@ -274,7 +274,10 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               {isParent && (
                 <span
                   className="text-muted-foreground shrink-0 -ml-1 cursor-pointer"
-                  onClick={() => toggleExpand(asset.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(asset.id);
+                  }}
                 >
                   {isExpanded ? (
                     <ChevronDownIcon className="size-4" />
@@ -288,6 +291,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   isDisconnected ? "italic text-muted-foreground" : ""
                 }`}
                 onClick={(e) => {
+                  if (!window.matchMedia("(min-width: 768px)").matches) return;
                   e.stopPropagation();
                   startEdit(asset.id, "name");
                 }}
@@ -321,7 +325,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               )}
               {isParent && (
                 <span
-                  className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer"
+                  className="hidden md:inline-flex items-center text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleExpand(asset.id);
@@ -408,7 +412,11 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           return (
             <div
               className="text-right tabular-nums cursor-text hover:bg-muted/50 rounded -mx-1 px-1 py-0.5 -my-0.5"
-              onClick={() => startEdit(asset.id, "currentValue")}
+              onClick={(e) => {
+                if (!window.matchMedia("(min-width: 768px)").matches) return;
+                e.stopPropagation();
+                startEdit(asset.id, "currentValue");
+              }}
             >
               <div className="flex items-center justify-end gap-1">
                 {isValueSaving && (
@@ -463,7 +471,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       },
       {
         id: "actions",
-        size: 40,
+        size: 72,
         cell: ({ row }) => {
           const asset = row.original;
           const otherSections = sections.filter((s) => s.id !== asset.sectionId);
@@ -473,18 +481,32 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           const canMoveDown = rowIdx >= 0 && rowIdx < nonArchived.length - 1;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                  />
-                }
+            <div className="flex items-center justify-end gap-0.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:inline-flex h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openAccountDetail(portfolioId, asset.id);
+                }}
+                aria-label="Open details"
               >
-                <MoreHorizontalIcon />
-              </DropdownMenuTrigger>
+                <OpenPanelIcon />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  }
+                >
+                  <MoreHorizontalIcon />
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onSelect={() => openAccountDetail(portfolioId, asset.id)}
@@ -533,7 +555,8 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </div>
           );
         },
       },
@@ -621,7 +644,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       <table className="w-full text-sm">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border">
+            <tr key={headerGroup.id} className="hidden md:table-row border-b border-border">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
@@ -655,11 +678,15 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             return (
               <React.Fragment key={row.id}>
                 <tr
-                  className={`border-b border-border transition-colors hover:bg-muted/35 ${
+                  className={`border-b border-border transition-colors hover:bg-muted/35 cursor-pointer md:cursor-default ${
                     stale && asset.providerType !== "plaid"
                       ? "opacity-60"
                       : ""
                   }`}
+                  onClick={() => {
+                    if (window.matchMedia("(min-width: 768px)").matches) return;
+                    openAccountDetail(portfolioId, asset.id);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-2.5 align-middle">
@@ -771,6 +798,25 @@ function MoreHorizontalIcon() {
       <circle cx="12" cy="12" r="1" />
       <circle cx="19" cy="12" r="1" />
       <circle cx="5" cy="12" r="1" />
+    </svg>
+  );
+}
+
+function OpenPanelIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
     </svg>
   );
 }
