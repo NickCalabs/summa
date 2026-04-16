@@ -274,7 +274,10 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               {isParent && (
                 <span
                   className="text-muted-foreground shrink-0 -ml-1 cursor-pointer"
-                  onClick={() => toggleExpand(asset.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(asset.id);
+                  }}
                 >
                   {isExpanded ? (
                     <ChevronDownIcon className="size-4" />
@@ -660,11 +663,15 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             return (
               <React.Fragment key={row.id}>
                 <tr
-                  className={`border-b border-border transition-colors hover:bg-muted/35 ${
+                  className={`border-b border-border transition-colors hover:bg-muted/35 cursor-pointer md:cursor-default ${
                     stale && asset.providerType !== "plaid"
                       ? "opacity-60"
                       : ""
                   }`}
+                  onClick={() => {
+                    if (window.matchMedia("(min-width: 768px)").matches) return;
+                    openAccountDetail(portfolioId, asset.id);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-2.5 align-middle">
