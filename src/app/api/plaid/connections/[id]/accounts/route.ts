@@ -76,6 +76,18 @@ export async function POST(
       const isCash = isDepositoryAccount(plaidAccount.type);
 
       // Create asset
+      const providerConfig: {
+        connectionId: string;
+        plaidAccountId: string;
+        creditLimit?: number;
+      } = {
+        connectionId: id,
+        plaidAccountId: plaidAccount.plaidAccountId,
+      };
+      if (plaidAccount.creditLimit != null) {
+        providerConfig.creditLimit = Number(plaidAccount.creditLimit);
+      }
+
       const [newAsset] = await db
         .insert(assets)
         .values({
@@ -88,10 +100,7 @@ export async function POST(
             : "0",
           isCashEquivalent: isCash,
           providerType: "plaid",
-          providerConfig: {
-            connectionId: id,
-            plaidAccountId: plaidAccount.plaidAccountId,
-          },
+          providerConfig,
           lastSyncedAt: new Date(),
         })
         .returning();

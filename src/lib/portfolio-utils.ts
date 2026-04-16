@@ -128,6 +128,12 @@ export function isAssetStale(asset: Asset): boolean {
   return Date.now() - new Date(asset.lastSyncedAt).getTime() > staleDays * 86_400_000;
 }
 
+export function isAssetAutoTracked(
+  providerType: Asset["providerType"]
+): boolean {
+  return providerType !== "manual" && providerType !== "custom";
+}
+
 export function recomputeAggregates(portfolio: Portfolio): Portfolio {
   let totalAssets = 0;
   let totalDebts = 0;

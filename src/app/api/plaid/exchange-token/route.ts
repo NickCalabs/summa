@@ -45,6 +45,7 @@ export async function POST(request: Request) {
           mask: a.mask,
           currentBalance: a.currentBalance?.toFixed(2) ?? null,
           availableBalance: a.availableBalance?.toFixed(2) ?? null,
+          creditLimit: a.limit?.toFixed(2) ?? null,
           isoCurrencyCode: a.isoCurrencyCode ?? "USD",
         }))
       )

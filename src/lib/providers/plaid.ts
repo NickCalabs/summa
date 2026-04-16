@@ -116,6 +116,7 @@ export interface PlaidAccountInfo {
   mask: string | null;
   currentBalance: number | null;
   availableBalance: number | null;
+  limit: number | null;
   isoCurrencyCode: string | null;
 }
 
@@ -136,6 +137,7 @@ export async function getAccounts(
     mask: a.mask ?? null,
     currentBalance: a.balances.current ?? null,
     availableBalance: a.balances.available ?? null,
+    limit: a.balances.limit ?? null,
     isoCurrencyCode: a.balances.iso_currency_code ?? null,
   }));
 }
@@ -160,6 +162,7 @@ export async function getBalances(
     mask: a.mask ?? null,
     currentBalance: a.balances.current ?? null,
     availableBalance: a.balances.available ?? null,
+    limit: a.balances.limit ?? null,
     isoCurrencyCode: a.balances.iso_currency_code ?? null,
   }));
 }

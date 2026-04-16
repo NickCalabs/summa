@@ -1,0 +1,1 @@
+ALTER TABLE "plaid_accounts" ADD COLUMN "credit_limit" numeric(20, 2);
