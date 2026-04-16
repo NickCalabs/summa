@@ -64,7 +64,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
   if (isLoading) {
     return (
-      <div className="px-4 py-4 space-y-4">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <div className="space-y-2">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-5 w-96" />
@@ -144,7 +144,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
 
   return (
     <CurrencyProvider baseCurrency={portfolio.currency} rates={portfolio.rates ?? {}}>
-      <div className="px-4 py-4 space-y-4">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <TopBar
           portfolioId={portfolioId}
           portfolioName={portfolio.name}
@@ -204,26 +204,32 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           </div>
         ) : (
           <>
-            <SheetSummaryRow
-              sheets={portfolio.sheets}
-              activeSheetId={activeSheetId}
-              onSheetChange={setActiveSheet}
-              portfolioId={portfolioId}
-              currency={portfolio.currency}
-              btcUsdRate={portfolio.btcUsdRate}
-            />
-
-            {portfolio.sheets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
-                <p className="font-medium text-sm mb-1">Create your first sheet</p>
-                <p className="text-xs text-muted-foreground">
-                  Use the <span className="font-medium">⋮</span> menu above to add a sheet
-                </p>
+            <section className="overflow-hidden rounded-card border border-border bg-card">
+              <div className="border-b border-border px-4 py-3 md:px-6">
+                <SheetSummaryRow
+                  sheets={portfolio.sheets}
+                  activeSheetId={activeSheetId}
+                  onSheetChange={setActiveSheet}
+                  portfolioId={portfolioId}
+                  currency={portfolio.currency}
+                  btcUsdRate={portfolio.btcUsdRate}
+                />
               </div>
-            ) : activeSheet ? (
-              <SheetView sheet={activeSheet} currency={portfolio.currency} btcUsdRate={portfolio.btcUsdRate} portfolioId={portfolioId} />
-            ) : null}
+
+              <div className="p-4 md:p-6">
+                {portfolio.sheets.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <LayoutGridIcon className="size-10 text-muted-foreground/40 mb-3" />
+                    <p className="font-medium text-sm mb-1">Create your first sheet</p>
+                    <p className="text-xs text-muted-foreground">
+                      Use the <span className="font-medium">⋮</span> menu above to add a sheet
+                    </p>
+                  </div>
+                ) : activeSheet ? (
+                  <SheetView sheet={activeSheet} currency={portfolio.currency} btcUsdRate={portfolio.btcUsdRate} portfolioId={portfolioId} />
+                ) : null}
+              </div>
+            </section>
           </>
         )}
 
