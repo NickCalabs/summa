@@ -54,15 +54,17 @@ export function SectionGroup({
         />
       </div>
       {!isCollapsed && (
-        <AssetTable
-          assets={section.assets}
-          currency={currency}
-          btcUsdRate={btcUsdRate}
-          portfolioId={portfolioId}
-          sectionId={section.id}
-          sections={sections}
-          sheetType={sheetType}
-        />
+        <div className="overflow-hidden rounded-card border border-border bg-card">
+          <AssetTable
+            assets={section.assets}
+            currency={currency}
+            btcUsdRate={btcUsdRate}
+            portfolioId={portfolioId}
+            sectionId={section.id}
+            sections={sections}
+            sheetType={sheetType}
+          />
+        </div>
       )}
     </div>
   );

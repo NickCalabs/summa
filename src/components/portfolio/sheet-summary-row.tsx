@@ -155,16 +155,16 @@ export function SheetSummaryRow({
                 <button
                   onClick={() => handleSheetClick(sheet.id)}
                   className={cn(
-                    "flex flex-col items-start px-4 py-2 rounded-lg transition-colors text-left",
+                    "flex flex-col items-start px-3 py-1.5 rounded-card transition-colors text-left",
                     isActive
-                      ? "bg-accent text-foreground"
+                      ? "text-foreground"
                       : "text-muted-foreground hover:bg-muted/50"
                   )}
                 >
                   <span
                     className={cn(
-                      "text-tiny uppercase tracking-upper leading-tight",
-                      isActive ? "font-extrabold" : "font-semibold"
+                      "text-tiny leading-tight",
+                      isActive ? "font-bold text-foreground" : "font-medium text-muted-foreground"
                     )}
                   >
                     {sheet.name}
@@ -174,7 +174,7 @@ export function SheetSummaryRow({
                     currency={currency}
                     btcUsdRate={btcUsdRate}
                     className={cn(
-                      "text-base font-normal tabular-lining leading-tight",
+                      "text-xs font-normal tabular-lining leading-tight mt-0.5",
                       isActive ? "text-foreground/80" : "text-muted-foreground/70"
                     )}
                   />
