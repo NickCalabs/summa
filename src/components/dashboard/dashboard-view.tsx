@@ -51,8 +51,8 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
-        <Skeleton className="h-[640px] rounded-[32px]" />
-        <Skeleton className="h-[420px] rounded-[32px]" />
+        <Skeleton className="h-[640px] rounded-card" />
+        <Skeleton className="h-[420px] rounded-card" />
       </div>
     );
   }
@@ -73,10 +73,8 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   if (isEmpty) {
     return (
       <div className="relative">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
-
-        <div className="relative mx-auto max-w-7xl p-6 md:p-8">
-          <section className="overflow-hidden rounded-[32px] border border-border/70 bg-background/90 shadow-[0_1px_0_rgba(255,255,255,0.45)] backdrop-blur">
+        <div className="mx-auto max-w-7xl px-4 py-4 md:px-6 md:py-6">
+          <section className="overflow-hidden rounded-card border border-border bg-card">
             <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
               <p className="text-2xl font-semibold tracking-tight mb-2">
                 Hi, {userName}
@@ -120,14 +118,12 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
   return (
     <div className="relative">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top_left,rgba(98,136,255,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(111,167,255,0.10),transparent_34%)]" />
-
-      <div className="relative mx-auto max-w-7xl space-y-8 p-6 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <div className="flex items-center justify-end gap-3">
           <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
         </div>
 
-        <section className="overflow-hidden rounded-[32px] border border-border/70 bg-background/90 shadow-[0_1px_0_rgba(255,255,255,0.45)] backdrop-blur">
+        <section className="overflow-hidden rounded-card border border-border bg-card">
           <div className="space-y-8 p-6 md:p-8">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="space-y-4">
@@ -338,7 +334,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-border/70 bg-background/90 p-6 shadow-[0_1px_0_rgba(255,255,255,0.45)] backdrop-blur md:p-8">
+        <section className="rounded-card border border-border bg-card p-6 md:p-8">
           <div className="mb-6 space-y-1">
             <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
               Allocation
@@ -367,7 +363,7 @@ function DashboardSurface({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[28px] border border-border/70 bg-background/70 p-5 md:p-6">
+    <section className="rounded-card border border-border bg-card/50 p-5 md:p-6">
       <div className="mb-5 space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
         {description ? (
