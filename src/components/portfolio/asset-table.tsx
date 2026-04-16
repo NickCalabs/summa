@@ -582,7 +582,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-3 text-left text-[11px] font-medium tracking-[0.18em] text-muted-foreground"
+                  className="px-4 py-3 text-left text-nano font-semibold uppercase tracking-upper text-muted-foreground"
                   style={{
                     width: header.column.columnDef.size
                       ? `${header.column.columnDef.size}px`
@@ -670,7 +670,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t border-border/50 bg-[#6a6a6a] text-white">
+          <tr className="border-t border-border/50 bg-muted text-foreground font-semibold">
             <td className="px-4 py-2.5" />
             <td className="px-4 py-2.5 text-right font-medium tabular-nums">
               <MoneyDisplay amount={sectionTotal} currency={baseCurrency} btcUsdRate={btcUsdRate} />

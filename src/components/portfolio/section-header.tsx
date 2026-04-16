@@ -107,7 +107,7 @@ export function SectionHeader({
           ) : (
             <div className="flex items-center gap-1">
               <span
-                className="cursor-pointer text-[11px] font-bold uppercase tracking-wide opacity-70"
+                className="cursor-pointer text-sm font-extrabold tracking-wide"
                 onDoubleClick={startRenaming}
               >
                 {section.name}
