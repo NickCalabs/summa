@@ -52,7 +52,7 @@ export function SectionHeader({
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const sectionTotal = section.assets.reduce(
-    (sum, a) => sum + toBase(Number(a.currentValue), a.currency),
+    (sum, a) => sum + toBase(Number(a.currentValue) * (Number(a.ownershipPct ?? 100) / 100), a.currency),
     0
   );
 
