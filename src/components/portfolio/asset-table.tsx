@@ -151,7 +151,11 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
     () =>
       assets
         .filter((a) => !a.isArchived)
-        .reduce((sum, a) => sum + toBase(Number(a.currentValue), a.currency), 0),
+        .reduce(
+          (sum, a) =>
+            sum + toBase(Number(a.currentValue) * (Number(a.ownershipPct ?? 100) / 100), a.currency),
+          0
+        ),
     [assets, toBase]
   );
 

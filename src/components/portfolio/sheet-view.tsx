@@ -32,7 +32,12 @@ export function SheetView({ sheet, currency, btcUsdRate, portfolioId }: SheetVie
 
   const sheetTotal = sheet.sections.reduce(
     (sum, section) =>
-      sum + section.assets.reduce((s, a) => s + toBase(Number(a.currentValue), a.currency), 0),
+      sum +
+      section.assets.reduce(
+        (s, a) =>
+          s + toBase(Number(a.currentValue) * (Number(a.ownershipPct ?? 100) / 100), a.currency),
+        0
+      ),
     0
   );
 

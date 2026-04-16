@@ -72,7 +72,11 @@ export function SheetSummaryRow({
         sum +
         section.assets
           .filter((a) => !a.isArchived)
-          .reduce((s, a) => s + toBase(Number(a.currentValue), a.currency), 0),
+          .reduce(
+            (s, a) =>
+              s + toBase(Number(a.currentValue) * (Number(a.ownershipPct ?? 100) / 100), a.currency),
+            0
+          ),
       0
     );
   }
