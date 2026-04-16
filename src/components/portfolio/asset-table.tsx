@@ -321,7 +321,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
               )}
               {isParent && (
                 <span
-                  className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer"
+                  className="hidden md:inline-flex items-center text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleExpand(asset.id);
