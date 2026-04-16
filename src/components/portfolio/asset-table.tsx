@@ -578,7 +578,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       <table className="w-full text-sm">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border/30">
+            <tr key={headerGroup.id} className="border-b border-border">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
@@ -612,7 +612,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             return (
               <React.Fragment key={row.id}>
                 <tr
-                  className={`border-b border-border/30 transition-colors hover:bg-muted/35 ${
+                  className={`border-b border-border transition-colors hover:bg-muted/35 ${
                     stale && asset.providerType !== "plaid"
                       ? "opacity-60"
                       : ""
@@ -638,7 +638,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                     return (
                       <tr
                         key={child.id}
-                        className="border-b border-border/20 transition-colors hover:bg-muted/25 bg-muted/5 cursor-pointer"
+                        className="border-b border-border/60 transition-colors hover:bg-muted/25 bg-muted/5 cursor-pointer"
                         onClick={() =>
                           openAccountDetail(portfolioId, child.id)
                         }
@@ -670,7 +670,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t border-border/50">
+          <tr className="border-t border-border">
             <td className="px-4 py-2.5">
               <button
                 type="button"
