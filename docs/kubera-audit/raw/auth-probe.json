@@ -1,0 +1,225 @@
+{
+  "ok": true,
+  "finalUrl": "https://app.kubera.com/networth?portfolio_id=7407c1f8-cfbf-4b81-8f38-be9f4764e8eb",
+  "bodySignals": {
+    "https://app.kubera.com/": {
+      "url": "https://app.kubera.com/networth?portfolio_id=7407c1f8-cfbf-4b81-8f38-be9f4764e8eb",
+      "title": "Net Worth • Kubera",
+      "hasLogin": false,
+      "hasAuthedShell": true,
+      "textSample": "Net Worth\n$100,950\nDashboard\nAssets\n$119,133\nDebts\n$18,183\nRecap\nFast Forward\nBeneficiary\nDocuments\nInsurance\nKubera Hearts\n$200 for you. $200 for your friend.\nKnow more\nUSD $\nNick\nn\nHello, Nick\nNet Worth\n$\n1\n0\n0\n0\n0\n,\n9\n5\n0\n0\nInvestable\n$\n1\n1\n9\n,\n1\n8\n6\nCAGR • YTD\nNET WORTH\n-8%\n-0.95%\nYOUR\nCLUB\nINVESTABLE\n-11%\n-0.75%\nYOUR\nCLUB\nS&P 500\n+2%\nBTC\n-15%\nGOLD\n+5%\nAssets\n$\n1\n1\n9\n,\n1\n3\n3\n1 DAY\n-$100 (0.08%)\n1 YEAR\n+$513 (0.43%)\nDebts\n$\n1\n8\n,\n1\n8\n3\n1 DAY\n$0\n1 YEAR\n+$541 (3%)\nCash on hand\n$\n1\n,\n3\n2\n7\nTax Estimate\n$\n2\n,\n7\n5\n0\n0\nAdjusted Net Worth\n$98,199\nNet Worth\n$\n1\n0\n0\n0\n0\n,\n9\n5\n0\n0\n-$49 (0.05%)\nInvest",
+      "lsKeys": [
+        "accessToken",
+        "CognitoIdentityServiceProvider.4s3p5qi7spb7cd5vtgj920ofvt.LastAuthUser",
+        "INITIAL_GREETING_SHOWN_KEY",
+        "_gcl_ls",
+        "CognitoIdentityServiceProvider.4s3p5qi7spb7cd5vtgj920ofvt.dec1652d-25a9-48fe-96f5-cbaf2a0b13ba.accessToken",
+        "cuberarootv64",
+        "token",
+        "viewUrlData",
+        "kubera.accessToken",
+        "openpages",
+        "CognitoIdentityServiceProvider.4s3p5qi7spb7cd5vtgj920ofvt.dec1652d-25a9-48fe-96f5-cbaf2a0b13ba.idToken",
+        "CognitoIdentityServiceProvider.4s3p5qi7spb7cd5vtgj920ofvt.dec1652d-25a9-48fe-96f5-cbaf2a0b13ba.clockDrift",
+        "wl_page_title",
+        "lastUsedPortfolioUserId",
+        "CognitoIdentityServiceProvider.4s3p5qi7spb7cd5vtgj920ofvt.dec1652d-25a9-48fe-96f5-cbaf2a0b13ba.userData",
+        "_lr_id_"
+      ]
+    }
+  },
+  "netLogCount": 48,
+  "netLogSample": [
+    {
+      "url": "https://app.kubera.com/",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/html"
+    },
+    {
+      "url": "https://app.kubera.com/inter.css",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/css"
+    },
+    {
+      "url": "https://app.kubera.com/static/vendor.LqnfaZ2d.css",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/css"
+    },
+    {
+      "url": "https://app.kubera.com/static/main.C7QbpPI5.css",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/css"
+    },
+    {
+      "url": "https://app.kubera.com/generate-splash-screen.js",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/javascript"
+    },
+    {
+      "url": "https://app.kubera.com/status/tool.js",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/javascript"
+    },
+    {
+      "url": "https://app.kubera.com/static/vendor.CmbC2v9c.js",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/javascript"
+    },
+    {
+      "url": "https://app.kubera.com/static/main.vJ74djcN.js",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/javascript"
+    },
+    {
+      "url": "blob:https://app.kubera.com/619e1404-2939-43aa-aae7-75b5e8205cae",
+      "status": 200,
+      "method": "GET",
+      "ct": ""
+    },
+    {
+      "url": "https://app.kubera.com/font-files/Inter-roman.var.woff2?v=3.19",
+      "status": 200,
+      "method": "GET",
+      "ct": "font/woff2"
+    },
+    {
+      "url": "https://app.kubera.com/status/config.json",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/octet-stream"
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/public/clientinfo/web?beta=0",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":{\"type\":\"web\",\"version\":\"6.4.3.12866\",\"lastBreakingVersion\":\"6.4.3.12866\",\"releaseNote\":\"- support for xyz\\r\\n- fixed ....\",\"tsRelease\":1776088274},\"errorCode\":0}"
+    },
+    {
+      "url": "https://www.google.com/ccm/collect?rcb=9&frm=0&en=page_view&dl=https%3A%2F%2Fapp.kubera.com%2Fnetworth&scrsrc=www.googletagmanager.com&rnd=1235726371.1776271783&dt=Net%20Worth%20%E2%80%A2%20Kubera&auid=766914184.1776271783&navt=n&npa=0&gtm=45je64e0v9102520563za200zd9102520563xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938465~115938468~117266400&apve=1&apvf=f&apvc=1&tids=AW-11257206149&tid=AW-11257206149&tft=1776271783402&tfd=993",
+      "status": 400,
+      "method": "POST",
+      "ct": ""
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/user/beneficiary",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":[{\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"name\":null,\"email\":null,\"phone\":null,\"reminderCount\":0,\"tsLastReminder\":null,\"angelName\":null,\"angelEmail\":null,\"angelPhone\":null,\"angelReminderCount\":0,\"angelTsLastReminder\":null,\"downloadUrl\":null,\"downloadCount\":0,\"tsLastDownload\":null,\"angelDownloadCount\":0,\"angelDownloadUrl\":null,\"angelTsLastDownload\":null,\"tsModified\":1670334615,\"tsArchive\":null},{\"portfolioId\":\"cf2600a9-5435-4504-85d3-db663aa97eee\",\"name\":null,\"email\":null,\"phone\":null,\"reminderCount\":0,\"tsLastReminder\":null,\"angelName\":null,\"angelEmail\":null,\"angelPhone\":null,\"angelReminderCount\":0,\"angelTsLastReminder\":null,\"downloadUrl\":null,\"downloadCount\":0,\"tsLastDownload\":null,\"angelDownloadCount\":0,\"angelDownloadUrl\":null,\"angelTsLastDownload\":null,\"tsModified\":1714164886,\"tsArchive\":null},{\"portfolioId\":\"dc67dcbb-7350-4a3f-9008-f8abdb9368b5\",\"name\":null,\"email\":null,\"phone\":null,\"reminderCount\":0,\"tsLastReminder\":null,\"angelName\":null,\"angelEmail\":null,\"angelPhone\":null,\"angelReminderCount\":0,\"angelTsLastReminder\":null,\"downloadUrl\":null,\"downloadCount\":0,\"tsLastDownload\":null,\"angelDownloadCount\":0,\"angelDownloadUrl\":null,\"angelTsLastDownload\":null,\"tsModified\":1775264266,\"tsArchive\":null},{\"portfolioId\":\"f4e8c839-15db-4442-8867-616f67cd65a7\",\"name\":null,\"email\":null,\"phone\":null,\"reminderCount\":0,\"tsLastReminder\":null,\"angelName\":null,\"angelEmail\":null,\"angelPhone\":null,\"angelReminderCount\":0,\"angelTsLastReminder\":null,\"downloadUrl\":null,\"downlo"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-R9ZHDHB8P1&gtm=45je64e0v9102520563za200zd9102520563&_p=1776271783187&gcd=13l3l3l3l1l1&npa=0&dma=0&are=1&cid=1744400302.1776271783&frm=0&pscdl=noapi&rcb=9&sr=1440x900&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uam=&uamb=0&uap=macOS&uapv=10.15.7&uaw=0&ul=en-us&_s=1&tag_exp=0~115616986~115938465~115938468~117266400&sid=1776271783&sct=1&seg=0&dl=https%3A%2F%2Fapp.kubera.com%2Fnetworth&dt=Net%20Worth%20%E2%80%A2%20Kubera&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&tfd=982",
+      "status": 204,
+      "method": "POST",
+      "ct": "text/plain"
+    },
+    {
+      "url": "https://www.google.com/rmkt/collect/11257206149/?random=1776271783392&cv=11&fst=1776271783392&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je64e0v9102520563za200zd9102520563xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938465~115938468~117266400&u_w=1440&u_h=900&url=https%3A%2F%2Fapp.kubera.com%2Fnetworth&rcb=9&frm=0&tiba=Net%20Worth%20%E2%80%A2%20Kubera&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=766914184.1776271783&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uamb=0&uam=&uap=macOS&uapv=10.15.7&uaw=0&data=event%3Dgtag.config&gcp=5",
+      "status": 200,
+      "method": "POST",
+      "ct": ""
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/user",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":{\"id\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\",\"name\":\"nick\",\"email\":\"stablesir@proton.me\",\"phone\":null,\"picture\":\"\",\"providerType\":\"Cognito\",\"utcOffset\":240,\"tz\":\"America/New_York\",\"lastAccess\":\"2026-04-15T16:02:08.000Z\",\"inactivityThreshold\":45,\"reminderCount\":0,\"storageLimit\":2147483648,\"trialDay\":14,\"countryCode\":\"US\",\"mfaType\":\"nomfa\",\"orgId\":\"kubera\",\"slno\":28140,\"discount\":0,\"discountInfo\":null,\"discordUserId\":\"316927117038321664\",\"tsLastReminder\":null,\"tsCreated\":1670334614,\"tsArchive\":null,\"tsSuspend\":null,\"tsDiscordVerified\":null,\"tsMarkedDelete\":null,\"tsLastAccess\":1776268928,\"tsTrialStart\":1670334738,\"tsExtendedTrialStart\":null,\"tsPassword\":null,\"allowPortfolioCreate\":1,\"plan\":[\"yearly\",\"yearly_black\"],\"subscription\":{\"id\":\"sub_1P7OguDGAIW5cSpjICthPFgC\",\"plan\":\"yearly\",\"priceId\":\"price_1IKxPpDGAIW5cSpjM3GBEvR5\",\"source\":\"stripe\",\"status\":\"active\",\"tsStart\":1745096992,\"tsEnd\":1776632992,\"cost\":15000,\"tsCreated\":1713560994,\"tsModified\":1745100631,\"paymentMethodId\":\"pm_1P7Oi4DGAIW5cSpjfKJOk9Ih\",\"cardLast4Digits\":\"0371\",\"cardBrand\":\"visa\",\"cardExpMonth\":5,\"cardExpYear\":2024,\"price\":150,\"graceDays\":14,\"remainingDay\":3,\"allowExtendedShare\":0,\"maxFamilyMemberCount\":5,\"maxPortfolioCount\":10,\"allowOptIn\":1,\"remainingOptInTrialDay\":0},\"price\":{\"yearly\":150,\"yearly_black\":2499},\"currentPrice\":{\"yearly\":249,\"yearly_black\":2499},\"beta\":null,\"tsServerNow\":1776271783,\"storageUsage\":null,\"globalSetting\":{\"supportedLinkType\":\"[1,2]\"}},\"errorCode\":0}"
+    },
+    {
+      "url": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/11257206149/?random=1776271783392&cv=11&fst=1776271783392&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je64e0v9102520563za200zd9102520563xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938465~115938468~117266400&u_w=1440&u_h=900&url=https%3A%2F%2Fapp.kubera.com%2Fnetworth&rcb=9&frm=0&tiba=Net%20Worth%20%E2%80%A2%20Kubera&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=766914184.1776271783&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uamb=0&uam=&uap=macOS&uapv=10.15.7&uaw=0&data=event%3Dgtag.config&rfmt=3&fmt=4",
+      "status": 200,
+      "method": "GET",
+      "ct": "text/javascript; charset=UTF-8"
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/user/preference",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":{\"isFirstSessionRegistered\":true,\"isAssetInitialTipShownForPortfolio\":[\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"f4e8c839-15db-4442-8867-616f67cd65a7\"],\"isDebtInitialTipShownForPortfolio\":[\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"f4e8c839-15db-4442-8867-616f67cd65a7\"],\"isInsuranceInitialTipShownForPortfolio\":[\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\"],\"isSidebarCollapsed\":false,\"canShowLinkAccountTip\":false,\"isLinkAccountTipShown\":false,\"isMultiCurrencyTipShown\":true,\"portfolioTickerShortcutMap\":{\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\":[150,229,194,8266,160]},\"isAccoutNameTipShown\":false,\"canShowAccountNameTip\":false,\"isSheetOverflowTipShown\":false,\"canShowAddNewButtonTip\":true,\"isAddNewButtonTipShown\":true,\"lastShownWhatsNewTipVersion\":\"v2\",\"bannerPreference\":null,\"isFirstTimeLinkingDialogShown\":false,\"canShowFirstTimeLinkingDialog\":true,\"isHoldingsExpansionTipShownForCustodian\":[\"8d156bd0-85ab-4932-bd86-a5d79ee54f29\",\"1408dd6d-9a45-414b-994f-7a5e2532ba43\",\"ed1fbebc-dde3-405b-b32e-9d13bd6ca2db\",\"bfc8e1e7-25d1-4763-a56c-9e636ac8be5c\",\"0dc09716-4bfa-4663-8bd1-76f3390c59d3\",\"a54cfba4-1c7e-4bb2-a1ce-5c6e0092b6e6\",\"30601fb3-2467-4bea-a341-5ec028d81ae6\",\"c0db97c2-a154-48cc-8fc4-65c7e72cdbdc\",\"c317dd67-c070-49aa-a9dc-862e31e734af\",\"2f1b6a8a-1589-4560-af62-ee5d808c9143\",\"4f404f48-d437-4653-a2bc-1337a808a898\",\"f1113cca-91a1-49ee-b255-fc195ea36d53\",\"ebc2c2e3-4050-420d-abbb-af904d8c6048\",\"c7fa1d74-9d96-4784-9e91-a79527b1d6cb\",\"0863d9bf-61f2-45b5-9b72-06bcb5b939c5\",\"86893379-6aea-4c60-"
+    },
+    {
+      "url": "https://www.google.com/pagead/1p-user-list/11257206149/?random=1776271783392&cv=11&fst=1776268800000&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je64e0v9102520563za200zd9102520563xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938465~115938468~117266400&u_w=1440&u_h=900&url=https%3A%2F%2Fapp.kubera.com%2Fnetworth&rcb=9&frm=0&tiba=Net%20Worth%20%E2%80%A2%20Kubera&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=766914184.1776271783&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uamb=0&uam=&uap=macOS&uapv=10.15.7&uaw=0&data=event%3Dgtag.config&rfmt=3&fmt=3&is_vtc=1&cid=CAQSyAEABaugfcXUvGq8GFhc8SjcDujMXgwpjcY6LmNCi5yTTdwr-aS_w0eK0zfKeKpMnOunx4kEfKO3h4M2RYUUNYj4v54DzsyiWeuIvS043ADgnkR3pssr-2wa_F5D31-WUOM8umZ_RoWwB-uBrta_7zZdk2MMbCTm2XkgcSW598iWqfF4LCkxj4l0UKmaJ7zstNzrtNONX-0L_1SWWwt7T7KeJdobJD9a_WwUH3RFyAZCO78KY-Jp4efDw4FPEC4mibeMGbSkd_meVA&random=1269291450&rmt_tld=0&ipr=y",
+      "status": 200,
+      "method": "GET",
+      "ct": "image/gif"
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/user/family/member",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":[{\"email\":\"stablesir@proton.me\",\"id\":\"family-owner\",\"name\":\"nick\",\"allowAll\":1,\"write\":1,\"orgId\":\"kubera\",\"parentId\":\"\",\"status\":\"\",\"tsLastAccess\":1776268928,\"userId\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\"}],\"errorCode\":0}"
+    },
+    {
+      "url": "https://r.intake-lr.com/i?a=vpbjam%2Fkubera&r=6-019d920c-7537-7115-af85-edcf8d8a98ef&t=2a302ced-e1a7-420c-9740-52e56650c6c4&s=0&ro=t&st=web&rs=0%2Cu",
+      "status": 200,
+      "method": "POST",
+      "ct": "application/json; charset=utf-8",
+      "body": "[{\"type\":\"APP_EXISTS\"},{\"type\":\"PERFORMANCE_MONITORING_ENABLED\"},{\"type\":\"EXTRA_QS_PARAMS\",\"data\":{\"hr\":\"t\"}},{\"type\":\"DASHBOARD_URL\",\"data\":{\"dashboardURL\":\"https://app.logrocket.com\"}},{\"type\":\"FILTERS|1548d84de8b3453d88e2e0372c363868\",\"data\":{\"uuid\":\"1548d84de8b3453d88e2e0372c363868\",\"onlyMatchOnce\":true,\"type\":\"visibleElement\",\"isErrorState\":true,\"nrfHash\":\"d0dc06a3f5fabbb5d7d9b3faa38e982c3860a85a\",\"trigger\":{\"params\":[{\"strings\":[\"error saving\",\"internal error\"],\"name\":\"text\",\"operator\":\"contains\"}],\"requestBodyJsonPaths\":[],\"responseBodyJsonPaths\":[]},\"predicate\":\"trigger\"}},{\"type\":\"FILTERS|8bfac3984df74c4e9e6711cfb094832d\",\"data\":{\"uuid\":\"8bfac3984df74c4e9e6711cfb094832d\",\"onlyMatchOnce\":true,\"type\":\"visibleElement\",\"isErrorState\":true,\"nrfHash\":\"84448c315aa1aa52f7ebf2b396c21e966402624b\",\"trigger\":{\"params\":[{\"strings\":[\"sorry\",\"we apologize\"],\"name\":\"text\",\"operator\":\"contains\"}],\"requestBodyJsonPaths\":[],\"responseBodyJsonPaths\":[]},\"predicate\":\"trigger\"}},{\"type\":\"FILTERS|97b7a9607f1846d3bac28bfb056853c7\",\"data\":{\"uuid\":\"97b7a9607f1846d3bac28bfb056853c7\",\"onlyMatchOnce\":true,\"type\":\"visibleElement\",\"isErrorState\":true,\"nrfHash\":\"846475eccd626bb5f7573db7176318150e93b92c\",\"trigger\":{\"params\":[{\"strings\":[\"an error has occurred\",\"an error occurred\",\"something unexpected occurred\"],\"name\":\"text\",\"operator\":\"contains\"}],\"requestBodyJsonPaths\":[],\"responseBodyJsonPaths\":[]},\"predicate\":\"trigger\"}},{\"type\":\"FILTERS|c21bad29c1da47b38f854d37de88d3cd\",\"data\":{\"uuid\":\"c21bad29"
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/portfolio?includeDetails=1&fetchLimit=250",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":{\"hash\":\"\",\"portfolio\":[{\"id\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"name\":\"Nick\",\"currency\":\"USD\",\"tickerId\":150,\"userId\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\",\"networthChartScenario\":\"null\",\"notificationOption\":\"{\\\"dayChangeAssets\\\":false,\\\"dayChangeLimitEnabled\\\":false,\\\"dayChangeLimit\\\":0.5,\\\"connectionErrors\\\":true}\",\"tsStartDate\":null,\"tsPlanningTargetDate\":null,\"taxRate\":null,\"picture\":\"\",\"description\":\"\",\"tsCreated\":1670334615,\"planning\":{\"scenario\":[{\"id\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb-default\",\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"name\":\"Scenario A\",\"sortKey\":\"1\"}],\"rule\":[{\"id\":\"22388479-71d4-43a9-8819-8586aff46d7b\",\"type\":\"rule_21\",\"scenarioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb-default\",\"data\":\"{\\\"amount\\\":{\\\"value\\\":6000,\\\"tickerId\\\":150},\\\"new_expense\\\":{\\\"value\\\":\\\"Expenses\\\"},\\\"repeat\\\":{\\\"frequency\\\":\\\"monthly\\\"}}\",\"sortKey\":\"3\",\"disabled\":0},{\"id\":\"295fd437-fba6-461f-9c6c-aba84d8b3b9f\",\"type\":\"rule_2\",\"scenarioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb-default\",\"data\":\"{\\\"asset_type\\\":{\\\"value\\\":\\\"investable\\\"},\\\"growth_rate\\\":{\\\"value\\\":7}}\",\"sortKey\":\"1\",\"disabled\":0},{\"id\":\"3313c317-f7ef-4553-8b18-039fd2a8986e\",\"type\":\"rule_2\",\"scenarioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb-default\",\"data\":\"{\\\"asset_type\\\":{\\\"value\\\":\\\"cash\\\"},\\\"growth_rate\\\":{\\\"value\\\":2}}\",\"sortKey\":\"0\",\"disabled\":0},{\"id\":\"928596b5-0d4f-4121-9716-1479e4cfef3f\",\"type\":\"rule_26\",\"scenarioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb-default\",\"data\":\"{\\\""
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/utility/tickerInfoV3",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":{\"aiSupportedFileTypes\":[\"application/json\",\"application/pdf\",\"application/vnd.ms-excel\",\"image/jpeg\",\"image/jpg\",\"image/png\",\"image/webp\",\"test\",\"text/csv\",\"text/plain\"],\"allIndices\":[{\"checkForSplit\":false,\"code\":\"GSPC\",\"currency\":\"USD\",\"id\":\"GSPC.INDX\",\"name\":\"S&P 500\",\"symbol\":\"GSPC.INDX\",\"market\":\"INDX\",\"type\":\"stock\",\"ticker\":\"GSPC.INDX\",\"longName\":\"S&P 500\",\"shortName\":\"S&P 500\",\"default\":true,\"rank\":1},{\"checkForSplit\":false,\"code\":\"DJI\",\"currency\":\"USD\",\"id\":\"DJI.INDX\",\"name\":\"Dow Jones Industrial Average\",\"symbol\":\"DJI.INDX\",\"market\":\"INDX\",\"type\":\"stock\",\"ticker\":\"DJI.INDX\",\"longName\":\"Dow Jones\",\"shortName\":\"Dow Jones\",\"default\":true,\"rank\":2},{\"checkForSplit\":false,\"code\":\"IXIC\",\"currency\":\"USD\",\"id\":\"IXIC.INDX\",\"name\":\"NASDAQ Composite\",\"symbol\":\"IXIC.INDX\",\"market\":\"INDX\",\"type\":\"stock\",\"ticker\":\"IXIC.INDX\",\"longName\":\"Nasdaq Composite\",\"shortName\":\"NASDAQ\",\"default\":true,\"rank\":3},{\"checkForSplit\":false,\"code\":\"bitcoin\",\"currency\":\"USD\",\"id\":\"bitcoin\",\"name\":\"Bitcoin\",\"symbol\":\"BTC.CC\",\"market\":\"CC\",\"type\":\"crypto\",\"ticker\":\"BTC.CC\",\"longName\":\"Bitcoin (BTC)\",\"shortName\":\"BTC\",\"default\":true,\"rank\":4},{\"checkForSplit\":false,\"code\":\"XAU\",\"currency\":\"USD\",\"id\":\"XAUUSD.FOREX\",\"name\":\"Gold\",\"symbol\":\"XAU.NY\",\"market\":\"US\",\"type\":\"stock\",\"ticker\":\"XAU.NY\",\"longName\":\"Gold\",\"shortName\":\"Gold\",\"rank\":5,\"default\":true},{\"checkForSplit\":false,\"code\":\"XAGUSD\",\"currency\":\"USD\",\"id\":\"XAGUSD.FOREX\",\"name\":\"Silver\",\"symbol\":\"XAGUSD.FOREX\",\"market\":\"FOREX\",\"type\":\"in"
+    },
+    {
+      "url": "https://app.kubera.com/font-files/Inter-SemiBold.woff2?v=3.19",
+      "status": 200,
+      "method": "GET",
+      "ct": "font/woff2"
+    },
+    {
+      "url": "https://app.kubera.com/font-files/Inter-Regular.woff2?v=3.19",
+      "status": 200,
+      "method": "GET",
+      "ct": "font/woff2"
+    },
+    {
+      "url": "https://cdn.kubera.com/r/wlk/kubera/logo.png",
+      "status": 200,
+      "method": "GET",
+      "ct": "image/png"
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/fundSchedule",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":[],\"errorCode\":0}"
+    },
+    {
+      "url": "https://kubera.sjv.io/xur/14080",
+      "status": 200,
+      "method": "POST",
+      "ct": "application/json; charset=UTF-8",
+      "body": "{\"tps\":[{\"u\":\"https://www.ojrq.net/p/?return=&cid=14080&tpsync=no&auth=\"}],\"fpc\":\"1abd00aa-38eb-11f1-a5cc-4bf2c6f1681f\"}"
+    },
+    {
+      "url": "https://api.kubera.com/api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/chartAndCAGR",
+      "status": 200,
+      "method": "GET",
+      "ct": "application/json; charset=utf-8",
+      "body": "{\"data\":{\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"portfolioName\":\"Nick\",\"portfolioCurrency\":\"USD\",\"portfolioCurrencyTickerId\":150,\"portfolioDataPoints\":{\"groupByDay\":{\"currency\":\"USD\",\"netWorth\":[{\"assetTotal\":113560.89177221,\"rvAssetTotal\":113560.89177220839,\"date\":\"2026-03-15\",\"debtTotal\":22639.79,\"rvDebtTotal\":22639.79,\"investibleTotal\":113560.89177221,\"rvInvestibleTotal\":113560.89177220839,\"value\":90921.10177221,\"rvValue\":90921.10177220838},{\"assetTotal\":114850.35167608,\"rvAssetTotal\":114850.35167607933,\"date\":\"2026-03-16\",\"debtTotal\":21116.95,\"rvDebtTotal\":21116.95,\"investibleTotal\":114850.35167608,\"rvInvestibleTotal\":114850.35167607933,\"value\":93733.40167608,\"rvValue\":93733.40167607933},{\"assetTotal\":114962.7347377,\"rvAssetTotal\":114962.73473769691,\"date\":\"2026-03-17\",\"debtTotal\":21170.32,\"rvDebtTotal\":21170.32,\"investibleTotal\":114962.7347377,\"rvInvestibleTotal\":114962.73473769691,\"value\":93792.4147377,\"rvValue\":93792.4147376969},{\"assetTotal\":114397.43743911,\"rvAssetTotal\":114397.43743911202,\"date\":\"2026-03-18\",\"debtTotal\":21186.55,\"rvDebtTotal\":21186.550000000003,\"investibleTotal\":114397.43743911,\"rvInvestibleTotal\":114397.43743911202,\"value\":93210.88743911,\"rvValue\":93210.88743911202},{\"assetTotal\":113350.29050391,\"rvAssetTotal\":113350.29050390827,\"date\":\"2026-03-19\",\"debtTotal\":24959.76,\"rvDebtTotal\":24959.760000000002,\"investibleTotal\":113350.29050391,\"rvInvestibleTotal\":113350.29050390827,\"value\":88390.53050391,\"rvValue\":88390.53050390826},{\"assetTot"
+    }
+  ]
+}

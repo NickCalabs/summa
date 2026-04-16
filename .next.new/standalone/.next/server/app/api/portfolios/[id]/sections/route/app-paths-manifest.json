@@ -1,0 +1,3 @@
+{
+  "/api/portfolios/[id]/sections/route": "app/api/portfolios/[id]/sections/route.js"
+}

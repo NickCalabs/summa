@@ -1,0 +1,3 @@
+{
+  "/api/plaid/connections/[id]/accounts/route": "app/api/plaid/connections/[id]/accounts/route.js"
+}

@@ -1,0 +1,188 @@
+{
+  "targets": {
+    "body": {
+      "tag": "BODY",
+      "cls": "",
+      "w": 1440,
+      "h": 900,
+      "font-family": "\"Inter var\", Inter, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 0)",
+      "border-radius": "0px",
+      "padding": "0px",
+      "margin": "0px",
+      "box-shadow": "none",
+      "transition": "all",
+      "display": "block",
+      "align-items": "normal",
+      "justify-content": "normal",
+      "gap": "normal"
+    },
+    "h1": null,
+    "h2": null,
+    "h3": null,
+    "netWorth": null,
+    "sidebar": null,
+    "sidebarItem": null,
+    "sidebarActive": null,
+    "topBar": null,
+    "card": null,
+    "sheetTab": null,
+    "sheetTabActive": null,
+    "tableHeader": null,
+    "tableRow": null,
+    "tableCell": null,
+    "sectionHeader": null,
+    "positive": null,
+    "negative": null,
+    "button": null,
+    "primaryBtn": null,
+    "input": null,
+    "chartWrap": null,
+    "chartSvg": null
+  },
+  "stats": {
+    "topColors": [
+      [
+        "rgb(0, 0, 0)",
+        101
+      ],
+      [
+        "rgba(0, 0, 0, 0.7)",
+        5
+      ],
+      [
+        "rgba(0, 0, 0, 0.6)",
+        3
+      ],
+      [
+        "rgb(0, 0, 238)",
+        2
+      ],
+      [
+        "rgba(0, 0, 0, 0.5)",
+        1
+      ],
+      [
+        "rgb(255, 255, 255)",
+        1
+      ]
+    ],
+    "topBgs": [
+      [
+        "rgba(0, 0, 0, 0)",
+        103
+      ],
+      [
+        "rgb(219, 219, 219)",
+        3
+      ],
+      [
+        "rgb(252, 252, 252)",
+        2
+      ],
+      [
+        "rgba(255, 255, 255, 0.97)",
+        1
+      ],
+      [
+        "rgba(0, 0, 0, 0.07)",
+        1
+      ],
+      [
+        "rgb(255, 0, 0)",
+        1
+      ],
+      [
+        "rgb(0, 0, 0)",
+        1
+      ],
+      [
+        "rgb(255, 255, 255)",
+        1
+      ]
+    ],
+    "topFonts": [
+      [
+        "\"Inter var\", Inter, sans-serif",
+        111
+      ],
+      [
+        "\"PT Serif Caption\"",
+        1
+      ],
+      [
+        "Inter, sans-serif",
+        1
+      ]
+    ],
+    "topSizes": [
+      [
+        "16px",
+        70
+      ],
+      [
+        "13px",
+        23
+      ],
+      [
+        "14px",
+        11
+      ],
+      [
+        "10px",
+        5
+      ],
+      [
+        "11px",
+        2
+      ],
+      [
+        "20px",
+        1
+      ],
+      [
+        "22px",
+        1
+      ]
+    ],
+    "topWeights": [
+      [
+        "400",
+        106
+      ],
+      [
+        "700",
+        3
+      ],
+      [
+        "800",
+        2
+      ],
+      [
+        "300",
+        1
+      ],
+      [
+        "600",
+        1
+      ]
+    ]
+  },
+  "rootVars": {},
+  "chartLibs": {
+    "highcharts": false,
+    "recharts": false,
+    "chartjs": true,
+    "d3": false,
+    "echarts": false,
+    "nivo": false
+  },
+  "url": "https://app.kubera.com/settings?portfolio_id=7407c1f8-cfbf-4b81-8f38-be9f4764e8eb",
+  "title": "Settings • Kubera"
+}
