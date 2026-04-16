@@ -471,7 +471,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       },
       {
         id: "actions",
-        size: 40,
+        size: 72,
         cell: ({ row }) => {
           const asset = row.original;
           const otherSections = sections.filter((s) => s.id !== asset.sectionId);
@@ -481,18 +481,32 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           const canMoveDown = rowIdx >= 0 && rowIdx < nonArchived.length - 1;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                  />
-                }
+            <div className="flex items-center justify-end gap-0.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:inline-flex h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openAccountDetail(portfolioId, asset.id);
+                }}
+                aria-label="Open details"
               >
-                <MoreHorizontalIcon />
-              </DropdownMenuTrigger>
+                <OpenPanelIcon />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  }
+                >
+                  <MoreHorizontalIcon />
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onSelect={() => openAccountDetail(portfolioId, asset.id)}
@@ -541,7 +555,8 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </div>
           );
         },
       },
@@ -783,6 +798,25 @@ function MoreHorizontalIcon() {
       <circle cx="12" cy="12" r="1" />
       <circle cx="19" cy="12" r="1" />
       <circle cx="5" cy="12" r="1" />
+    </svg>
+  );
+}
+
+function OpenPanelIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
     </svg>
   );
 }
