@@ -103,7 +103,7 @@ function SummaryCell({
           change={changeDay ?? null}
           currency={currency}
           btcUsdRate={btcUsdRate}
-          label="1D"
+          label="1 DAY"
           invertColor={invertColor}
         />
       </div>

@@ -37,17 +37,17 @@ export function SheetTotalHeader({
   const invertColor = type === "debts";
 
   return (
-    <div className="space-y-1">
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+    <div className="space-y-2">
+      <p className="text-nano uppercase tracking-upper font-semibold text-muted-foreground">{label}</p>
       <MoneyDisplay
         amount={total}
         currency={currency}
         btcUsdRate={btcUsdRate}
-        className="text-4xl font-normal tracking-[-0.015em] tabular-lining"
+        className="text-hero font-semibold tracking-[-0.015em] tabular-lining"
       />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
-        <ChangeIndicator change={changeDay ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1D" invertColor={invertColor} />
-        <ChangeIndicator change={changeYear ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1Y" invertColor={invertColor} />
+        <ChangeIndicator change={changeDay ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1 DAY" invertColor={invertColor} />
+        <ChangeIndicator change={changeYear ?? null} currency={currency} btcUsdRate={btcUsdRate} label="1 YEAR" invertColor={invertColor} />
       </div>
     </div>
   );

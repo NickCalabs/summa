@@ -1,4 +1,3 @@
-import { TrendingUpIcon, TrendingDownIcon, MinusIcon } from "lucide-react";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
 import type { Change } from "@/lib/snapshot-utils";
 
@@ -18,15 +17,21 @@ export function ChangeIndicator({
   btcUsdRate,
 }: ChangeIndicatorProps) {
   if (!change) {
-    return <span className="text-xs text-muted-foreground">{label}: —</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+        <span className="text-nano uppercase tracking-upper font-semibold">{label}</span>
+        <span className="text-xs">—</span>
+      </span>
+    );
   }
 
   const { absoluteChange, percentChange } = change;
 
   if (absoluteChange === 0) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-        {label}: <MinusIcon className="size-3" /> 0%
+      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+        <span className="text-nano uppercase tracking-upper font-semibold">{label}</span>
+        <span className="text-xs">0%</span>
       </span>
     );
   }
@@ -34,14 +39,15 @@ export function ChangeIndicator({
   const isPositive = absoluteChange > 0;
   const isGood = invertColor ? !isPositive : isPositive;
   const colorClass = isGood ? "text-positive" : "text-negative";
-  const Icon = isPositive ? TrendingUpIcon : TrendingDownIcon;
+  const sign = isPositive ? "+" : "";
 
   return (
-    <span className={`inline-flex items-center gap-1 text-xs ${colorClass}`}>
-      {label}: <Icon className="size-3" />
-      <MoneyDisplay amount={Math.abs(absoluteChange)} currency={currency} btcUsdRate={btcUsdRate} />
-      ({percentChange > 0 ? "+" : ""}
-      {percentChange.toFixed(1)}%)
+    <span className="inline-flex items-center gap-1.5">
+      <span className="text-nano uppercase tracking-upper font-semibold text-muted-foreground">{label}</span>
+      <span className={`text-xs font-medium ${colorClass}`}>
+        {sign}<MoneyDisplay amount={Math.abs(absoluteChange)} currency={currency} btcUsdRate={btcUsdRate} />
+        {" "}({sign}{percentChange.toFixed(1)}%)
+      </span>
     </span>
   );
 }

@@ -154,13 +154,13 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                       change={oneDayNetWorth}
                       currency={portfolio.currency}
                       btcUsdRate={portfolio.btcUsdRate}
-                      label="1D"
+                      label="1 DAY"
                     />
                     <ChangeIndicator
                       change={oneYearNetWorth}
                       currency={portfolio.currency}
                       btcUsdRate={portfolio.btcUsdRate}
-                      label="1Y"
+                      label="1 YEAR"
                     />
                   </div>
                 </div>
@@ -211,7 +211,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                       change={oneDayNetWorth}
                       currency={portfolio.currency}
                       btcUsdRate={portfolio.btcUsdRate}
-                      label="1D"
+                      label="1 DAY"
                     />
                     {investableTotal > 0 && (
                       <div className="flex items-center gap-1.5 text-muted-foreground">
