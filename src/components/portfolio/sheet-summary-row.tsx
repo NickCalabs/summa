@@ -157,14 +157,14 @@ export function SheetSummaryRow({
                   className={cn(
                     "flex flex-col items-start px-4 py-2 rounded-lg transition-colors text-left",
                     isActive
-                      ? "bg-primary/10 text-primary"
+                      ? "bg-accent text-foreground"
                       : "text-muted-foreground hover:bg-muted/50"
                   )}
                 >
                   <span
                     className={cn(
-                      "text-[11px] uppercase tracking-wide leading-tight",
-                      isActive ? "font-semibold" : "font-medium"
+                      "text-tiny uppercase tracking-upper leading-tight",
+                      isActive ? "font-extrabold" : "font-semibold"
                     )}
                   >
                     {sheet.name}
@@ -175,7 +175,7 @@ export function SheetSummaryRow({
                     btcUsdRate={btcUsdRate}
                     className={cn(
                       "text-base font-normal tabular-lining leading-tight",
-                      isActive ? "text-primary/80" : "text-muted-foreground/70"
+                      isActive ? "text-foreground/80" : "text-muted-foreground/70"
                     )}
                   />
                 </button>
