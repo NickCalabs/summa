@@ -288,6 +288,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                   isDisconnected ? "italic text-muted-foreground" : ""
                 }`}
                 onClick={(e) => {
+                  if (!window.matchMedia("(min-width: 768px)").matches) return;
                   e.stopPropagation();
                   startEdit(asset.id, "name");
                 }}
@@ -408,7 +409,11 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
           return (
             <div
               className="text-right tabular-nums cursor-text hover:bg-muted/50 rounded -mx-1 px-1 py-0.5 -my-0.5"
-              onClick={() => startEdit(asset.id, "currentValue")}
+              onClick={(e) => {
+                if (!window.matchMedia("(min-width: 768px)").matches) return;
+                e.stopPropagation();
+                startEdit(asset.id, "currentValue");
+              }}
             >
               <div className="flex items-center justify-end gap-1">
                 {isValueSaving && (
