@@ -49,6 +49,9 @@ interface UIStore {
 
   hideDust: boolean;
   toggleHideDust: () => void;
+
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
 }
 
 // Assets whose current value is below this threshold are considered dust and
@@ -143,4 +146,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   hideDust: false,
   toggleHideDust: () => set((state) => ({ hideDust: !state.hideDust })),
+
+  searchQuery: "",
+  setSearchQuery: (q) => set({ searchQuery: q }),
 }));
