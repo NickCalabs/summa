@@ -29,6 +29,8 @@ export function TopBar({
   const updatePortfolio = useUpdatePortfolio(portfolioId);
   const createSection = useCreateSection(portfolioId);
   const openAddFlow = useUIStore((s) => s.openAddFlow);
+  const searchQuery = useUIStore((s) => s.searchQuery);
+  const setSearchQuery = useUIStore((s) => s.setSearchQuery);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -82,7 +84,8 @@ export function TopBar({
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
         <Input
           placeholder="Search assets..."
-          disabled
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="h-8 w-48 pl-8 text-xs"
         />
       </div>

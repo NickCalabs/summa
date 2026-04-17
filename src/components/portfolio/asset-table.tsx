@@ -127,6 +127,8 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
 
   const valuesMasked = useUIStore((s) => s.valuesMasked);
   const hideDust = useUIStore((s) => s.hideDust);
+  const searchQuery = useUIStore((s) => s.searchQuery);
+  const searchActive = searchQuery.trim().length > 0;
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [expandedParents, setExpandedParents] = useState<Set<string>>(
@@ -268,7 +270,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
 
           const isParent =
             asset.children && asset.children.length > 0 || (asset.childCount ?? 0) > 0;
-          const isExpanded = expandedParents.has(asset.id);
+          const isExpanded = searchActive || expandedParents.has(asset.id);
 
           return (
             <div className="select-none flex items-center gap-1.5">
@@ -606,37 +608,60 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
       expandedParents,
       toggleExpand,
       valuesMasked,
+      searchActive,
     ]
   );
 
-  // When the dust filter is on, hide rows whose current value (converted to
-  // base) is under $1. Do the conversion with the same toBase() the render
-  // path uses so decisions line up with displayed totals. For parents, also
-  // strip dust children so an expanded parent doesn't show a long list of
-  // ~$0 wallets.
+  // Filters applied in order: (1) search by name, then (2) dust threshold.
+  // Search matches on parent or any child name (case-insensitive substring).
+  // When a child matches but the parent doesn't, the parent is kept and its
+  // children are pruned to the matches, so the rendered list shows exactly
+  // what the user typed.
   const visibleAssets = useMemo(() => {
-    if (!hideDust) return assets;
-    const THRESHOLD = 1;
-    return assets
-      .map((asset) => {
-        if (asset.children && asset.children.length > 0) {
-          const visibleChildren = asset.children.filter(
-            (c) => Math.abs(toBase(Number(c.currentValue), c.currency)) >= THRESHOLD
+    const query = searchQuery.trim().toLowerCase();
+    let filtered = assets;
+
+    if (query) {
+      filtered = filtered.flatMap((asset) => {
+        const parentMatches = asset.name.toLowerCase().includes(query);
+        const children = asset.children ?? [];
+        if (children.length > 0) {
+          const matchingChildren = children.filter((c) =>
+            c.name.toLowerCase().includes(query)
           );
-          return { ...asset, children: visibleChildren };
+          if (parentMatches) return [asset];
+          if (matchingChildren.length > 0) {
+            return [{ ...asset, children: matchingChildren }];
+          }
+          return [];
         }
-        return asset;
-      })
-      .filter((asset) => {
-        const baseValue = Math.abs(
-          toBase(Number(asset.currentValue), asset.currency)
-        );
-        // Parents keep showing as long as any child survived the filter, even
-        // if their computed total rounds under $1 (it won't, typically).
-        if (asset.children && asset.children.length > 0) return true;
-        return baseValue >= THRESHOLD;
+        return parentMatches ? [asset] : [];
       });
-  }, [assets, hideDust, toBase]);
+    }
+
+    if (hideDust) {
+      const THRESHOLD = 1;
+      filtered = filtered
+        .map((asset) => {
+          if (asset.children && asset.children.length > 0) {
+            const visibleChildren = asset.children.filter(
+              (c) => Math.abs(toBase(Number(c.currentValue), c.currency)) >= THRESHOLD
+            );
+            return { ...asset, children: visibleChildren };
+          }
+          return asset;
+        })
+        .filter((asset) => {
+          const baseValue = Math.abs(
+            toBase(Number(asset.currentValue), asset.currency)
+          );
+          if (asset.children && asset.children.length > 0) return true;
+          return baseValue >= THRESHOLD;
+        });
+    }
+
+    return filtered;
+  }, [assets, hideDust, toBase, searchQuery]);
 
   const table = useReactTable({
     data: visibleAssets,
@@ -699,7 +724,7 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             const isParent =
               (asset.children && asset.children.length > 0) ||
               (asset.childCount ?? 0) > 0;
-            const isExpanded = expandedParents.has(asset.id);
+            const isExpanded = searchActive || expandedParents.has(asset.id);
 
             return (
               <React.Fragment key={row.id}>
