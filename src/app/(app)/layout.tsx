@@ -90,6 +90,7 @@ function SidebarContent({
   portfoliosLoading,
   portfolioList,
   activePortfolio,
+  user,
   onNavigate,
 }: {
   pathname: string;
@@ -106,8 +107,11 @@ function SidebarContent({
         sheets: { id: string; name: string; type: "assets" | "debts" }[];
       }
     | undefined;
+  user?: { name?: string | null; email?: string | null };
   onNavigate?: () => void;
 }) {
+  const userLabel = user?.name || user?.email || null;
+  const userSubLabel = user?.name && user?.email ? user.email : null;
   const assetSheets = activePortfolio?.sheets.filter((sheet) => sheet.type === "assets") ?? [];
   const debtSheets = activePortfolio?.sheets.filter((sheet) => sheet.type === "debts") ?? [];
   const firstAssetSheetId = assetSheets[0]?.id;
@@ -120,6 +124,15 @@ function SidebarContent({
         <p className="text-xs text-sidebar-foreground/60">The balance sheet you actually own.</p>
       </div>
 
+      {userLabel && (
+        <div className="md:hidden px-5 pb-4 -mt-1">
+          <p className="text-base font-semibold truncate">{userLabel}</p>
+          {userSubLabel && (
+            <p className="text-xs text-sidebar-foreground/60 truncate">{userSubLabel}</p>
+          )}
+        </div>
+      )}
+
       <Separator className="bg-sidebar-border" />
 
       <div className="flex-1 overflow-y-auto p-3">
@@ -130,7 +143,7 @@ function SidebarContent({
               <Link
                 href="/dashboard"
                 onClick={onNavigate}
-                className={`group flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
+                className={`group flex items-center justify-between rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
                   pathname === "/dashboard"
                     ? "active-nav bg-sidebar-accent text-sidebar-foreground font-medium"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -144,7 +157,7 @@ function SidebarContent({
                   amount={activePortfolio.aggregates.netWorth}
                   currency={activePortfolio.currency}
                   btcUsdRate={activePortfolio.btcUsdRate}
-                  className="text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
+                  className="hidden md:inline text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
 
@@ -155,7 +168,7 @@ function SidebarContent({
                     : `/portfolio/${activePortfolio.id}`
                 }
                 onClick={onNavigate}
-                className={`group flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
+                className={`group flex items-center justify-between rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
                   pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
                   activeSheetId &&
                   assetSheets.some((s) => s.id === activeSheetId)
@@ -171,7 +184,7 @@ function SidebarContent({
                   amount={activePortfolio.aggregates.totalAssets}
                   currency={activePortfolio.currency}
                   btcUsdRate={activePortfolio.btcUsdRate}
-                  className="text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
+                  className="hidden md:inline text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
 
@@ -182,7 +195,7 @@ function SidebarContent({
                     : `/portfolio/${activePortfolio.id}?type=debts`
                 }
                 onClick={onNavigate}
-                className={`group flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
+                className={`group flex items-center justify-between rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
                   pathname.startsWith(`/portfolio/${activePortfolio.id}`) &&
                   activeSheetId &&
                   debtSheets.some((s) => s.id === activeSheetId)
@@ -198,7 +211,7 @@ function SidebarContent({
                   amount={activePortfolio.aggregates.totalDebts}
                   currency={activePortfolio.currency}
                   btcUsdRate={activePortfolio.btcUsdRate}
-                  className="text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
+                  className="hidden md:inline text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
             </nav>
@@ -212,7 +225,7 @@ function SidebarContent({
           <Link
             href="/settings"
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
+            className={`flex items-center gap-3 rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
               pathname === "/settings"
                 ? "bg-sidebar-accent text-sidebar-foreground font-medium"
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -224,7 +237,7 @@ function SidebarContent({
           <Link
             href="/settings/connections"
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
+            className={`flex items-center gap-3 rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
               pathname === "/settings/connections"
                 ? "bg-sidebar-accent text-sidebar-foreground font-medium"
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -236,7 +249,7 @@ function SidebarContent({
           <Link
             href="/import/kubera"
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
+            className={`flex items-center gap-3 rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
               pathname === "/import/kubera"
                 ? "bg-sidebar-accent text-sidebar-foreground font-medium"
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -254,7 +267,7 @@ function SidebarContent({
               <Link
                 href="/dashboard"
                 onClick={onNavigate}
-                className={`flex items-center gap-3 rounded-card px-3 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-3 rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
                   pathname === "/dashboard"
                     ? "bg-sidebar-accent text-sidebar-foreground font-medium"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -288,7 +301,7 @@ function SidebarContent({
                       key={p.id}
                       href={`/portfolio/${p.id}`}
                       onClick={onNavigate}
-                      className={`flex items-center justify-between rounded-card px-3 py-2 text-sm transition-colors ${
+                      className={`flex items-center justify-between rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
                         isActive
                           ? "bg-sidebar-accent/60 text-sidebar-foreground"
                           : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
@@ -324,6 +337,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: portfolioList, isLoading: portfoliosLoading } = usePortfolios();
+  const session = authClient.useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const activePortfolioId = useMemo(
     () => parsePortfolioId(pathname) ?? portfolioList?.[0]?.id ?? "",
@@ -331,6 +345,9 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   );
   const { data: activePortfolio } = usePortfolio(activePortfolioId);
   const activeSheetId = searchParams.get("sheet");
+  const user = session.data?.user
+    ? { name: session.data.user.name, email: session.data.user.email }
+    : undefined;
 
   async function handleLogout() {
     await authClient.signOut();
@@ -362,6 +379,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
                 }
               : undefined
           }
+          user={user}
         />
         <Separator className="bg-sidebar-border" />
         <div className="px-3 pt-2 pb-0">
@@ -409,6 +427,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
                   }
                 : undefined
             }
+            user={user}
             onNavigate={() => setSidebarOpen(false)}
           />
           <Separator className="bg-sidebar-border" />
