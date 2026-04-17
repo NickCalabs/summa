@@ -21,6 +21,7 @@ import {
   ChevronRightIcon,
   ChevronDownIcon,
   Link2Icon,
+  AlertTriangleIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -358,6 +359,22 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
             editingCell?.field === "currentValue";
           const ownershipPct = Number(asset.ownershipPct ?? 100);
           const isPartialOwnership = ownershipPct < 100;
+          const stale = isAssetStale(asset);
+          const isDisconnected =
+            (asset.providerType === "plaid" ||
+              asset.providerType === "simplefin") &&
+            stale;
+          const showStaleWarning = stale && !isDisconnected;
+          const daysSinceSync = asset.lastSyncedAt
+            ? Math.floor(
+                (Date.now() - new Date(asset.lastSyncedAt).getTime()) /
+                  86_400_000
+              )
+            : null;
+          const staleTooltip =
+            daysSinceSync != null
+              ? `Last synced ${daysSinceSync} day${daysSinceSync === 1 ? "" : "s"} ago`
+              : "Never synced";
 
           // For crypto assets, the quantity unit is BTC/ETH/etc. even though
           // asset.currency is "USD" (prices stored in USD)
@@ -453,6 +470,15 @@ export function AssetTable({ assets, btcUsdRate, portfolioId, sectionId, section
                       )}
                     </div>
                   </div>
+                )}
+                {showStaleWarning && (
+                  <span
+                    title={staleTooltip}
+                    aria-label={staleTooltip}
+                    className="shrink-0 leading-none"
+                  >
+                    <AlertTriangleIcon className="size-3.5 text-amber-500" />
+                  </span>
                 )}
               </div>
               {isPartialOwnership && (
