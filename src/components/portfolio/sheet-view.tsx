@@ -13,6 +13,7 @@ import { useCreateSection, useReorderSections } from "@/hooks/use-sections";
 import { useUIStore } from "@/stores/ui-store";
 import { useCurrency } from "@/contexts/currency-context";
 import { ASSET_CATEGORIES, DEBT_CATEGORIES } from "./asset-categories";
+import { MoneyDisplay } from "./money-display";
 import type { Sheet } from "@/hooks/use-portfolio";
 
 interface SheetViewProps {
@@ -177,6 +178,16 @@ export function SheetView({ sheet, currency, btcUsdRate, portfolioId }: SheetVie
           onMoveDown={() => handleMoveSection(index, 1)}
         />
       ))}
+
+      <div className="flex items-center justify-between pt-4 border-t border-border">
+        <span className="text-base font-bold">{sheet.name}</span>
+        <MoneyDisplay
+          amount={sheetTotal}
+          currency={currency}
+          btcUsdRate={btcUsdRate}
+          className="text-base font-bold tabular-nums"
+        />
+      </div>
 
       <div className="flex items-center gap-2 pt-2">
         <Popover open={addOpen} onOpenChange={setAddOpen}>
