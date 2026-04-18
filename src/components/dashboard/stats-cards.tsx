@@ -31,6 +31,7 @@ export function StatsCards({
           currency={currency}
           btcUsdRate={portfolio.btcUsdRate}
           changeDay={getChangeFromSnapshots(snapshots, "totalAssets", 1)}
+          changeYear={getChangeFromSnapshots(snapshots, "totalAssets", 365)}
         />
         <SummaryCell
           label="Debts"
@@ -38,6 +39,7 @@ export function StatsCards({
           currency={currency}
           btcUsdRate={portfolio.btcUsdRate}
           changeDay={getChangeFromSnapshots(snapshots, "totalDebts", 1)}
+          changeYear={getChangeFromSnapshots(snapshots, "totalDebts", 365)}
           invertColor
         />
         <SummaryCell
@@ -65,6 +67,7 @@ function SummaryCell({
   currency,
   btcUsdRate,
   changeDay,
+  changeYear,
   invertColor = false,
   onClick,
 }: {
@@ -73,6 +76,7 @@ function SummaryCell({
   currency: string;
   btcUsdRate?: number | null;
   changeDay?: ReturnType<typeof getChangeFromSnapshots>;
+  changeYear?: ReturnType<typeof getChangeFromSnapshots>;
   invertColor?: boolean;
   onClick?: () => void;
 }) {
@@ -83,7 +87,7 @@ function SummaryCell({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "bg-background/90 px-4 py-4 text-left transition-colors",
+        "bg-background/90 px-4 py-5 text-left transition-colors",
         onClick && "hover:bg-background"
       )}
     >
@@ -95,10 +99,10 @@ function SummaryCell({
           amount={value}
           currency={currency}
           btcUsdRate={btcUsdRate}
-          className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
+          className="text-hero font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
-      <div className="mt-2">
+      <div className="mt-3 space-y-1.5">
         <ChangeIndicator
           change={changeDay ?? null}
           currency={currency}
@@ -106,6 +110,15 @@ function SummaryCell({
           label="1 DAY"
           invertColor={invertColor}
         />
+        {changeYear !== undefined && (
+          <ChangeIndicator
+            change={changeYear ?? null}
+            currency={currency}
+            btcUsdRate={btcUsdRate}
+            label="1 YEAR"
+            invertColor={invertColor}
+          />
+        )}
       </div>
     </Element>
   );
