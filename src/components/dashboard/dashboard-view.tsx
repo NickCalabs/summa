@@ -195,6 +195,9 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                   from={getFromDate(chartRange)}
                   currency={portfolio.currency}
                   heightClassName="h-[280px] md:h-[340px] xl:h-[390px]"
+                  todayNetWorth={portfolio.aggregates.netWorth}
+                  todayInvestable={investableTotal}
+                  todayBtcUsdRate={portfolio.btcUsdRate}
                 />
               </div>
             </DashboardSurface>
@@ -207,6 +210,9 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                 portfolioId={portfolioId}
                 from={getFromDate(chartRange)}
                 currency={portfolio.currency}
+                todayAssets={portfolio.aggregates.totalAssets}
+                todayDebts={portfolio.aggregates.totalDebts}
+                todayBtcUsdRate={portfolio.btcUsdRate}
               />
             </DashboardSurface>
 

@@ -24,6 +24,12 @@ interface NetWorthChartProps {
   currency: string;
   className?: string;
   heightClassName?: string;
+  /** Live net worth — appended/overwrites today's snapshot so the chart's
+   *  last point matches the header aggregate instead of lagging behind the
+   *  last midnight-UTC snapshot. */
+  todayNetWorth?: number;
+  todayInvestable?: number;
+  todayBtcUsdRate?: number | null;
 }
 
 export function NetWorthChart({
@@ -32,13 +38,16 @@ export function NetWorthChart({
   currency,
   className,
   heightClassName,
+  todayNetWorth,
+  todayInvestable,
+  todayBtcUsdRate,
 }: NetWorthChartProps) {
   const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
   const { displayCurrency, convert } = useDisplayCurrency();
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
-    return [...snapshots]
+    const data = [...snapshots]
       .reverse()
       .filter((s) => {
         if (displayCurrency === "USD") return true;
@@ -55,7 +64,26 @@ export function NetWorthChart({
               : null,
         };
       });
-  }, [snapshots, displayCurrency, convert]);
+
+    if (todayNetWorth != null) {
+      const today = new Date().toISOString().slice(0, 10);
+      const todayPoint = {
+        date: today,
+        netWorth: convert(todayNetWorth, todayBtcUsdRate ?? null),
+        investable:
+          todayInvestable != null
+            ? convert(todayInvestable, todayBtcUsdRate ?? null)
+            : null,
+      };
+      if (data.length > 0 && data[data.length - 1].date === today) {
+        data[data.length - 1] = todayPoint;
+      } else {
+        data.push(todayPoint);
+      }
+    }
+
+    return data;
+  }, [snapshots, displayCurrency, convert, todayNetWorth, todayInvestable, todayBtcUsdRate]);
 
   const hasInvestable = chartData.some((d) => d.investable != null);
 
@@ -107,7 +135,7 @@ export function NetWorthChart({
           />
           <Tooltip content={<NetWorthTooltip hasInvestable={hasInvestable} />} />
           <Area
-            type="natural"
+            type="linear"
             dataKey="netWorth"
             stroke="none"
             fill="url(#netWorthGradient)"
@@ -115,7 +143,7 @@ export function NetWorthChart({
             activeDot={false}
           />
           <Line
-            type="natural"
+            type="linear"
             dataKey="netWorth"
             stroke="#7c3aed"
             strokeWidth={2.5}
@@ -130,7 +158,7 @@ export function NetWorthChart({
           {hasInvestable && (
             <>
               <Area
-                type="natural"
+                type="linear"
                 dataKey="investable"
                 stroke="none"
                 fill="url(#investableGradient)"
@@ -139,7 +167,7 @@ export function NetWorthChart({
                 connectNulls
               />
               <Line
-                type="natural"
+                type="linear"
                 dataKey="investable"
                 stroke="#a78bfa"
                 strokeWidth={1.5}
