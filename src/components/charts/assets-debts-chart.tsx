@@ -19,15 +19,25 @@ interface AssetsDebtsChartProps {
   portfolioId: string;
   from?: string;
   currency: string;
+  todayAssets?: number;
+  todayDebts?: number;
+  todayBtcUsdRate?: number | null;
 }
 
-export function AssetsDebtsChart({ portfolioId, from, currency }: AssetsDebtsChartProps) {
+export function AssetsDebtsChart({
+  portfolioId,
+  from,
+  currency,
+  todayAssets,
+  todayDebts,
+  todayBtcUsdRate,
+}: AssetsDebtsChartProps) {
   const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
   const { displayCurrency, convert, formatCompact: dcFormatCompact } = useDisplayCurrency();
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
-    return [...snapshots]
+    const data = [...snapshots]
       .reverse()
       .filter((s) => {
         if (displayCurrency === "USD") return true;
@@ -41,7 +51,23 @@ export function AssetsDebtsChart({ portfolioId, from, currency }: AssetsDebtsCha
           debts: convert(Number(s.totalDebts), rate),
         };
       });
-  }, [snapshots, displayCurrency, convert]);
+
+    if (todayAssets != null && todayDebts != null) {
+      const today = new Date().toISOString().slice(0, 10);
+      const todayPoint = {
+        date: today,
+        assets: convert(todayAssets, todayBtcUsdRate ?? null),
+        debts: convert(todayDebts, todayBtcUsdRate ?? null),
+      };
+      if (data.length > 0 && data[data.length - 1].date === today) {
+        data[data.length - 1] = todayPoint;
+      } else {
+        data.push(todayPoint);
+      }
+    }
+
+    return data;
+  }, [snapshots, displayCurrency, convert, todayAssets, todayDebts, todayBtcUsdRate]);
 
   if (isLoading) return <Skeleton className="h-[200px] md:h-[300px] w-full" />;
   if (chartData.length < 2) {
@@ -83,14 +109,14 @@ export function AssetsDebtsChart({ portfolioId, from, currency }: AssetsDebtsCha
           />
           <Tooltip content={<AssetsDebtsTooltip />} />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="assets"
             stroke="#22C55E"
             strokeWidth={2}
             fill="url(#assetsGradient)"
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="debts"
             stroke="#EF4444"
             strokeWidth={2}
