@@ -11,16 +11,33 @@ import { getFromDate } from "@/lib/chart-utils";
 import { useUIStore } from "@/stores/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
+import dynamic from "next/dynamic";
 import { SheetTotalHeader } from "./sheet-total-header";
 import { SheetSummaryRow } from "./sheet-summary-row";
 import { SheetView } from "./sheet-view";
 import { TopBar } from "./top-bar";
-import { DetailPanel } from "./detail-panel";
-import { AddFlowDialog } from "./add-flow-dialog";
-import { AccountDetailModal } from "./account-detail-modal";
-import { PlaidConnectDialog } from "./plaid-connect-dialog";
-import { CsvImportDialog } from "./csv-import-dialog";
 import { CurrencyProvider } from "@/contexts/currency-context";
+
+const DetailPanel = dynamic(
+  () => import("./detail-panel").then((m) => ({ default: m.DetailPanel })),
+  { ssr: false },
+);
+const AccountDetailModal = dynamic(
+  () => import("./account-detail-modal").then((m) => ({ default: m.AccountDetailModal })),
+  { ssr: false },
+);
+const AddFlowDialog = dynamic(
+  () => import("./add-flow-dialog").then((m) => ({ default: m.AddFlowDialog })),
+  { ssr: false },
+);
+const PlaidConnectDialog = dynamic(
+  () => import("./plaid-connect-dialog").then((m) => ({ default: m.PlaidConnectDialog })),
+  { ssr: false },
+);
+const CsvImportDialog = dynamic(
+  () => import("./csv-import-dialog").then((m) => ({ default: m.CsvImportDialog })),
+  { ssr: false },
+);
 
 interface PortfolioViewProps {
   portfolioId: string;
