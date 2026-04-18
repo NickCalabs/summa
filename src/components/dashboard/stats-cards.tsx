@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Portfolio } from "@/hooks/use-portfolio";
 import type { PortfolioSnapshot } from "@/hooks/use-snapshots";
-import { getChangeFromSnapshots } from "@/lib/snapshot-utils";
+import { computeCAGR, getChangeFromSnapshots } from "@/lib/snapshot-utils";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { CashDetailSheet } from "./cash-detail-sheet";
 import { ChangeIndicator } from "./change-indicator";
@@ -12,26 +12,35 @@ import { cn } from "@/lib/utils";
 interface StatsCardsProps {
   portfolio: Portfolio;
   snapshots: PortfolioSnapshot[];
+  investableTotal: number;
 }
 
-export function StatsCards({ portfolio, snapshots }: StatsCardsProps) {
+export function StatsCards({
+  portfolio,
+  snapshots,
+  investableTotal,
+}: StatsCardsProps) {
   const { aggregates, currency, btcUsdRate } = portfolio;
   const [cashSheetOpen, setCashSheetOpen] = useState(false);
 
   const oneDayNetWorth = getChangeFromSnapshots(snapshots, "netWorth", 1);
   const oneYearNetWorth = getChangeFromSnapshots(snapshots, "netWorth", 365);
+  const netWorthCagr = computeCAGR(snapshots, "netWorth");
+  const investableCagr = computeCAGR(snapshots, "investableTotal");
 
   return (
     <>
       <div className="grid gap-2 md:grid-cols-3">
         <NetWorthCard
           netWorth={aggregates.netWorth}
-          cashOnHand={aggregates.cashOnHand}
+          investableTotal={investableTotal}
           currency={currency}
           btcUsdRate={btcUsdRate}
           changeDay={oneDayNetWorth}
           changeYear={oneYearNetWorth}
-          onCashClick={() => setCashSheetOpen(true)}
+          netWorthCagr={netWorthCagr}
+          investableCagr={investableCagr}
+          className="md:row-span-2"
         />
         <SummaryCard
           label="Assets"
@@ -50,6 +59,13 @@ export function StatsCards({ portfolio, snapshots }: StatsCardsProps) {
           changeYear={getChangeFromSnapshots(snapshots, "totalDebts", 365)}
           invertColor
         />
+        <SummaryCard
+          label="Cash on hand"
+          value={aggregates.cashOnHand}
+          currency={currency}
+          btcUsdRate={btcUsdRate}
+          onClick={() => setCashSheetOpen(true)}
+        />
       </div>
 
       <CashDetailSheet
@@ -66,23 +82,27 @@ const CARD_CLASS =
 
 function NetWorthCard({
   netWorth,
-  cashOnHand,
+  investableTotal,
   currency,
   btcUsdRate,
   changeDay,
   changeYear,
-  onCashClick,
+  netWorthCagr,
+  investableCagr,
+  className,
 }: {
   netWorth: number;
-  cashOnHand: number;
+  investableTotal: number;
   currency: string;
   btcUsdRate?: number | null;
   changeDay?: ReturnType<typeof getChangeFromSnapshots>;
   changeYear?: ReturnType<typeof getChangeFromSnapshots>;
-  onCashClick?: () => void;
+  netWorthCagr: number | null;
+  investableCagr: number | null;
+  className?: string;
 }) {
   return (
-    <div className={CARD_CLASS}>
+    <div className={cn(CARD_CLASS, className)}>
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
         Net Worth
       </div>
@@ -112,23 +132,51 @@ function NetWorthCard({
 
       <div className="my-4 h-px bg-border" />
 
-      <button
-        type="button"
-        onClick={onCashClick}
-        className="block w-full text-left rounded-sm transition-colors hover:opacity-80"
+      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        Investable
+      </div>
+      <div className="mt-1.5">
+        <MoneyDisplay
+          amount={investableTotal}
+          currency={currency}
+          btcUsdRate={btcUsdRate}
+          className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
+        />
+      </div>
+
+      {netWorthCagr != null && (
+        <>
+          <div className="my-4 h-px bg-border" />
+          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            CAGR · YTD
+          </div>
+          <div className="mt-2 space-y-1.5">
+            <CagrRow label="Net Worth" value={netWorthCagr} />
+            {investableCagr != null && (
+              <CagrRow label="Investable" value={investableCagr} />
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function CagrRow({ label, value }: { label: string; value: number }) {
+  const formatted = `${value >= 0 ? "+" : ""}${(value * 100).toFixed(1)}%`;
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "font-semibold tabular-nums",
+          value >= 0 ? "text-positive" : "text-negative"
+        )}
       >
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-          Cash
-        </div>
-        <div className="mt-1.5">
-          <MoneyDisplay
-            amount={cashOnHand}
-            currency={currency}
-            btcUsdRate={btcUsdRate}
-            className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
-          />
-        </div>
-      </button>
+        {formatted}
+      </span>
     </div>
   );
 }
@@ -153,6 +201,7 @@ function SummaryCard({
   onClick?: () => void;
 }) {
   const Element = onClick ? "button" : "div";
+  const hasChanges = changeDay !== undefined || changeYear !== undefined;
 
   return (
     <Element
@@ -175,24 +224,28 @@ function SummaryCard({
           className="text-hero font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
-      <div className="mt-2 space-y-1">
-        <ChangeIndicator
-          change={changeDay ?? null}
-          currency={currency}
-          btcUsdRate={btcUsdRate}
-          label="1 DAY"
-          invertColor={invertColor}
-        />
-        {changeYear !== undefined && (
-          <ChangeIndicator
-            change={changeYear ?? null}
-            currency={currency}
-            btcUsdRate={btcUsdRate}
-            label="1 YEAR"
-            invertColor={invertColor}
-          />
-        )}
-      </div>
+      {hasChanges && (
+        <div className="mt-2 space-y-1">
+          {changeDay !== undefined && (
+            <ChangeIndicator
+              change={changeDay ?? null}
+              currency={currency}
+              btcUsdRate={btcUsdRate}
+              label="1 DAY"
+              invertColor={invertColor}
+            />
+          )}
+          {changeYear !== undefined && (
+            <ChangeIndicator
+              change={changeYear ?? null}
+              currency={currency}
+              btcUsdRate={btcUsdRate}
+              label="1 YEAR"
+              invertColor={invertColor}
+            />
+          )}
+        </div>
+      )}
     </Element>
   );
 }
