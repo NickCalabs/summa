@@ -83,6 +83,27 @@ export async function POST(
         institutionName: getInstitutionSectionName(account.institutionName),
       });
 
+      const providerConfig: {
+        connectionId: string;
+        simplefinAccountId: string;
+        creditLimit?: number;
+      } = {
+        connectionId: id,
+        simplefinAccountId: account.simplefinAccountId,
+      };
+      if (
+        sheetType === "debts" &&
+        account.balance != null &&
+        account.availableBalance != null
+      ) {
+        const limit =
+          Math.abs(Number(account.balance)) +
+          Number(account.availableBalance);
+        if (Number.isFinite(limit) && limit > 0) {
+          providerConfig.creditLimit = limit;
+        }
+      }
+
       const [asset] = await db
         .insert(assets)
         .values({
@@ -93,10 +114,7 @@ export async function POST(
           currentValue: getAssetValue(account.balance, sheetType),
           isCashEquivalent: sheetType === "assets" && assetType === "cash",
           providerType: "simplefin",
-          providerConfig: {
-            connectionId: id,
-            simplefinAccountId: account.simplefinAccountId,
-          },
+          providerConfig,
           lastSyncedAt: new Date(),
         })
         .returning();

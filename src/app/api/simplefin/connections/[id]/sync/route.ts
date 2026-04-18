@@ -6,7 +6,7 @@ import {
   simplefinAccounts,
   simplefinConnections,
 } from "@/lib/db/schema";
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import {
   errorResponse,
   handleError,
@@ -121,6 +121,22 @@ export async function POST(
 
       if (assetInfo.length === 0) continue;
 
+      // Compute credit limit for debt accounts when SimpleFIN reports
+      // both balance (debt owed) and available-balance (credit remaining).
+      const limitPatch =
+        assetInfo[0].sheetType === "debts" &&
+        accountBalance.balance != null &&
+        accountBalance.availableBalance != null
+          ? (() => {
+              const limit =
+                Math.abs(Number(accountBalance.balance)) +
+                Number(accountBalance.availableBalance);
+              return Number.isFinite(limit) && limit > 0
+                ? { creditLimit: limit }
+                : null;
+            })()
+          : null;
+
       await db
         .update(assets)
         .set({
@@ -128,6 +144,9 @@ export async function POST(
             accountBalance.balance,
             assetInfo[0].sheetType
           ),
+          ...(limitPatch && {
+            providerConfig: sql`coalesce(${assets.providerConfig}, '{}'::jsonb) || ${JSON.stringify(limitPatch)}::jsonb`,
+          }),
           lastSyncedAt: new Date(),
           updatedAt: new Date(),
         })
