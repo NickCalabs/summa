@@ -51,7 +51,3 @@ backups/
 # TLS certs (local CA)
 /certs/
 
-# Serwist service worker (generated at build)
-/public/sw.js
-/public/sw.js.map
-/public/swe-worker-*.js
