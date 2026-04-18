@@ -108,7 +108,7 @@
   --font-size-tiny: 12px;       /* sheet tabs */
   --font-size-small: 13px;      /* dense table text */
   --font-size-base: 16px;       /* body default */
-  --font-size-hero: 36px;       /* page totals */
+  --font-size-hero: 32px;       /* page totals */
 
   /* Typography utilities */
   --letter-spacing-upper: 0.05em;  /* uppercase column headers, tab pills */
@@ -165,7 +165,7 @@
   --font-size-tiny: 12px;
   --font-size-small: 13px;
   --font-size-base: 16px;
-  --font-size-hero: 36px;
+  --font-size-hero: 32px;
 
   --letter-spacing-upper: 0.05em;
   --font-weight-tab: 800;
