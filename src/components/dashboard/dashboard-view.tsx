@@ -98,7 +98,6 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   }
 
   const oneDayNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 1);
-  const oneYearNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 365);
 
   // Compute most recent lastSyncedAt across all assets for the "synced N ago" label
   const lastSyncedAt = (() => {
@@ -124,41 +123,14 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
         </div>
 
         <div className="space-y-8">
-          <div className="flex flex-col gap-3">
-            <p className="text-2xl font-semibold tracking-tight">
-              Hi, {userName}
-            </p>
-            <div className="space-y-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Net Worth
-              </div>
-              <MoneyDisplay
-                amount={portfolio.aggregates.netWorth}
-                currency={portfolio.currency}
-                btcUsdRate={portfolio.btcUsdRate}
-                animate
-                className="text-4xl font-normal tracking-[-0.015em] tabular-lining sm:text-5xl xl:text-6xl"
-              />
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                <ChangeIndicator
-                  change={oneDayNetWorth}
-                  currency={portfolio.currency}
-                  btcUsdRate={portfolio.btcUsdRate}
-                  label="1 DAY"
-                />
-                <ChangeIndicator
-                  change={oneYearNetWorth}
-                  currency={portfolio.currency}
-                  btcUsdRate={portfolio.btcUsdRate}
-                  label="1 YEAR"
-                />
-              </div>
-            </div>
-          </div>
+          <p className="text-2xl font-semibold tracking-tight">
+            Hi, {userName}
+          </p>
 
           <StatsCards
             portfolio={portfolio}
             snapshots={recapSnapshots}
+            investableTotal={investableTotal}
           />
 
           <CagrCard snapshots={recapSnapshots} />
