@@ -160,7 +160,11 @@ function SidebarContent({
                   className="hidden md:inline text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
               </Link>
+            </nav>
 
+            <Separator className="my-2 bg-sidebar-border/50" />
+
+            <nav className="space-y-0.5">
               <Link
                 href={
                   firstAssetSheetId
