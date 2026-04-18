@@ -12,14 +12,9 @@ import { cn } from "@/lib/utils";
 interface StatsCardsProps {
   portfolio: Portfolio;
   snapshots: PortfolioSnapshot[];
-  investableTotal: number;
 }
 
-export function StatsCards({
-  portfolio,
-  snapshots,
-  investableTotal,
-}: StatsCardsProps) {
+export function StatsCards({ portfolio, snapshots }: StatsCardsProps) {
   const { aggregates, currency, btcUsdRate } = portfolio;
   const [cashSheetOpen, setCashSheetOpen] = useState(false);
 
@@ -28,14 +23,15 @@ export function StatsCards({
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-3">
         <NetWorthCard
           netWorth={aggregates.netWorth}
-          investableTotal={investableTotal}
+          cashOnHand={aggregates.cashOnHand}
           currency={currency}
           btcUsdRate={btcUsdRate}
           changeDay={oneDayNetWorth}
           changeYear={oneYearNetWorth}
+          onCashClick={() => setCashSheetOpen(true)}
         />
         <SummaryCard
           label="Assets"
@@ -56,17 +52,6 @@ export function StatsCards({
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard
-          label="Cash"
-          value={aggregates.cashOnHand}
-          currency={currency}
-          btcUsdRate={btcUsdRate}
-          changeDay={getChangeFromSnapshots(snapshots, "cashOnHand", 1)}
-          onClick={() => setCashSheetOpen(true)}
-        />
-      </div>
-
       <CashDetailSheet
         open={cashSheetOpen}
         onOpenChange={setCashSheetOpen}
@@ -77,29 +62,31 @@ export function StatsCards({
 }
 
 const CARD_CLASS =
-  "rounded-2xl border border-border bg-background px-5 py-5 transition-colors";
+  "rounded-card border border-border bg-card px-4 py-4 transition-colors";
 
 function NetWorthCard({
   netWorth,
-  investableTotal,
+  cashOnHand,
   currency,
   btcUsdRate,
   changeDay,
   changeYear,
+  onCashClick,
 }: {
   netWorth: number;
-  investableTotal: number;
+  cashOnHand: number;
   currency: string;
   btcUsdRate?: number | null;
   changeDay?: ReturnType<typeof getChangeFromSnapshots>;
   changeYear?: ReturnType<typeof getChangeFromSnapshots>;
+  onCashClick?: () => void;
 }) {
   return (
     <div className={CARD_CLASS}>
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
         Net Worth
       </div>
-      <div className="mt-2">
+      <div className="mt-1.5">
         <MoneyDisplay
           amount={netWorth}
           currency={currency}
@@ -108,7 +95,7 @@ function NetWorthCard({
           className="text-hero font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
-      <div className="mt-3 space-y-1.5">
+      <div className="mt-2 space-y-1">
         <ChangeIndicator
           change={changeDay ?? null}
           currency={currency}
@@ -123,22 +110,25 @@ function NetWorthCard({
         />
       </div>
 
-      {investableTotal > 0 && (
-        <>
-          <div className="my-5 h-px bg-border" />
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-            Investable
-          </div>
-          <div className="mt-2">
-            <MoneyDisplay
-              amount={investableTotal}
-              currency={currency}
-              btcUsdRate={btcUsdRate}
-              className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
-            />
-          </div>
-        </>
-      )}
+      <div className="my-4 h-px bg-border" />
+
+      <button
+        type="button"
+        onClick={onCashClick}
+        className="block w-full text-left rounded-sm transition-colors hover:opacity-80"
+      >
+        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          Cash
+        </div>
+        <div className="mt-1.5">
+          <MoneyDisplay
+            amount={cashOnHand}
+            currency={currency}
+            btcUsdRate={btcUsdRate}
+            className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
+          />
+        </div>
+      </button>
     </div>
   );
 }
@@ -177,7 +167,7 @@ function SummaryCard({
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-2">
+      <div className="mt-1.5">
         <MoneyDisplay
           amount={value}
           currency={currency}
@@ -185,7 +175,7 @@ function SummaryCard({
           className="text-hero font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
-      <div className="mt-3 space-y-1.5">
+      <div className="mt-2 space-y-1">
         <ChangeIndicator
           change={changeDay ?? null}
           currency={currency}

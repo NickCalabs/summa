@@ -130,7 +130,6 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
           <StatsCards
             portfolio={portfolio}
             snapshots={recapSnapshots}
-            investableTotal={investableTotal}
           />
 
           <CagrCard snapshots={recapSnapshots} />
