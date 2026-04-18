@@ -19,7 +19,6 @@ import { StatsCards } from "./stats-cards";
 import { AllocationChart } from "./allocation-chart";
 import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
-import { CagrCard } from "./cagr-card";
 import { ToolbarActions } from "@/components/toolbar-actions";
 import { cn } from "@/lib/utils";
 
@@ -130,9 +129,8 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
           <StatsCards
             portfolio={portfolio}
             snapshots={recapSnapshots}
+            investableTotal={investableTotal}
           />
-
-          <CagrCard snapshots={recapSnapshots} />
 
             <DashboardSurface
               title="Net worth history"
