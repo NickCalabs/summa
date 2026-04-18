@@ -47,3 +47,6 @@ backups/
 
 # superpowers brainstorming workspace
 .superpowers/
+
+# TLS certs (local CA)
+/certs/
