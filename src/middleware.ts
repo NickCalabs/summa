@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TtlCache } from "@/lib/providers/rate-limit-cache";
 
-const publicPaths = ["/login", "/register", "/api/auth", "/api/health", "/api/plaid/webhook"];
+const publicPaths = ["/login", "/register", "/api/auth", "/api/health", "/api/plaid/webhook", "/api/ca"];
 
 const RATE_LIMITED_PATHS = ["/api/auth/sign-in", "/api/auth/sign-up"];
 const MAX_ATTEMPTS = 10;
@@ -46,8 +46,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for session cookie
-  const sessionToken = request.cookies.get("better-auth.session_token");
+  // Check for session cookie. Better-auth automatically prefixes with __Secure-
+  // when running on HTTPS, so we accept both forms.
+  const sessionToken =
+    request.cookies.get("better-auth.session_token") ||
+    request.cookies.get("__Secure-better-auth.session_token");
 
   if (!sessionToken) {
     const loginUrl = new URL("/login", request.url);
@@ -66,6 +69,6 @@ export const config = {
      * - favicon.ico
      * - public files
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|sw\\.js\\.map|swe-worker-.*\\.js|manifest\\.json|icon-.*\\.png|icon\\.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
