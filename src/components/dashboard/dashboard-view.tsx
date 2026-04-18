@@ -50,7 +50,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
+      <div className="mx-auto max-w-4xl space-y-8 p-6 md:p-8">
         <Skeleton className="h-[640px] rounded-card" />
         <Skeleton className="h-[420px] rounded-card" />
       </div>
@@ -73,7 +73,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
   if (isEmpty) {
     return (
       <div className="relative">
-        <div className="mx-auto max-w-7xl px-4 py-4 md:px-6 md:py-6">
+        <div className="mx-auto max-w-4xl px-4 py-4 md:px-6 md:py-6">
           <section className="overflow-hidden rounded-card border border-border bg-card">
             <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
               <p className="text-2xl font-semibold tracking-tight mb-2">
@@ -117,7 +117,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
   return (
     <div className="relative">
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 md:px-6 md:py-6">
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <div className="flex items-center justify-end gap-3">
           <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
         </div>
