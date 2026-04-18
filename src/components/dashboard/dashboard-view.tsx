@@ -123,67 +123,45 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
           <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
         </div>
 
-        <section className="overflow-hidden md:rounded-card md:border md:border-border md:bg-card">
-          <div className="space-y-8 md:p-6 lg:p-8">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-              <div className="space-y-4">
-                <div className="hidden md:block space-y-2">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                    Recap
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Net worth first, with the balance-sheet flow condensed into a
-                    single recap below it.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <MoneyDisplay
-                    amount={portfolio.aggregates.netWorth}
-                    currency={portfolio.currency}
-                    btcUsdRate={portfolio.btcUsdRate}
-                    animate
-                    className="text-4xl font-normal tracking-[-0.015em] tabular-lining sm:text-5xl xl:text-6xl"
-                  />
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                    <ChangeIndicator
-                      change={oneDayNetWorth}
-                      currency={portfolio.currency}
-                      btcUsdRate={portfolio.btcUsdRate}
-                      label="1 DAY"
-                    />
-                    <ChangeIndicator
-                      change={oneYearNetWorth}
-                      currency={portfolio.currency}
-                      btcUsdRate={portfolio.btcUsdRate}
-                      label="1 YEAR"
-                    />
-                  </div>
-                </div>
+        <div className="space-y-8">
+          <div className="flex flex-col gap-3">
+            <p className="text-2xl font-semibold tracking-tight">
+              Hi, {userName}
+            </p>
+            <div className="space-y-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Net Worth
               </div>
-
-              <div className="hidden xl:flex flex-col items-start gap-3 xl:items-end">
-                <p className="text-sm text-muted-foreground">Hi, {userName}</p>
-                <Link
-                  href={`/portfolio/${portfolioId}`}
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "gap-1.5",
-                  })}
-                >
-                  Open Assets & Debts
-                  <ArrowRightIcon className="size-3.5" />
-                </Link>
+              <MoneyDisplay
+                amount={portfolio.aggregates.netWorth}
+                currency={portfolio.currency}
+                btcUsdRate={portfolio.btcUsdRate}
+                animate
+                className="text-4xl font-normal tracking-[-0.015em] tabular-lining sm:text-5xl xl:text-6xl"
+              />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <ChangeIndicator
+                  change={oneDayNetWorth}
+                  currency={portfolio.currency}
+                  btcUsdRate={portfolio.btcUsdRate}
+                  label="1 DAY"
+                />
+                <ChangeIndicator
+                  change={oneYearNetWorth}
+                  currency={portfolio.currency}
+                  btcUsdRate={portfolio.btcUsdRate}
+                  label="1 YEAR"
+                />
               </div>
             </div>
+          </div>
 
-            <StatsCards
-              portfolio={portfolio}
-              snapshots={recapSnapshots}
-            />
+          <StatsCards
+            portfolio={portfolio}
+            snapshots={recapSnapshots}
+          />
 
-            <CagrCard snapshots={recapSnapshots} />
+          <CagrCard snapshots={recapSnapshots} />
 
             <DashboardSurface
               title="Net worth history"
@@ -331,8 +309,7 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
                 />
               </div>
             </DashboardSurface>
-          </div>
-        </section>
+        </div>
 
         <section className="md:rounded-card md:border md:border-border md:bg-card md:p-6 lg:md:p-8">
           <div className="mb-6 space-y-1">
