@@ -27,7 +27,7 @@ export function SlotDigit({ digit, delay }: SlotDigitProps) {
         ref={ref}
         className="inline-flex flex-col"
         style={{
-          transform: `translateY(${mounted ? -digit * 100 : 0}%)`,
+          transform: `translateY(${mounted ? -digit * 10 : 0}%)`,
           transition: mounted
             ? `transform 600ms cubic-bezier(0.23, 1, 0.32, 1) ${delay}ms`
             : "none",
