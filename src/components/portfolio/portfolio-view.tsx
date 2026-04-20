@@ -143,22 +143,6 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
   const defaultSectionId = activeSheet?.sections[0]?.id ?? null;
   const allSections = activeSheet?.sections ?? [];
 
-  // Compute most recent lastSyncedAt across all assets
-  const lastSyncedAt = (() => {
-    let latest: number | null = null;
-    for (const sheet of portfolio.sheets) {
-      for (const section of sheet.sections) {
-        for (const asset of section.assets) {
-          if (asset.lastSyncedAt) {
-            const ts = new Date(asset.lastSyncedAt).getTime();
-            if (latest == null || ts > latest) latest = ts;
-          }
-        }
-      }
-    }
-    return latest != null ? new Date(latest) : null;
-  })();
-
   return (
     <CurrencyProvider baseCurrency={portfolio.currency} rates={portfolio.rates ?? {}}>
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-4 md:px-6 md:py-6">
@@ -168,7 +152,6 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           defaultSectionId={defaultSectionId}
           activeSheetId={activeSheet?.id ?? null}
           activeSheetType={activeSheet?.type ?? null}
-          lastSyncedAt={lastSyncedAt}
         />
 
         {activeSheet && (

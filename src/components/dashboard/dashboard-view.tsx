@@ -98,27 +98,11 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
 
   const oneDayNetWorth = getChangeFromSnapshots(recapSnapshots, "netWorth", 1);
 
-  // Compute most recent lastSyncedAt across all assets for the "synced N ago" label
-  const lastSyncedAt = (() => {
-    let latest: number | null = null;
-    for (const sheet of portfolio.sheets) {
-      for (const section of sheet.sections) {
-        for (const asset of section.assets) {
-          if (asset.lastSyncedAt) {
-            const ts = new Date(asset.lastSyncedAt).getTime();
-            if (latest == null || ts > latest) latest = ts;
-          }
-        }
-      }
-    }
-    return latest != null ? new Date(latest) : null;
-  })();
-
   return (
     <div className="relative">
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-4 md:px-6 md:py-6">
         <div className="flex items-center justify-end gap-3">
-          <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
+          <ToolbarActions portfolioId={portfolioId} />
         </div>
 
         <div className="space-y-8">

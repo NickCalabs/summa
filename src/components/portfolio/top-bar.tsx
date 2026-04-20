@@ -15,7 +15,6 @@ interface TopBarProps {
   defaultSectionId: string | null;
   activeSheetId: string | null;
   activeSheetType: "assets" | "debts" | null;
-  lastSyncedAt: Date | null;
 }
 
 export function TopBar({
@@ -24,7 +23,6 @@ export function TopBar({
   defaultSectionId,
   activeSheetId,
   activeSheetType,
-  lastSyncedAt,
 }: TopBarProps) {
   const updatePortfolio = useUpdatePortfolio(portfolioId);
   const createSection = useCreateSection(portfolioId);
@@ -111,7 +109,7 @@ export function TopBar({
         <span className="hidden md:inline">Add</span>
       </Button>
 
-      <ToolbarActions portfolioId={portfolioId} lastSyncedAt={lastSyncedAt} />
+      <ToolbarActions portfolioId={portfolioId} />
     </div>
   );
 }

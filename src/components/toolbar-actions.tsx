@@ -13,7 +13,6 @@ import {
   DownloadIcon,
   FilterIcon,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +25,13 @@ import {
 import { DisplayCurrencyDropdown } from "@/components/portfolio/display-currency-dropdown";
 import { useUIStore } from "@/stores/ui-store";
 import { useSyncPortfolio } from "@/hooks/use-portfolio-mutations";
+import { useConnectionHealth } from "@/hooks/use-connection-health";
 
 interface ToolbarActionsProps {
   portfolioId?: string;
-  lastSyncedAt?: Date | null;
 }
 
-export function ToolbarActions({ portfolioId, lastSyncedAt }: ToolbarActionsProps) {
+export function ToolbarActions({ portfolioId }: ToolbarActionsProps) {
   const valuesMasked = useUIStore((s) => s.valuesMasked);
   const toggleValuesMasked = useUIStore((s) => s.toggleValuesMasked);
   const compactNumbers = useUIStore((s) => s.compactNumbers);
@@ -45,35 +44,39 @@ export function ToolbarActions({ portfolioId, lastSyncedAt }: ToolbarActionsProp
   // Sync only makes sense when we have a portfolio context; call hook unconditionally
   // and gate the UI.
   const syncPortfolio = useSyncPortfolio(portfolioId ?? "");
+  const { staleCount, errorCount } = useConnectionHealth();
+  const needsAttention = staleCount + errorCount;
+  const badgeColor = errorCount > 0 ? "bg-destructive" : "bg-amber-500";
+  const badgeTitle =
+    needsAttention > 0
+      ? `${needsAttention} connection${needsAttention > 1 ? "s" : ""} need${needsAttention === 1 ? "s" : ""} attention`
+      : "All connections healthy";
 
   return (
     <div className="flex items-center gap-3">
       {portfolioId && (
-        <div className="flex flex-col items-start">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => syncPortfolio.mutate()}
-            disabled={syncPortfolio.isPending}
-            title="Refresh prices and balances"
-          >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => syncPortfolio.mutate()}
+          disabled={syncPortfolio.isPending}
+          title={badgeTitle}
+        >
+          <span className="relative">
             <RefreshCwIcon
               className={`size-3.5 ${syncPortfolio.isPending ? "animate-spin" : ""}`}
               data-icon="inline-start"
             />
-            <span className="hidden md:inline">
-              {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
-            </span>
-          </Button>
-          {lastSyncedAt && !syncPortfolio.isPending && (
-            <span
-              className="hidden md:inline text-[10px] text-muted-foreground/70 mt-0.5 px-1 leading-none"
-              title={lastSyncedAt.toLocaleString()}
-            >
-              synced {formatDistanceToNow(lastSyncedAt, { addSuffix: true })}
-            </span>
-          )}
-        </div>
+            {needsAttention > 0 && !syncPortfolio.isPending && (
+              <span
+                className={`absolute -top-1 -right-1 size-1.5 rounded-full ${badgeColor}`}
+              />
+            )}
+          </span>
+          <span className="hidden md:inline">
+            {syncPortfolio.isPending ? "Syncing..." : "Refresh"}
+          </span>
+        </Button>
       )}
 
       <DisplayCurrencyDropdown />
