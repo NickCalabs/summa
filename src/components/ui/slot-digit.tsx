@@ -20,7 +20,7 @@ export function SlotDigit({ digit, delay }: SlotDigitProps) {
 
   return (
     <span
-      className="inline-block overflow-hidden"
+      className="inline-block overflow-hidden align-bottom"
       style={{ height: "1em", lineHeight: "1em" }}
     >
       <span
