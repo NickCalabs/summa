@@ -20,8 +20,8 @@ export function SlotDigit({ digit, delay }: SlotDigitProps) {
 
   return (
     <span
-      className="inline-block overflow-hidden align-bottom"
-      style={{ height: "1em", lineHeight: "1em" }}
+      className="inline-block"
+      style={{ height: "1em", lineHeight: "1em", clipPath: "inset(0)" }}
     >
       <span
         ref={ref}
