@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface UIStore {
   activeSheetId: string | null;
@@ -59,7 +60,7 @@ interface UIStore {
 // (portfolio table, detail totals, etc.) uses the same cutoff.
 export const DUST_THRESHOLD_USD = 1;
 
-export const useUIStore = create<UIStore>((set) => ({
+export const useUIStore = create<UIStore>()(persist((set) => ({
   activeSheetId: null,
   setActiveSheet: (id) => set({ activeSheetId: id }),
 
@@ -149,4 +150,11 @@ export const useUIStore = create<UIStore>((set) => ({
 
   searchQuery: "",
   setSearchQuery: (q) => set({ searchQuery: q }),
+}), {
+  name: "summa-ui-prefs",
+  partialize: (state) => ({
+    valuesMasked: state.valuesMasked,
+    compactNumbers: state.compactNumbers,
+    hideDust: state.hideDust,
+  }),
 }));
