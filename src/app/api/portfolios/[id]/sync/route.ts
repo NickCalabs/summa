@@ -10,6 +10,7 @@ import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { db } from "@/lib/db";
 import { simplefinConnections } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { syncSimpleFINConnection } from "@/lib/simplefin-sync";
 
 // Per-portfolio in-memory throttle: 30 seconds between syncs.
 // Manual refresh fans out to Yahoo + CoinGecko + Plaid; we don't want a
@@ -47,16 +48,19 @@ export async function POST(
     }
     lastSyncAt.set(id, now);
 
-    // Sync SimpleFIN connections for this user
+    // Sync SimpleFIN connections for this user (direct function call, no HTTP)
     const sfConnections = await db
-      .select({ id: simplefinConnections.id })
+      .select({
+        id: simplefinConnections.id,
+        accessUrlEnc: simplefinConnections.accessUrlEnc,
+      })
       .from(simplefinConnections)
       .where(eq(simplefinConnections.userId, user.id));
 
     const simplefinSyncs = sfConnections.map((c) =>
-      fetch(new URL(`/api/simplefin/connections/${c.id}/sync`, request.url), {
-        method: "POST",
-        headers: { cookie: request.headers.get("cookie") ?? "" },
+      syncSimpleFINConnection({
+        connectionId: c.id,
+        accessUrlEnc: c.accessUrlEnc,
       }).catch(() => null)
     );
 

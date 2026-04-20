@@ -6,6 +6,7 @@ import {
   plaidConnections,
   plaidAccounts,
   coinbaseConnections,
+  simplefinConnections,
 } from "@/lib/db/schema";
 import { eq, isNull, isNotNull, ne, and, or, lt, sql } from "drizzle-orm";
 import { getYahooBatchPrices } from "@/lib/providers/yahoo";
@@ -17,6 +18,7 @@ import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
 import { refreshBtcWallets, refreshEthWallets, refreshSolWallets } from "@/lib/wallets";
 import { syncCoinbaseConnection } from "@/lib/coinbase-sync";
+import { syncSimpleFINConnection } from "@/lib/simplefin-sync";
 import { recomputeParentValues } from "@/lib/parent-value-recalc";
 
 let started = false;
@@ -26,6 +28,7 @@ const running = {
   prices: false,
   cryptoPrices: false,
   plaid: false,
+  simplefin: false,
   coinbase: false,
   snapshots: false,
   btcWallets: false,
@@ -385,6 +388,87 @@ export async function refreshPlaidBalances() {
   }
 }
 
+export async function refreshSimpleFINBalances() {
+  const ts = new Date().toISOString();
+  const now = new Date();
+  console.log(`[cron] ${ts} Starting SimpleFIN balance refresh...`);
+
+  try {
+    // Include connections that:
+    //   1. Have no error (healthy), OR
+    //   2. Have an error with no expiry set (legacy records — treat as expired), OR
+    //   3. Have an error whose expiry has passed (time to retry)
+    const connections = await db
+      .select()
+      .from(simplefinConnections)
+      .where(
+        or(
+          isNull(simplefinConnections.errorCode),
+          and(
+            isNotNull(simplefinConnections.errorCode),
+            isNull(simplefinConnections.errorExpiresAt)
+          ),
+          lt(simplefinConnections.errorExpiresAt, now)
+        )
+      );
+
+    let updatedCount = 0;
+
+    for (const connection of connections) {
+      try {
+        const result = await syncSimpleFINConnection({
+          connectionId: connection.id,
+          accessUrlEnc: connection.accessUrlEnc,
+        });
+
+        if (result.ok) {
+          updatedCount += result.synced;
+        } else {
+          // syncSimpleFINConnection already stored the error on the connection,
+          // but we need to set backoff fields
+          const nextRetryCount = (connection.errorRetryCount ?? 0) + 1;
+          const errorExpiresAt = new Date(
+            Date.now() + nextBackoffMs(nextRetryCount)
+          );
+          await db
+            .update(simplefinConnections)
+            .set({
+              errorExpiresAt,
+              errorRetryCount: nextRetryCount,
+              updatedAt: new Date(),
+            })
+            .where(eq(simplefinConnections.id, connection.id));
+        }
+      } catch (error) {
+        console.error(
+          `[cron] ${ts} SimpleFIN refresh failed for connection ${connection.id}:`,
+          error
+        );
+        const nextRetryCount = (connection.errorRetryCount ?? 0) + 1;
+        const errorExpiresAt = new Date(
+          Date.now() + nextBackoffMs(nextRetryCount)
+        );
+        await db
+          .update(simplefinConnections)
+          .set({
+            errorCode: "SYNC_ERROR",
+            errorMessage: "Balance sync failed",
+            errorExpiresAt,
+            errorRetryCount: nextRetryCount,
+            updatedAt: new Date(),
+          })
+          .where(eq(simplefinConnections.id, connection.id));
+      }
+    }
+
+    console.log(
+      `[cron] ${ts} SimpleFIN balance refresh complete: ${updatedCount} assets updated`
+    );
+  } catch (error) {
+    console.error(`[cron] ${ts} SimpleFIN balance refresh failed:`, error);
+  }
+}
+
 export async function refreshCoinbaseConnections() {
   const ts = new Date().toISOString();
   console.log(`[cron] ${ts} Starting Coinbase sync...`);
@@ -456,6 +540,15 @@ export function startCronJobs() {
     refreshPlaidBalances()
       .catch((err) => console.error("[cron] Unhandled error in refreshPlaidBalances:", err))
       .finally(() => { running.plaid = false; });
+  });
+
+  // Every 6 hours (offset 30 min from Plaid) — refresh SimpleFIN balances
+  cron.schedule("30 */6 * * *", () => {
+    if (running.simplefin) return;
+    running.simplefin = true;
+    refreshSimpleFINBalances()
+      .catch((err) => console.error("[cron] Unhandled error in refreshSimpleFINBalances:", err))
+      .finally(() => { running.simplefin = false; });
   });
 
   // Every 15 minutes — refresh Coinbase balances.

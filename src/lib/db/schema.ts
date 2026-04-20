@@ -295,6 +295,8 @@ export const simplefinConnections = pgTable("simplefin_connections", {
   accessUrlEnc: text("access_url_enc").notNull(),
   errorCode: text("error_code"),
   errorMessage: text("error_message"),
+  errorExpiresAt: timestamp("error_expires_at"),
+  errorRetryCount: integer("error_retry_count").notNull().default(0),
   lastSyncedAt: timestamp("last_synced_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
