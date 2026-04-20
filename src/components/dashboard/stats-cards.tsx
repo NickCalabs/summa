@@ -5,6 +5,7 @@ import type { Portfolio } from "@/hooks/use-portfolio";
 import type { PortfolioSnapshot } from "@/hooks/use-snapshots";
 import { computeCAGR, getChangeFromSnapshots } from "@/lib/snapshot-utils";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
+import { SlotNumber } from "@/components/ui/slot-digit";
 import { CashDetailSheet } from "./cash-detail-sheet";
 import { ChangeIndicator } from "./change-indicator";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ export function StatsCards({
           btcUsdRate={btcUsdRate}
           changeDay={getChangeFromSnapshots(snapshots, "totalAssets", 1)}
           changeYear={getChangeFromSnapshots(snapshots, "totalAssets", 365)}
+          animate
         />
         <SummaryCard
           label="Debts"
@@ -58,6 +60,7 @@ export function StatsCards({
           changeDay={getChangeFromSnapshots(snapshots, "totalDebts", 1)}
           changeYear={getChangeFromSnapshots(snapshots, "totalDebts", 365)}
           invertColor
+          animate
         />
         <SummaryCard
           label="Cash on hand"
@@ -65,6 +68,7 @@ export function StatsCards({
           currency={currency}
           btcUsdRate={btcUsdRate}
           onClick={() => setCashSheetOpen(true)}
+          animate
         />
       </div>
 
@@ -140,6 +144,7 @@ function NetWorthCard({
           amount={investableTotal}
           currency={currency}
           btcUsdRate={btcUsdRate}
+          animate
           className="text-2xl font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
@@ -169,14 +174,13 @@ function CagrRow({ label, value }: { label: string; value: number }) {
       <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </span>
-      <span
+      <SlotNumber
+        value={formatted}
         className={cn(
           "font-semibold tabular-nums",
           value >= 0 ? "text-positive" : "text-negative"
         )}
-      >
-        {formatted}
-      </span>
+      />
     </div>
   );
 }
@@ -190,6 +194,7 @@ function SummaryCard({
   changeYear,
   invertColor = false,
   onClick,
+  animate,
 }: {
   label: string;
   value: number;
@@ -199,6 +204,7 @@ function SummaryCard({
   changeYear?: ReturnType<typeof getChangeFromSnapshots>;
   invertColor?: boolean;
   onClick?: () => void;
+  animate?: boolean;
 }) {
   const Element = onClick ? "button" : "div";
   const hasChanges = changeDay !== undefined || changeYear !== undefined;
@@ -221,6 +227,7 @@ function SummaryCard({
           amount={value}
           currency={currency}
           btcUsdRate={btcUsdRate}
+          animate={animate}
           className="text-hero font-normal tracking-[-0.015em] tabular-lining"
         />
       </div>
