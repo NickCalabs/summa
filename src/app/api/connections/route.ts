@@ -211,7 +211,7 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(assets.providerType, "ticker"),
-          sql`${assets.providerConfig}->>'source' = 'yahoo'`,
+          sql`coalesce(${assets.providerConfig}->>'source', 'yahoo') = 'yahoo'`,
           sql`${assets.sectionId} IN (
             SELECT s.id FROM sections s
             JOIN sheets sh ON s.sheet_id = sh.id
