@@ -3,34 +3,35 @@
 import Link from "next/link";
 import { ArrowRightIcon, PinIcon } from "lucide-react";
 import { useLenses } from "@/hooks/use-lenses";
-import { DashboardPinCard } from "./dashboard-pin-card";
+import { LensCard } from "./lens-card";
 
-interface DashboardPinsSectionProps {
+interface LensesSectionProps {
   portfolioId: string;
   currency: string;
   btcUsdRate: number | null;
 }
 
-export function DashboardPinsSection({
+export function LensesSection({
   portfolioId,
   currency,
   btcUsdRate,
-}: DashboardPinsSectionProps) {
-  const { data: pins, isLoading } = useLenses(portfolioId);
+}: LensesSectionProps) {
+  const { data: lenses, isLoading } = useLenses(portfolioId);
 
   if (isLoading) return null;
-  if (!pins || pins.length === 0) return null;
+  const visible = lenses?.filter((l) => l.isPinned) ?? [];
+  if (visible.length === 0) return null;
 
   return (
     <section className="md:rounded-card md:border md:border-border md:bg-card/50 md:p-6">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div className="space-y-1">
           <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-            Pinned
+            Lenses
           </p>
           <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
             <PinIcon className="size-4" />
-            Charts you starred
+            Pinned views
           </h2>
         </div>
         <Link
@@ -43,10 +44,10 @@ export function DashboardPinsSection({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {pins.map((pin) => (
-          <DashboardPinCard
-            key={pin.id}
-            pin={pin}
+        {visible.map((lens) => (
+          <LensCard
+            key={lens.id}
+            lens={lens}
             currency={currency}
             btcUsdRate={btcUsdRate}
           />
