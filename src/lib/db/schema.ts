@@ -239,19 +239,26 @@ export const portfolioSnapshots = pgTable(
   ]
 );
 
-// ── Dashboard Pins ──
+// ── Lenses ──
 //
-// Saved chart views pinned to the dashboard. Each pin captures a label and a
-// list of asset IDs whose snapshots get summed and rendered as a single chart.
-// This is the foundation for the future Lens feature — a Lens is just a
-// dashboard pin with editable membership.
+// User-defined views that aggregate a hand-picked set of assets across accounts
+// and providers. A Lens has its own detail page and can optionally appear as a
+// card on the dashboard via `is_pinned`.
+//
+// Storage shape mirrors the original dashboard_pins (id, portfolio, label,
+// asset_ids, sort_order, created_at) plus description/color/is_pinned. The
+// column is still named `label` in the DB to keep the rename migration tight;
+// the API response field is also `label` (UI calls it "name").
 
-export const dashboardPins = pgTable("dashboard_pins", {
+export const lenses = pgTable("lenses", {
   id: uuid("id").primaryKey().defaultRandom(),
   portfolioId: uuid("portfolio_id")
     .notNull()
     .references(() => portfolios.id, { onDelete: "cascade" }),
   label: text("label").notNull(),
+  description: text("description"),
+  color: text("color"),
+  isPinned: boolean("is_pinned").notNull().default(true),
   assetIds: jsonb("asset_ids").$type<string[]>().notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
