@@ -239,6 +239,24 @@ export const portfolioSnapshots = pgTable(
   ]
 );
 
+// ── Dashboard Pins ──
+//
+// Saved chart views pinned to the dashboard. Each pin captures a label and a
+// list of asset IDs whose snapshots get summed and rendered as a single chart.
+// This is the foundation for the future Lens feature — a Lens is just a
+// dashboard pin with editable membership.
+
+export const dashboardPins = pgTable("dashboard_pins", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  portfolioId: uuid("portfolio_id")
+    .notNull()
+    .references(() => portfolios.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  assetIds: jsonb("asset_ids").$type<string[]>().notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // ── Plaid Connections ──
 
 export const plaidConnections = pgTable("plaid_connections", {

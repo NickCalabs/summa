@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { CheckIcon, PinIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,9 @@ import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecapDrillDown } from "@/hooks/use-recap-drill-down";
 import { useDisplayCurrency } from "@/contexts/display-currency-context";
+import { useDashboardPins } from "@/hooks/use-dashboard-pins";
+import { useCreateDashboardPin } from "@/hooks/use-create-dashboard-pin";
+import { useDeleteDashboardPin } from "@/hooks/use-delete-dashboard-pin";
 import {
   getFromDate,
   formatChartDate,
@@ -54,6 +58,26 @@ export function RecapDrillDown({
   const from = getFromDate(range);
   const { data, isLoading } = useRecapDrillDown(portfolioId, assetIds, from);
   const dc = useDisplayCurrency();
+
+  const { data: pins } = useDashboardPins(portfolioId);
+  const createPin = useCreateDashboardPin();
+  const deletePin = useDeleteDashboardPin();
+
+  // A pin "matches" this drill-down if its asset set is identical, regardless
+  // of order. Used to switch the button between Pin / Unpin.
+  const matchingPin = useMemo(() => {
+    if (!pins) return null;
+    const sorted = [...assetIds].sort().join(",");
+    return pins.find((p) => [...p.assetIds].sort().join(",") === sorted) ?? null;
+  }, [pins, assetIds]);
+
+  const togglePin = () => {
+    if (matchingPin) {
+      deletePin.mutate({ portfolioId, pinId: matchingPin.id });
+    } else {
+      createPin.mutate({ portfolioId, label, assetIds });
+    }
+  };
 
   const chartData = useMemo(() => {
     if (!data?.series) return [];
@@ -112,7 +136,7 @@ export function RecapDrillDown({
           )}
         </DialogHeader>
 
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
           {RANGES.map((r) => (
             <Button
               key={r}
@@ -124,6 +148,26 @@ export function RecapDrillDown({
               {r}
             </Button>
           ))}
+
+          <Button
+            variant={matchingPin ? "default" : "outline"}
+            size="sm"
+            className="ml-auto h-6 px-2 text-xs gap-1"
+            onClick={togglePin}
+            disabled={createPin.isPending || deletePin.isPending}
+          >
+            {matchingPin ? (
+              <>
+                <CheckIcon className="size-3" />
+                Pinned
+              </>
+            ) : (
+              <>
+                <PinIcon className="size-3" />
+                Add to dashboard
+              </>
+            )}
+          </Button>
         </div>
 
         {isLoading ? (

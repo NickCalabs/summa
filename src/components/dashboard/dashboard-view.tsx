@@ -19,6 +19,7 @@ import { StatsCards } from "./stats-cards";
 import { AllocationChart } from "./allocation-chart";
 import { ChangeIndicator } from "./change-indicator";
 import { RecapSankeyChart } from "./recap-sankey-chart";
+import { DashboardPinsSection } from "./pins/dashboard-pins-section";
 import { ToolbarActions } from "@/components/toolbar-actions";
 import { cn } from "@/lib/utils";
 
@@ -269,6 +270,12 @@ export function DashboardView({ portfolioId, userName }: DashboardViewProps) {
               </div>
             </DashboardSurface>
         </div>
+
+        <DashboardPinsSection
+          portfolioId={portfolio.id}
+          currency={portfolio.currency}
+          btcUsdRate={portfolio.btcUsdRate}
+        />
 
         <section className="md:rounded-card md:border md:border-border md:bg-card md:p-6 lg:md:p-8">
           <div className="mb-6 space-y-1">
