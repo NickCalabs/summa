@@ -24,7 +24,7 @@ import { useRecapDrillDown } from "@/hooks/use-recap-drill-down";
 import { useDisplayCurrency } from "@/contexts/display-currency-context";
 import { useLenses } from "@/hooks/use-lenses";
 import { useCreateLens } from "@/hooks/use-create-lens";
-import { useDeleteLens } from "@/hooks/use-delete-lens";
+import { useUpdateLens } from "@/hooks/use-update-lens";
 import {
   getFromDate,
   formatChartDate,
@@ -59,23 +59,34 @@ export function RecapDrillDown({
   const { data, isLoading } = useRecapDrillDown(portfolioId, assetIds, from);
   const dc = useDisplayCurrency();
 
-  const { data: pins } = useLenses(portfolioId);
-  const createPin = useCreateLens();
-  const deletePin = useDeleteLens();
+  const { data: lenses } = useLenses(portfolioId);
+  const createLens = useCreateLens();
+  const updateLens = useUpdateLens();
 
-  // A pin "matches" this drill-down if its asset set is identical, regardless
+  // A lens "matches" this drill-down if its asset set is identical, regardless
   // of order. Used to switch the button between Pin / Unpin.
-  const matchingPin = useMemo(() => {
-    if (!pins) return null;
+  const matchingLens = useMemo(() => {
+    if (!lenses) return null;
     const sorted = [...assetIds].sort().join(",");
-    return pins.find((p) => [...p.assetIds].sort().join(",") === sorted) ?? null;
-  }, [pins, assetIds]);
+    return lenses.find((p) => [...p.assetIds].sort().join(",") === sorted) ?? null;
+  }, [lenses, assetIds]);
 
-  const togglePin = () => {
-    if (matchingPin) {
-      deletePin.mutate({ portfolioId, lensId: matchingPin.id });
+  const isPinned = matchingLens?.isPinned ?? false;
+
+  const toggleLensPin = () => {
+    if (matchingLens) {
+      updateLens.mutate({
+        portfolioId,
+        lensId: matchingLens.id,
+        isPinned: !matchingLens.isPinned,
+      });
     } else {
-      createPin.mutate({ portfolioId, label, assetIds });
+      createLens.mutate({
+        portfolioId,
+        label,
+        assetIds,
+        isPinned: true,
+      });
     }
   };
 
@@ -150,13 +161,13 @@ export function RecapDrillDown({
           ))}
 
           <Button
-            variant={matchingPin ? "default" : "outline"}
+            variant={isPinned ? "default" : "outline"}
             size="sm"
             className="ml-auto h-6 px-2 text-xs gap-1"
-            onClick={togglePin}
-            disabled={createPin.isPending || deletePin.isPending}
+            onClick={toggleLensPin}
+            disabled={createLens.isPending || updateLens.isPending}
           >
-            {matchingPin ? (
+            {isPinned ? (
               <>
                 <CheckIcon className="size-3" />
                 Pinned
