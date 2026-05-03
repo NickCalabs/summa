@@ -41,17 +41,6 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Check if a user already exists (single-user mode)
-      const checkRes = await fetch("/api/auth/check-user");
-      if (checkRes.ok) {
-        const { exists } = await checkRes.json();
-        if (exists) {
-          setError("Registration is disabled. A user already exists.");
-          setLoading(false);
-          return;
-        }
-      }
-
       const result = await authClient.signUp.email({
         email,
         password,

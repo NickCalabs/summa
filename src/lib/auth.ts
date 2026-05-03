@@ -12,20 +12,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  databaseHooks: {
-    user: {
-      create: {
-        before: async () => {
-          const result = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(schema.user);
-          if (Number(result[0].count) > 0) {
-            return false;
-          }
-        },
-      },
-    },
-  },
+  databaseHooks: {},
   user: {
     additionalFields: {
       defaultCurrency: {
