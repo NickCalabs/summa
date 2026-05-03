@@ -22,9 +22,9 @@ import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecapDrillDown } from "@/hooks/use-recap-drill-down";
 import { useDisplayCurrency } from "@/contexts/display-currency-context";
-import { useDashboardPins } from "@/hooks/use-dashboard-pins";
-import { useCreateDashboardPin } from "@/hooks/use-create-dashboard-pin";
-import { useDeleteDashboardPin } from "@/hooks/use-delete-dashboard-pin";
+import { useLenses } from "@/hooks/use-lenses";
+import { useCreateLens } from "@/hooks/use-create-lens";
+import { useDeleteLens } from "@/hooks/use-delete-lens";
 import {
   getFromDate,
   formatChartDate,
@@ -59,9 +59,9 @@ export function RecapDrillDown({
   const { data, isLoading } = useRecapDrillDown(portfolioId, assetIds, from);
   const dc = useDisplayCurrency();
 
-  const { data: pins } = useDashboardPins(portfolioId);
-  const createPin = useCreateDashboardPin();
-  const deletePin = useDeleteDashboardPin();
+  const { data: pins } = useLenses(portfolioId);
+  const createPin = useCreateLens();
+  const deletePin = useDeleteLens();
 
   // A pin "matches" this drill-down if its asset set is identical, regardless
   // of order. Used to switch the button between Pin / Unpin.
@@ -73,7 +73,7 @@ export function RecapDrillDown({
 
   const togglePin = () => {
     if (matchingPin) {
-      deletePin.mutate({ portfolioId, pinId: matchingPin.id });
+      deletePin.mutate({ portfolioId, lensId: matchingPin.id });
     } else {
       createPin.mutate({ portfolioId, label, assetIds });
     }

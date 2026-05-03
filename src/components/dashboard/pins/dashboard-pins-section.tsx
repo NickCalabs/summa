@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRightIcon, PinIcon } from "lucide-react";
-import { useDashboardPins } from "@/hooks/use-dashboard-pins";
+import { useLenses } from "@/hooks/use-lenses";
 import { DashboardPinCard } from "./dashboard-pin-card";
 
 interface DashboardPinsSectionProps {
@@ -16,7 +16,7 @@ export function DashboardPinsSection({
   currency,
   btcUsdRate,
 }: DashboardPinsSectionProps) {
-  const { data: pins, isLoading } = useDashboardPins(portfolioId);
+  const { data: pins, isLoading } = useLenses(portfolioId);
 
   if (isLoading) return null;
   if (!pins || pins.length === 0) return null;

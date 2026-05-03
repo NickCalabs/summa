@@ -14,14 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoneyDisplay } from "@/components/portfolio/money-display";
 import { useRecapDrillDown } from "@/hooks/use-recap-drill-down";
-import { useDeleteDashboardPin } from "@/hooks/use-delete-dashboard-pin";
+import { useDeleteLens } from "@/hooks/use-delete-lens";
 import { useDisplayCurrency } from "@/contexts/display-currency-context";
 import { getFromDate, formatChartDate } from "@/lib/chart-utils";
 import { cn } from "@/lib/utils";
-import type { DashboardPin } from "@/hooks/use-dashboard-pins";
+import type { Lens } from "@/hooks/use-lenses";
 
 interface DashboardPinCardProps {
-  pin: DashboardPin;
+  pin: Lens;
   currency: string;
   btcUsdRate: number | null;
 }
@@ -34,7 +34,7 @@ export function DashboardPinCard({
   const from = getFromDate("1Y");
   const { data, isLoading } = useRecapDrillDown(pin.portfolioId, pin.assetIds, from);
   const dc = useDisplayCurrency();
-  const deletePin = useDeleteDashboardPin();
+  const deletePin = useDeleteLens();
 
   const chartData = useMemo(() => {
     if (!data?.series) return [];
@@ -93,7 +93,7 @@ export function DashboardPinCard({
           variant="ghost"
           size="icon"
           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={() => deletePin.mutate({ portfolioId: pin.portfolioId, pinId: pin.id })}
+          onClick={() => deletePin.mutate({ portfolioId: pin.portfolioId, lensId: pin.id })}
           disabled={deletePin.isPending}
           aria-label="Remove pin"
         >
