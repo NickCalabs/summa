@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type ComponentProps, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ChevronDownIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +14,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoneyDisplay } from "@/components/portfolio/money-display";
+import { MoneyDisplay as MoneyDisplayBase } from "@/components/portfolio/money-display";
+
+// Detail view always shows fractional cents — drill-down precision matters
+// here. Dashboard/sheet/lens views use MoneyDisplay's whole-dollar default.
+function MoneyDisplay(props: ComponentProps<typeof MoneyDisplayBase>) {
+  return <MoneyDisplayBase showCents {...props} />;
+}
 import { WalletInfoCard } from "@/components/portfolio/wallet-info-card";
 import { usePortfolio, type Asset, type Portfolio } from "@/hooks/use-portfolio";
 import { useUpdateAsset } from "@/hooks/use-assets";

@@ -12,21 +12,37 @@ interface MoneyDisplayProps {
   animate?: boolean;
   /** Today's BTC/USD rate — when provided, enables display-currency conversion */
   btcUsdRate?: number | null;
+  /**
+   * Whether to render fractional cents. Defaults to false — dashboard, sheet,
+   * and lens views show whole dollars. Drill-down views (asset detail,
+   * transactions) opt in with showCents={true} for granular precision.
+   */
+  showCents?: boolean;
 }
 
-function formatCurrency(amount: number, currency: string, compact: boolean): string {
+function formatCurrency(
+  amount: number,
+  currency: string,
+  compact: boolean,
+  showCents: boolean
+): string {
   const useCompact = compact && Math.abs(amount) >= 10_000;
   try {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
-      ...(useCompact ? { notation: "compact", maximumFractionDigits: 2 } : {}),
+      ...(useCompact
+        ? { notation: "compact", maximumFractionDigits: 2 }
+        : showCents
+          ? {}
+          : { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
     }).format(amount);
   } catch {
     // Fallback for invalid currency codes (e.g. "BTC", empty string)
+    const digits = showCents ? 2 : 0;
     return `${amount.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
     })} ${currency}`;
   }
 }
@@ -37,6 +53,7 @@ export function MoneyDisplay({
   className,
   animate = false,
   btcUsdRate,
+  showCents = false,
 }: MoneyDisplayProps) {
   const masked = useUIStore((s) => s.valuesMasked);
   const compact = useUIStore((s) => s.compactNumbers);
@@ -51,7 +68,7 @@ export function MoneyDisplay({
 
   const formatted = useDisplayFormat && dc
     ? dc.format(finalValue, compact)
-    : formatCurrency(finalValue, currency, compact);
+    : formatCurrency(finalValue, currency, compact, showCents);
 
   if (masked) {
     return (
