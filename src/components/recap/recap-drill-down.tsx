@@ -90,54 +90,56 @@ export function RecapDrillDown({
     }
   };
 
+  // Chart data stays in USD; MoneyDisplay handles BTC/sats conversion via
+  // btcUsdRate, and the chart's tickFormatter/tooltip convert at render
+  // time. Pre-converting AND letting MoneyDisplay convert again caused a
+  // divide-by-rate-twice bug in pinned cards and headlines.
   const chartData = useMemo(() => {
     if (!data?.series) return [];
-    return data.series.map((pt) => {
-      let val = pt.value;
-      if (btcUsdRate && dc.displayCurrency !== "USD") {
-        val = dc.convert(val, btcUsdRate);
-      }
-      return { date: pt.date, value: val };
-    });
-  }, [data, btcUsdRate, dc]);
+    return data.series.map((pt) => ({ date: pt.date, value: pt.value }));
+  }, [data]);
 
-  const latest = chartData.length > 0 ? chartData[chartData.length - 1].value : null;
-  const earliest = chartData.length > 1 ? chartData[0].value : null;
-  const totalChange =
-    latest != null && earliest != null ? latest - earliest : null;
+  const latestUsd = chartData.length > 0 ? chartData[chartData.length - 1].value : null;
+  const earliestUsd = chartData.length > 1 ? chartData[0].value : null;
+  const totalChangeUsd =
+    latestUsd != null && earliestUsd != null ? latestUsd - earliestUsd : null;
   const totalChangePct =
-    totalChange != null && earliest && earliest !== 0
-      ? (totalChange / Math.abs(earliest)) * 100
+    totalChangeUsd != null && earliestUsd && earliestUsd !== 0
+      ? (totalChangeUsd / Math.abs(earliestUsd)) * 100
       : null;
+  const totalChangeDisplay =
+    totalChangeUsd != null && btcUsdRate && dc.displayCurrency !== "USD"
+      ? dc.convert(totalChangeUsd, btcUsdRate)
+      : totalChangeUsd;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{label}</DialogTitle>
-          {latest != null && (
+          {latestUsd != null && (
             <div className="flex items-baseline gap-3 mt-1">
               <MoneyDisplay
-                amount={latest}
+                amount={latestUsd}
                 currency={currency}
                 btcUsdRate={btcUsdRate}
                 className="text-xl font-semibold"
               />
-              {totalChange != null && (
+              {totalChangeUsd != null && totalChangeDisplay != null && (
                 <span
                   className={cn(
                     "text-sm tabular-nums",
-                    totalChange > 0
+                    totalChangeUsd > 0
                       ? "text-emerald-600 dark:text-emerald-400"
-                      : totalChange < 0
+                      : totalChangeUsd < 0
                         ? "text-red-600 dark:text-red-400"
                         : "text-muted-foreground"
                   )}
                 >
-                  {totalChange > 0 ? "+" : ""}
+                  {totalChangeUsd > 0 ? "+" : ""}
                   {dc.displayCurrency !== "USD"
-                    ? dc.format(totalChange)
-                    : `$${totalChange.toFixed(0)}`}
+                    ? dc.format(totalChangeDisplay)
+                    : `$${totalChangeDisplay.toFixed(0)}`}
                   {totalChangePct != null && (
                     <> ({totalChangePct > 0 ? "+" : ""}{totalChangePct.toFixed(1)}%)</>
                   )}
@@ -208,13 +210,17 @@ export function RecapDrillDown({
                   minTickGap={40}
                 />
                 <YAxis
-                  tickFormatter={(v: number) =>
-                    formatCompactDisplayCurrency(
-                      v,
+                  tickFormatter={(v: number) => {
+                    const display =
+                      btcUsdRate && dc.displayCurrency !== "USD"
+                        ? dc.convert(v, btcUsdRate)
+                        : v;
+                    return formatCompactDisplayCurrency(
+                      display,
                       dc.displayCurrency,
                       dc.formatCompact
-                    )
-                  }
+                    );
+                  }}
                   tick={{ fontSize: 11 }}
                   stroke="var(--muted-foreground)"
                   tickLine={false}
@@ -224,7 +230,11 @@ export function RecapDrillDown({
                 <Tooltip
                   content={({ active, payload, label: tipLabel }) => {
                     if (!active || !payload?.[0]) return null;
-                    const v = payload[0].value as number;
+                    const usd = payload[0].value as number;
+                    const display =
+                      btcUsdRate && dc.displayCurrency !== "USD"
+                        ? dc.convert(usd, btcUsdRate)
+                        : usd;
                     return (
                       <div className="rounded-lg bg-popover px-3 py-2 text-sm ring-1 ring-border shadow-md">
                         <p className="text-muted-foreground text-xs">
@@ -232,8 +242,8 @@ export function RecapDrillDown({
                         </p>
                         <p className="font-medium tabular-nums">
                           {dc.displayCurrency !== "USD"
-                            ? dc.format(v)
-                            : `$${v.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
+                            ? dc.format(display)
+                            : `$${display.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
                         </p>
                       </div>
                     );

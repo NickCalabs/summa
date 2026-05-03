@@ -38,16 +38,13 @@ export function LensChart({
   const { data, isLoading } = useRecapDrillDown(portfolioId, assetIds, from);
   const dc = useDisplayCurrency();
 
+  // Plot in USD; tickFormatter and tooltip convert at render time.
+  // Pre-converting series values would double-convert when display
+  // currency is BTC/sats and inputs flow through other consumers.
   const chartData = useMemo(() => {
     if (!data?.series) return [];
-    return data.series.map((pt) => {
-      let val = pt.value;
-      if (btcUsdRate && dc.displayCurrency !== "USD") {
-        val = dc.convert(val, btcUsdRate);
-      }
-      return { date: pt.date, value: val };
-    });
-  }, [data, btcUsdRate, dc]);
+    return data.series.map((pt) => ({ date: pt.date, value: pt.value }));
+  }, [data]);
 
   if (isLoading) return <Skeleton className="h-72 w-full" />;
   if (chartData.length <= 1) {
@@ -83,13 +80,17 @@ export function LensChart({
             minTickGap={40}
           />
           <YAxis
-            tickFormatter={(v: number) =>
-              formatCompactDisplayCurrency(
-                v,
+            tickFormatter={(v: number) => {
+              const display =
+                btcUsdRate && dc.displayCurrency !== "USD"
+                  ? dc.convert(v, btcUsdRate)
+                  : v;
+              return formatCompactDisplayCurrency(
+                display,
                 dc.displayCurrency,
                 dc.formatCompact
-              )
-            }
+              );
+            }}
             tick={{ fontSize: 11 }}
             stroke="var(--muted-foreground)"
             tickLine={false}
@@ -99,7 +100,11 @@ export function LensChart({
           <Tooltip
             content={({ active, payload, label: tipLabel }) => {
               if (!active || !payload?.[0]) return null;
-              const v = payload[0].value as number;
+              const usd = payload[0].value as number;
+              const display =
+                btcUsdRate && dc.displayCurrency !== "USD"
+                  ? dc.convert(usd, btcUsdRate)
+                  : usd;
               return (
                 <div className="rounded-lg bg-popover px-3 py-2 text-sm ring-1 ring-border shadow-md">
                   <p className="text-muted-foreground text-xs">
@@ -107,8 +112,8 @@ export function LensChart({
                   </p>
                   <p className="font-medium tabular-nums">
                     {dc.displayCurrency !== "USD"
-                      ? dc.format(v)
-                      : `$${v.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
+                      ? dc.format(display)
+                      : `$${display.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
                   </p>
                 </div>
               );

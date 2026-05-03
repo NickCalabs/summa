@@ -37,24 +37,23 @@ export function LensCard({ lens, currency, btcUsdRate }: LensCardProps) {
   const dc = useDisplayCurrency();
   const updateLens = useUpdateLens();
 
+  // Chart data stays in USD throughout. MoneyDisplay handles conversion
+  // internally via btcUsdRate; the chart's tooltip/axis convert at render
+  // time. Pre-converting AND letting MoneyDisplay convert again caused a
+  // divide-by-btcUsdRate-twice bug on pinned cards.
   const chartData = useMemo(() => {
     if (!data?.series) return [];
-    return data.series.map((pt) => {
-      let val = pt.value;
-      if (btcUsdRate && dc.displayCurrency !== "USD") {
-        val = dc.convert(val, btcUsdRate);
-      }
-      return { date: pt.date, value: val };
-    });
-  }, [data, btcUsdRate, dc]);
+    return data.series.map((pt) => ({ date: pt.date, value: pt.value }));
+  }, [data]);
 
-  const latest =
+  const latestUsd =
     chartData.length > 0 ? chartData[chartData.length - 1].value : null;
-  const earliest = chartData.length > 1 ? chartData[0].value : null;
-  const change = latest != null && earliest != null ? latest - earliest : null;
+  const earliestUsd = chartData.length > 1 ? chartData[0].value : null;
+  const changeUsd =
+    latestUsd != null && earliestUsd != null ? latestUsd - earliestUsd : null;
   const changePct =
-    change != null && earliest && earliest !== 0
-      ? (change / Math.abs(earliest)) * 100
+    changeUsd != null && earliestUsd && earliestUsd !== 0
+      ? (changeUsd / Math.abs(earliestUsd)) * 100
       : null;
 
   const handleUnpin = (e: React.MouseEvent) => {
@@ -83,26 +82,26 @@ export function LensCard({ lens, currency, btcUsdRate }: LensCardProps) {
           )}
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">{lens.label}</h3>
-            {latest != null ? (
+            {latestUsd != null ? (
               <div className="mt-1 flex items-baseline gap-2">
                 <MoneyDisplay
-                  amount={latest}
+                  amount={latestUsd}
                   currency={currency}
                   btcUsdRate={btcUsdRate}
                   className="text-lg font-semibold"
                 />
-                {change != null && (
+                {changeUsd != null && (
                   <span
                     className={cn(
                       "text-xs tabular-nums",
-                      change > 0
+                      changeUsd > 0
                         ? "text-emerald-600 dark:text-emerald-400"
-                        : change < 0
+                        : changeUsd < 0
                           ? "text-red-600 dark:text-red-400"
                           : "text-muted-foreground"
                     )}
                   >
-                    {change > 0 ? "+" : ""}
+                    {changeUsd > 0 ? "+" : ""}
                     {changePct != null ? `${changePct.toFixed(1)}%` : ""}
                   </span>
                 )}
@@ -156,7 +155,11 @@ export function LensCard({ lens, currency, btcUsdRate }: LensCardProps) {
               <Tooltip
                 content={({ active, payload, label: tipLabel }) => {
                   if (!active || !payload?.[0]) return null;
-                  const v = payload[0].value as number;
+                  const usd = payload[0].value as number;
+                  const display =
+                    btcUsdRate && dc.displayCurrency !== "USD"
+                      ? dc.convert(usd, btcUsdRate)
+                      : usd;
                   return (
                     <div className="rounded-lg bg-popover px-2 py-1 text-xs ring-1 ring-border shadow-md">
                       <p className="text-muted-foreground">
@@ -164,8 +167,8 @@ export function LensCard({ lens, currency, btcUsdRate }: LensCardProps) {
                       </p>
                       <p className="font-medium tabular-nums">
                         {dc.displayCurrency !== "USD"
-                          ? dc.format(v)
-                          : `$${v.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
+                          ? dc.format(display)
+                          : `$${display.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
                       </p>
                     </div>
                   );

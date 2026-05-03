@@ -36,55 +36,59 @@ export function LensHero({
   const { data, isLoading } = useRecapDrillDown(portfolioId, assetIds, from);
   const dc = useDisplayCurrency();
 
-  const points = useMemo(() => {
+  // Keep series in USD; MoneyDisplay handles BTC/sats conversion via
+  // btcUsdRate. Pre-converting AND letting MoneyDisplay convert again
+  // produces a divide-by-rate-twice bug.
+  const pointsUsd = useMemo(() => {
     if (!data?.series) return [];
-    return data.series.map((pt) => {
-      let val = pt.value;
-      if (btcUsdRate && dc.displayCurrency !== "USD") {
-        val = dc.convert(val, btcUsdRate);
-      }
-      return val;
-    });
-  }, [data, btcUsdRate, dc]);
+    return data.series.map((pt) => pt.value);
+  }, [data]);
 
-  const latest = points.length > 0 ? points[points.length - 1] : null;
-  const earliest = points.length > 1 ? points[0] : null;
-  const change = latest != null && earliest != null ? latest - earliest : null;
+  const latestUsd = pointsUsd.length > 0 ? pointsUsd[pointsUsd.length - 1] : null;
+  const earliestUsd = pointsUsd.length > 1 ? pointsUsd[0] : null;
+  const changeUsd =
+    latestUsd != null && earliestUsd != null ? latestUsd - earliestUsd : null;
   const changePct =
-    change != null && earliest && earliest !== 0
-      ? (change / Math.abs(earliest)) * 100
+    changeUsd != null && earliestUsd && earliestUsd !== 0
+      ? (changeUsd / Math.abs(earliestUsd)) * 100
       : null;
 
   if (isLoading) {
     return <Skeleton className="h-16 w-64" />;
   }
 
+  // Convert change to display currency only at render time.
+  const changeDisplay =
+    changeUsd != null && btcUsdRate && dc.displayCurrency !== "USD"
+      ? dc.convert(changeUsd, btcUsdRate)
+      : changeUsd;
+
   return (
     <div className="space-y-3">
       <div className="flex items-baseline gap-3">
-        {latest != null ? (
+        {latestUsd != null ? (
           <>
             <MoneyDisplay
-              amount={latest}
+              amount={latestUsd}
               currency={currency}
               btcUsdRate={btcUsdRate}
               className="text-3xl font-semibold tabular-nums"
             />
-            {change != null && (
+            {changeUsd != null && changeDisplay != null && (
               <span
                 className={cn(
                   "text-sm tabular-nums",
-                  change > 0
+                  changeUsd > 0
                     ? "text-emerald-600 dark:text-emerald-400"
-                    : change < 0
+                    : changeUsd < 0
                       ? "text-red-600 dark:text-red-400"
                       : "text-muted-foreground"
                 )}
               >
-                {change > 0 ? "+" : ""}
+                {changeUsd > 0 ? "+" : ""}
                 {dc.displayCurrency !== "USD"
-                  ? dc.format(change)
-                  : `$${change.toFixed(0)}`}
+                  ? dc.format(changeDisplay)
+                  : `$${changeDisplay.toFixed(0)}`}
                 {changePct != null && (
                   <>
                     {" "}
