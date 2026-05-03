@@ -142,7 +142,7 @@ export const useUIStore = create<UIStore>()(persist((set) => ({
   valuesMasked: false,
   toggleValuesMasked: () => set((state) => ({ valuesMasked: !state.valuesMasked })),
 
-  compactNumbers: true,
+  compactNumbers: false,
   toggleCompactNumbers: () => set((state) => ({ compactNumbers: !state.compactNumbers })),
 
   hideDust: false,

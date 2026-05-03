@@ -9,6 +9,7 @@ import {
   LayoutGridIcon,
   MenuIcon,
   PlugIcon,
+  TableIcon,
   UploadIcon,
   WalletCardsIcon,
 } from "lucide-react";
@@ -217,6 +218,23 @@ function SidebarContent({
                   btcUsdRate={activePortfolio.btcUsdRate}
                   className="hidden md:inline text-sm tabular-nums text-muted-foreground group-[.active-nav]:text-sidebar-foreground"
                 />
+              </Link>
+
+              <Separator className="my-2 bg-sidebar-border/50" />
+
+              <Link
+                href="/recap"
+                onClick={onNavigate}
+                className={`group flex items-center justify-between rounded-card px-3 py-3 md:py-2 text-base md:text-sm transition-colors ${
+                  pathname === "/recap"
+                    ? "active-nav bg-sidebar-accent text-sidebar-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <TableIcon className="size-4" />
+                  Recap
+                </span>
               </Link>
             </nav>
 
