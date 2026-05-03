@@ -1,0 +1,236 @@
+{
+  "url": "https://app.kubera.com/assets?portfolio_id=7407c1f8-cfbf-4b81-8f38-be9f4764e8eb#sheet_id=7c0a2b81-3580-43b8-99fb-91d3a9d0cfff",
+  "title": "Assets • Kubera",
+  "main": {
+    "tag": "body",
+    "w": 1440,
+    "h": 900,
+    "children": [
+      {
+        "tag": "noscript",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "div",
+        "id": "root",
+        "w": 1440,
+        "h": 900,
+        "children": [
+          {
+            "tag": "div",
+            "cls": "sc-lcIcpc eWzyxf",
+            "w": 1440,
+            "h": 900,
+            "children": [
+              {
+                "tag": "div",
+                "cls": "sc-iFame krKWFD",
+                "w": 1440,
+                "h": 900,
+                "children": [
+                  {
+                    "tag": "div",
+                    "cls": "sc-hkaZBZ dNLSpI sc-diwAlR fdwiiv",
+                    "w": 1440,
+                    "h": 900
+                  },
+                  {
+                    "tag": "div",
+                    "cls": "sc-bSRUti dNTvVf sc-hHmZCR iXvHWQ",
+                    "w": 222,
+                    "h": 900
+                  },
+                  {
+                    "tag": "div",
+                    "cls": "sc-juvPSd yUcXC dashboard-container",
+                    "w": 1218,
+                    "h": 900
+                  },
+                  {
+                    "tag": "div",
+                    "cls": "sc-hUtWQB jamUCp",
+                    "w": 42,
+                    "h": 42
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "cls": "sc-ixorMa dkPwtB",
+                "w": 1,
+                "h": 1,
+                "children": [
+                  {
+                    "tag": "div",
+                    "cls": "sc-cqnacC bcWKMy",
+                    "w": 1,
+                    "h": 20
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "id": "yodlee-script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "id": "plaid-script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "id": "finicity-script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "id": "trezor-script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "div",
+        "id": "lean-link",
+        "w": 1440,
+        "h": 0
+      },
+      {
+        "tag": "iframe",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "script",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "div",
+        "cls": "sc-gNJABI iExwdT",
+        "w": 0,
+        "h": 0,
+        "children": [
+          {
+            "tag": "div",
+            "cls": "fixed-section-wrapper",
+            "w": 0,
+            "h": 0,
+            "children": [
+              {
+                "tag": "div",
+                "cls": "sc-yZwTr dLbDRo",
+                "w": 0,
+                "h": 0,
+                "children": [
+                  {
+                    "tag": "div",
+                    "cls": "sc-fjhmcy ekFESC",
+                    "w": 0,
+                    "h": 0
+                  },
+                  {
+                    "tag": "div",
+                    "cls": "sc-hwcHae kuhCgi",
+                    "w": 0,
+                    "h": 0
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "cls": "sc-yZwTr dLbDRo",
+                "w": 0,
+                "h": 0,
+                "children": [
+                  {
+                    "tag": "div",
+                    "cls": "sc-fjhmcy ekFESC",
+                    "w": 0,
+                    "h": 0
+                  },
+                  {
+                    "tag": "div",
+                    "cls": "sc-hwcHae kuhCgi",
+                    "w": 0,
+                    "h": 0
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "cls": "sc-yZwTr gRlVrc",
+                "w": 0,
+                "h": 0,
+                "children": [
+                  {
+                    "tag": "div",
+                    "cls": "sc-fjhmcy ekFESC",
+                    "w": 0,
+                    "h": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "id": "rfd-announcement-:re:",
+        "w": 1,
+        "h": 1
+      },
+      {
+        "tag": "div",
+        "id": "rfd-hidden-text-:re:-hidden-text-:rf:",
+        "w": 0,
+        "h": 0
+      },
+      {
+        "tag": "iframe",
+        "w": 1440,
+        "h": 1
+      },
+      {
+        "tag": "div",
+        "id": "beacon-container",
+        "w": 1440,
+        "h": 0
+      },
+      {
+        "tag": "iframe",
+        "w": 1440,
+        "h": 1
+      }
+    ]
+  }
+}

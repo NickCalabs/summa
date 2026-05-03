@@ -1,0 +1,186 @@
+{
+  "results": {
+    "body": {
+      "font-family": "\"Inter var\", Inter, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 0)",
+      "border-radius": "0px",
+      "padding": "0px",
+      "margin": "0px",
+      "box-shadow": "none",
+      "transition": "all",
+      "width": 1440,
+      "height": 900,
+      "tag": "BODY",
+      "cls": ""
+    },
+    "h1": null,
+    "h2": null,
+    "h3": null,
+    "sidebar": null,
+    "sidebarItem": null,
+    "topBar": null,
+    "card": null,
+    "tableHeader": null,
+    "tableCell": null,
+    "button": {
+      "sel": "button",
+      "font-family": "Inter, sans-serif",
+      "font-size": "11px",
+      "font-weight": "700",
+      "line-height": "13px",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 0)",
+      "border-radius": "0px",
+      "padding": "0px 0px 3px",
+      "margin": "0px 0px 0px 15px",
+      "box-shadow": "none",
+      "transition": "all",
+      "width": 49,
+      "height": 16,
+      "tag": "BUTTON",
+      "cls": "sc-gfeeSI kgzgKy"
+    },
+    "input": null,
+    "link": {
+      "sel": "a",
+      "font-family": "\"Inter var\", Inter, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 238)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 238)",
+      "border-radius": "0px",
+      "padding": "0px",
+      "margin": "0px 0px 0px 12px",
+      "box-shadow": "none",
+      "transition": "all",
+      "width": 150,
+      "height": 30,
+      "tag": "A",
+      "cls": "sc-cbdVDE eQMVBu"
+    }
+  },
+  "topColors": [
+    [
+      "rgb(0, 0, 0)",
+      2430
+    ],
+    [
+      "rgb(255, 0, 0)",
+      27
+    ],
+    [
+      "rgb(0, 167, 7)",
+      12
+    ],
+    [
+      "rgba(0, 0, 0, 0.5)",
+      10
+    ],
+    [
+      "rgba(0, 0, 0, 0.7)",
+      6
+    ],
+    [
+      "rgba(36, 36, 36, 0.6)",
+      4
+    ],
+    [
+      "rgba(0, 0, 0, 0.6)",
+      3
+    ],
+    [
+      "rgb(0, 116, 252)",
+      3
+    ],
+    [
+      "rgb(0, 0, 238)",
+      2
+    ],
+    [
+      "rgb(66, 66, 66)",
+      2
+    ],
+    [
+      "rgb(255, 255, 255)",
+      1
+    ]
+  ],
+  "topBgs": [
+    [
+      "rgba(0, 0, 0, 0)",
+      2462
+    ],
+    [
+      "rgb(255, 255, 255)",
+      22
+    ],
+    [
+      "rgb(121, 215, 98)",
+      6
+    ],
+    [
+      "rgb(219, 219, 219)",
+      3
+    ],
+    [
+      "rgb(252, 252, 252)",
+      2
+    ],
+    [
+      "rgba(255, 255, 255, 0.97)",
+      1
+    ],
+    [
+      "rgba(0, 0, 0, 0.07)",
+      1
+    ],
+    [
+      "rgb(255, 0, 0)",
+      1
+    ],
+    [
+      "rgb(0, 0, 0)",
+      1
+    ],
+    [
+      "rgb(218, 101, 101)",
+      1
+    ]
+  ],
+  "topFonts": [
+    [
+      "\"Inter var\", Inter, sans-serif",
+      2439
+    ],
+    [
+      "Inter",
+      29
+    ],
+    [
+      "Inter, sans-serif",
+      24
+    ],
+    [
+      "\"Roboto Condensed\", \"Inter var\", Inter, sans-serif",
+      7
+    ],
+    [
+      "\"PT Serif Caption\"",
+      1
+    ]
+  ],
+  "rootVars": {},
+  "url": "https://app.kubera.com/networth?portfolio_id=7407c1f8-cfbf-4b81-8f38-be9f4764e8eb",
+  "title": "Net Worth • Kubera"
+}

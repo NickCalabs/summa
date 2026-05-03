@@ -1,0 +1,184 @@
+{
+  "GET /api/v1/auth/user/family/member": {
+    "count": 14,
+    "statuses": {
+      "200": 14
+    },
+    "sampleBody": "{\"data\":[{\"email\":\"stablesir@proton.me\",\"id\":\"family-owner\",\"name\":\"nick\",\"allowAll\":1,\"write\":1,\"orgId\":\"kubera\",\"parentId\":\"\",\"status\":\"\",\"tsLastAccess\":1776272720,\"userId\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\"}],\"errorCode\":0}"
+  },
+  "GET /api/v1/public/clientinfo/web": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"type\":\"web\",\"version\":\"6.4.3.12866\",\"lastBreakingVersion\":\"6.4.3.12866\",\"releaseNote\":\"- support for xyz\\r\\n- fixed ....\",\"tsRelease\":1776088274},\"errorCode\":0}"
+  },
+  "GET /api/v1/auth/user/beneficiary": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":[{\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"name\":null,\"email\":null,\"phone\":null,\"reminderCount\":0,\"tsLastReminder\":null,\"angelName\":null,\"angelEmail\":null,\"angelPhone\":null,\"angelReminderCount\":0,\"angelTsLastReminder\":null,\"downloadUrl\":null,\"downloadCount\":0,\"tsLastDownload\":null,\"angelDownloadCount\":0,\"angelDownloadUrl\":null,\"angelTsLastDownload\":null,\"tsModified\":1670334615,\"tsArchive\":null},{\"portfolioId\":\"cf2600a9-5435-4504-85d3-db663aa97eee\",\"name\":null,\"email\":null,\"p"
+  },
+  "GET /api/v1/auth/user/preference": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"isFirstSessionRegistered\":true,\"isAssetInitialTipShownForPortfolio\":[\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"f4e8c839-15db-4442-8867-616f67cd65a7\"],\"isDebtInitialTipShownForPortfolio\":[\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"f4e8c839-15db-4442-8867-616f67cd65a7\"],\"isInsuranceInitialTipShownForPortfolio\":[\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\"],\"isSidebarCollapsed\":false,\"canShowLinkAccountTip\":false,\"isLinkAccountTipShown\":false,\"isMultiCurrencyTipShown\":true,\"portfolioTickerShortcutMa"
+  },
+  "GET /api/v1/auth/user": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"id\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\",\"name\":\"nick\",\"email\":\"stablesir@proton.me\",\"phone\":null,\"picture\":\"\",\"providerType\":\"Cognito\",\"utcOffset\":240,\"tz\":\"America/New_York\",\"lastAccess\":\"2026-04-15T17:05:20.000Z\",\"inactivityThreshold\":45,\"reminderCount\":0,\"storageLimit\":2147483648,\"trialDay\":14,\"countryCode\":\"US\",\"mfaType\":\"nomfa\",\"orgId\":\"kubera\",\"slno\":28140,\"discount\":0,\"discountInfo\":null,\"discordUserId\":\"316927117038321664\",\"tsLastReminder\":null,\"tsCreated\":1670334614,\"tsArch"
+  },
+  "GET /api/v1/auth/portfolio": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"hash\":\"\",\"portfolio\":[{\"id\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"name\":\"Nick\",\"currency\":\"USD\",\"tickerId\":150,\"userId\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\",\"networthChartScenario\":\"null\",\"notificationOption\":\"{\\\"dayChangeAssets\\\":false,\\\"dayChangeLimitEnabled\\\":false,\\\"dayChangeLimit\\\":0.5,\\\"connectionErrors\\\":true}\",\"tsStartDate\":null,\"tsPlanningTargetDate\":null,\"taxRate\":null,\"picture\":\"\",\"description\":\"\",\"tsCreated\":1670334615,\"planning\":{\"scenario\":[{\"id\":\"7407c1f8-cfbf-4b81-8"
+  },
+  "GET /api/v1/auth/utility/tickerInfoV3": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"aiSupportedFileTypes\":[\"application/json\",\"application/pdf\",\"application/vnd.ms-excel\",\"image/jpeg\",\"image/jpg\",\"image/png\",\"image/webp\",\"test\",\"text/csv\",\"text/plain\"],\"allIndices\":[{\"checkForSplit\":false,\"code\":\"GSPC\",\"currency\":\"USD\",\"id\":\"GSPC.INDX\",\"name\":\"S&P 500\",\"symbol\":\"GSPC.INDX\",\"market\":\"INDX\",\"type\":\"stock\",\"ticker\":\"GSPC.INDX\",\"longName\":\"S&P 500\",\"shortName\":\"S&P 500\",\"default\":true,\"rank\":1},{\"checkForSplit\":false,\"code\":\"DJI\",\"currency\":\"USD\",\"id\":\"DJI.INDX\",\"name\":\"D"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/fundSchedule": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":[],\"errorCode\":0}"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/chartAndCAGR": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"portfolioName\":\"Nick\",\"portfolioCurrency\":\"USD\",\"portfolioCurrencyTickerId\":150,\"portfolioDataPoints\":{\"groupByDay\":{\"currency\":\"USD\",\"netWorth\":[{\"assetTotal\":113560.89177221,\"rvAssetTotal\":113560.89177220839,\"date\":\"2026-03-15\",\"debtTotal\":22639.79,\"rvDebtTotal\":22639.79,\"investibleTotal\":113560.89177221,\"rvInvestibleTotal\":113560.89177220839,\"value\":90921.10177221,\"rvValue\":90921.10177220838},{\"assetTotal\":114850.35167608,\"rvAsset"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/custodiansRecap": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"portfolioLinkedCustodians\":[],\"portfolios\":[{\"groupByDay\":{\"currency\":\"USD\",\"netWorth\":[{\"asset\":[{\"id\":\"100\",\"value\":50,\"rv\":50},{\"id\":\"44\",\"value\":0,\"rv\":0},{\"id\":\"3\",\"value\":75.09,\"rv\":75.09},{\"id\":\"45\",\"value\":193.25897727999998,\"rv\":193.25897727999998},{\"id\":\"38\",\"value\":11049.6,\"rv\":11049.6},{\"id\":\"46\",\"value\":2374.99513088,\"rv\":2374.99513088},{\"id\":\"47\",\"value\":54519.041681919996,\"rv\":54519.041681919996},{\"id\":\"49\",\"value\":11237.667875199999,\"rv\":11237.667875199999},{\"id\":\"50\",\""
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/summaryStat": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"clubPercentile\":6.87,\"clubs\":[250000,1000000,2500000,5000000,10000000,25000000],\"primaryResidenceValue\":0,\"primaryResidenceMortgageValue\":0,\"clubMedians\":{\"cashRatio\":15.73,\"investableRatio\":100,\"primaryResidenceRatio\":197.315,\"ytd_networth\":-0.95,\"ytd_investable\":-0.75,\"qtd_networth\":1.64,\"qtd_investable\":1.72,\"yearly_networth\":9.995000000000001,\"yearly_investable\":10.44,\"alltime_networth\":13.035,\"alltime_investable\":14.09}},\"errorCode\":0}"
+  },
+  "GET /api/v1/auth/utility/analytics": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{},\"errorCode\":0}"
+  },
+  "GET /api/v1/auth/portfolio/holding": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":{\"portfolio\":{\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\":{\"holding\":[{\"id\":\"c0db97c2-a154-48cc-8fc4-65c7e72cdbdc_BTC.CC\",\"availableCredit\":null,\"parentId\":\"c0db97c2-a154-48cc-8fc4-65c7e72cdbdc\",\"relatedId\":null,\"sectionId\":\"6d6890aa-3a71-44b5-9fee-c66c74b661f6\",\"name\":\"BTC\",\"srcName\":null,\"accountNumber\":\"exchange\",\"cost\":null,\"costExchangeRate\":null,\"costTickerId\":null,\"value\":0.13189404,\"valueTickerId\":194,\"description\":null,\"note\":null,\"ownership\":100,\"past\":0,\"star\":0,\"symbol\":\"BTC\",\"isC"
+  },
+  "GET /api/v1/auth/portfolio/connectivityCenter": {
+    "count": 7,
+    "statuses": {
+      "200": 7
+    },
+    "sampleBody": "{\"data\":[{\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"connectivityCenter\":[{\"aggregator\":\"crypto_oauth\",\"assetNames\":[\"Coinbase - Spot\"],\"custodianId\":\"c0db97c2-a154-48cc-8fc4-65c7e72cdbdc\",\"custodianName\":\"Coinbase - Spot\",\"disconnect\":0,\"linkType\":10,\"providerAccountId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb-29c76777-5a27-5627-8ee4-a2d55bb9a8f7\",\"providerId\":\"coinbase\",\"providerName\":\"Coinbase\",\"status\":0,\"statusInfo\":\"\",\"type\":0,\"uptimeScore\":100,\"successCount\":100},{\"aggregator\":\"cr"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/change/size/100/type/day_year/tsStartDate/1670284800": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":{\"change\":{\"day\":{\"asset\":[{\"archived\":0,\"currentValue\":168.15,\"name\":\"Chase - TOTAL CHECKING - 5988\",\"value\":-260.17999999999995,\"cids\":[\"88762d17-689c-4976-93d3-59e9bf32bfce\"]},{\"archived\":0,\"currentValue\":94190.46152259,\"name\":\"Bitcoin\",\"value\":-238.5963419100026,\"cids\":[\"0415c6b4-46c1-48f6-8c19-ee6da7f4bbe4\",\"5fcc1cce-7197-4ca9-a129-8cef85d13e85\",\"c070a289-a168-4b99-9fa3-beb9086b1256\",\"f93abb8a-480a-43cb-9e94-f25414faaa8c\",\"9d0227fc-8bc7-40e2-a78b-ce6712ec6421\",\"c7a33ebb-553b-48c8-ab"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/change/size/100/type/all/tsStartDate/1670284800": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":{\"change\":{\"day\":{\"asset\":[{\"archived\":0,\"currentValue\":168.15,\"name\":\"Chase - TOTAL CHECKING - 5988\",\"value\":-260.17999999999995,\"cids\":[\"88762d17-689c-4976-93d3-59e9bf32bfce\"]},{\"archived\":0,\"currentValue\":94190.46152259,\"name\":\"Bitcoin\",\"value\":-238.5963419100026,\"cids\":[\"0415c6b4-46c1-48f6-8c19-ee6da7f4bbe4\",\"5fcc1cce-7197-4ca9-a129-8cef85d13e85\",\"c070a289-a168-4b99-9fa3-beb9086b1256\",\"f93abb8a-480a-43cb-9e94-f25414faaa8c\",\"9d0227fc-8bc7-40e2-a78b-ce6712ec6421\",\"c7a33ebb-553b-48c8-ab"
+  },
+  "GET /api/v1/auth/link/popularInstitution/Debt": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":[{\"groupId\":26624,\"countryCode\":null,\"country\":null,\"category\":\"both\",\"name\":\"Ethereum\",\"linkProviderId\":\"ethereum\",\"icon\":\"ethereum.png\",\"type\":\"crypto\",\"aggregator\":\"zerion\",\"showAccountList\":1,\"subTitle\":\"Wallet Address\",\"plan\":\"a\",\"plaidSupported\":0,\"helpText\":null,\"helpUrl\":null,\"message\":null,\"consent\":0,\"connectParam\":null,\"providerType\":null,\"aggregatorOptions\":[{\"aggregator\":\"zerion\",\"defaultPlan\":\"a\",\"consent\":0,\"linkProviderId\":\"ethereum\",\"linkType\":9,\"plan\":\"a\",\"showAccountLi"
+  },
+  "GET /api/v1/auth/link/popularInstitution/Asset": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":[{\"groupId\":26624,\"countryCode\":null,\"country\":null,\"category\":\"both\",\"name\":\"Ethereum\",\"linkProviderId\":\"ethereum\",\"icon\":\"ethereum.png\",\"type\":\"crypto\",\"aggregator\":\"zerion\",\"showAccountList\":1,\"subTitle\":\"Wallet Address\",\"plan\":\"a\",\"plaidSupported\":0,\"helpText\":null,\"helpUrl\":null,\"message\":null,\"consent\":0,\"connectParam\":null,\"providerType\":null,\"aggregatorOptions\":[{\"aggregator\":\"zerion\",\"defaultPlan\":\"a\",\"consent\":0,\"linkProviderId\":\"ethereum\",\"linkType\":9,\"plan\":\"a\",\"showAccountLi"
+  },
+  "GET /api/v1/auth/portfolio/irrUpdatedV2/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":[{\"id\":\"0863d9bf-61f2-45b5-9b72-06bcb5b939c5\",\"availableCredit\":0,\"parentId\":null,\"relatedId\":null,\"sectionId\":\"f86cb346-1d58-4929-a436-4a95dfa4edf3\",\"name\":\"Fidelity Investments - Individual - xxxx6311\",\"srcName\":null,\"accountNumber\":null,\"cost\":5391.54,\"costExchangeRate\":\"{\\\"date\\\":\\\"2025-04-25\\\",\\\"tickerId\\\":194,\\\"rate\\\":0.000010476030841434798}\",\"costTickerId\":150,\"value\":14608.20106,\"valueTickerId\":150,\"description\":null,\"note\":null,\"ownership\":100,\"rate\":null,\"past\":0,\"star\":0,\"sym"
+  },
+  "POST /api/v1/auth/section/irrUpdate": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":[{\"id\":\"f86cb346-1d58-4929-a436-4a95dfa4edf3\",\"name\":\"TradFi\",\"sheetId\":\"cc74bf56-287a-4ede-a06f-7940b9326f29\",\"sortKey\":\"0\",\"expanded\":1,\"columnSortKey\":\"Value\",\"columnSortOrder\":\"descending\",\"irr\":\"{\\\"all\\\":{\\\"cashIn\\\":5391.54,\\\"cashOut\\\":0,\\\"cashTickerId\\\":150,\\\"dateEnd\\\":\\\"2026-04-15\\\",\\\"dateStart\\\":\\\"2025-04-25\\\",\\\"error\\\":\\\"\\\",\\\"timestamp\\\":1776272814,\\\"value\\\":170.9467250544371,\\\"cashInType\\\":\\\"cost\\\"},\\\"ytd\\\":{\\\"cashIn\\\":15962.47452,\\\"cashOut\\\":0,\\\"cashTickerId\\\":150,\\\"dateEnd\\\":"
+  },
+  "POST /api/v1/auth/portfolio/sheet/irrUpdate": {
+    "count": 6,
+    "statuses": {
+      "200": 6
+    },
+    "sampleBody": "{\"data\":[{\"id\":\"cc74bf56-287a-4ede-a06f-7940b9326f29\",\"category\":\"Asset\",\"name\":\"Investments\",\"sortKey\":\"02\",\"irr\":\"{\\\"all\\\":{\\\"cashIn\\\":5391.54,\\\"cashOut\\\":0,\\\"cashTickerId\\\":150,\\\"dateEnd\\\":\\\"2026-04-15\\\",\\\"dateStart\\\":\\\"2025-04-25\\\",\\\"error\\\":\\\"\\\",\\\"timestamp\\\":1776272815,\\\"value\\\":170.9467250544371,\\\"cashInType\\\":\\\"cost\\\"},\\\"ytd\\\":{\\\"cashIn\\\":30463.3219552434,\\\"cashOut\\\":0,\\\"cashTickerId\\\":150,\\\"dateEnd\\\":\\\"2026-04-15\\\",\\\"dateStart\\\":\\\"2025-12-31\\\",\\\"error\\\":\\\"\\\",\\\"timestamp\\\":1776272817,\\\"v"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/change/size/100/type/day/tsStartDate/1670334615": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": "{\"data\":{\"change\":{\"day\":{\"asset\":[{\"archived\":0,\"currentValue\":94190.46152259,\"name\":\"Bitcoin\",\"value\":-392.6363284500004,\"cids\":[\"0415c6b4-46c1-48f6-8c19-ee6da7f4bbe4\",\"5fcc1cce-7197-4ca9-a129-8cef85d13e85\",\"c070a289-a168-4b99-9fa3-beb9086b1256\",\"f93abb8a-480a-43cb-9e94-f25414faaa8c\",\"9d0227fc-8bc7-40e2-a78b-ce6712ec6421\",\"c7a33ebb-553b-48c8-abfd-65dca5f3a659\",\"ea16908d-25e0-4e39-aca6-792775953aa0\",\"f3459242-e531-47b2-8231-e32e142e43fc\",\"c0db97c2-a154-48cc-8fc4-65c7e72cdbdc_BTC.CC\"]},{\"archive"
+  },
+  "POST /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/diyChart": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": "{\"data\":{\"portfolioId\":\"7407c1f8-cfbf-4b81-8f38-be9f4764e8eb\",\"data\":\"{\\\"columns\\\":{\\\"column1\\\":{\\\"chartIds\\\":[\\\"report_id=chart_option%3Dasset_classes%26chart_timerange%3Dtoday%26chart_type%3Dtotals%26report_node_id%3DAssets&chart_style=doughnut&chart_content=contents&is_checked=true&is_default_chart=true&chart_name=Assets x Class&should_be_checked_by_default=true\\\",\\\"report_id=chart_option%3Dsheets_and_sections%26chart_timerange%3Dtoday%26chart_type%3Dtotals%26report_node_id%3D7c0a2b81-3580-43"
+  },
+  "POST /api/v1/auth/user": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": "{\"data\":{\"id\":\"dec1652d-25a9-48fe-96f5-cbaf2a0b13ba\",\"name\":\"nick\",\"email\":\"stablesir@proton.me\",\"phone\":null,\"picture\":\"\",\"providerType\":\"Cognito\",\"utcOffset\":0,\"tz\":\"UTC\",\"lastAccess\":\"2026-04-15T17:06:38.000Z\",\"inactivityThreshold\":45,\"reminderCount\":0,\"storageLimit\":2147483648,\"trialDay\":14,\"countryCode\":\"US\",\"mfaType\":\"nomfa\",\"orgId\":\"kubera\",\"slno\":28140,\"discount\":0,\"discountInfo\":null,\"discordUserId\":\"316927117038321664\",\"tsLastReminder\":null,\"tsCreated\":1670334614,\"tsArchive\":null,\"tsSu"
+  },
+  "GET /api/v1/auth/portfolio/7407c1f8-cfbf-4b81-8f38-be9f4764e8eb/change/size/100/type/all/tsStartDate/1670334615": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": "{\"data\":{\"change\":{\"day\":{\"asset\":[{\"archived\":0,\"currentValue\":168.15,\"name\":\"Chase - TOTAL CHECKING - 5988\",\"value\":-260.17999999999995,\"cids\":[\"88762d17-689c-4976-93d3-59e9bf32bfce\"]},{\"archived\":0,\"currentValue\":94190.46152259,\"name\":\"Bitcoin\",\"value\":-238.5963419100026,\"cids\":[\"0415c6b4-46c1-48f6-8c19-ee6da7f4bbe4\",\"5fcc1cce-7197-4ca9-a129-8cef85d13e85\",\"c070a289-a168-4b99-9fa3-beb9086b1256\",\"f93abb8a-480a-43cb-9e94-f25414faaa8c\",\"9d0227fc-8bc7-40e2-a78b-ce6712ec6421\",\"c7a33ebb-553b-48c8-ab"
+  },
+  "POST /api/v1/auth/section/custodian/batchRefresh": {
+    "count": 1,
+    "statuses": {
+      "200": 1
+    },
+    "sampleBody": "{\"data\":{\"custodian\":[],\"hash\":\"{\\\"custodian\\\":[\\\"0863d9bf-61f2-45b5-9b72-06bcb5b939c5\\\",\\\"c0db97c2-a154-48cc-8fc4-65c7e72cdbdc\\\",\\\"4629a5de-60aa-4832-a6ac-e56bcc02c1a8\\\",\\\"bfc8e1e7-25d1-4763-a56c-9e636ac8be5c\\\",\\\"13a416e0-2f57-43f8-8623-1377f1a29235\\\",\\\"f62b2225-7bde-4177-87f8-905348fb2079\\\",\\\"743da52a-2fc4-455e-bb9e-5f27ba01c4a4\\\",\\\"05e3cdf6-e264-4dae-87f9-28eae4ecc946\\\",\\\"88762d17-689c-4976-93d3-59e9bf32bfce\\\",\\\"605da31b-608f-4820-83b6-66d339b0cf90\\\"],\\\"refreshId\\\":\\\"8c42ed3e-a57e-41f7-8f1d-e"
+  }
+}
