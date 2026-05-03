@@ -38,6 +38,7 @@ import {
   parseCurrencyInput,
 } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { getProviderLabel } from "@/lib/asset-helpers";
 
 interface AccountDetailViewProps {
   portfolioId: string;
@@ -1923,19 +1924,6 @@ const TRANSACTION_TYPE_LABELS: Record<Transaction["type"], string> = {
   deposit: "Deposit",
   withdraw: "Withdraw",
 };
-
-function getProviderLabel(providerType: string) {
-  switch (providerType) {
-    case "plaid":
-      return "Plaid synced";
-    case "ticker":
-      return "Ticker tracked";
-    case "manual":
-      return "Manual";
-    default:
-      return providerType;
-  }
-}
 
 function getContributionAmount(tx: Transaction) {
   const total = Number(tx.total);
