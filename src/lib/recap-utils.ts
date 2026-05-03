@@ -114,6 +114,7 @@ export interface AggregationKeyInput {
 // Map CoinGecko IDs to canonical symbols so all sources of the same coin merge.
 const COINGECKO_TO_SYMBOL: Record<string, string> = {
   bitcoin: "BTC",
+  "wrapped-bitcoin": "WBTC",
   ethereum: "ETH",
   solana: "SOL",
   litecoin: "LTC",
