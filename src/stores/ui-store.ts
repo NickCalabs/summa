@@ -28,6 +28,10 @@ interface UIStore {
   openCsvImportDialog: () => void;
   closeCsvImportDialog: () => void;
 
+  importDialogOpen: boolean;
+  openImportDialog: () => void;
+  closeImportDialog: () => void;
+
   addFlowOpen: boolean;
   addFlowSheetType: "assets" | "debts" | null;
   addFlowDefaultSectionId: string | null;
@@ -104,6 +108,10 @@ export const useUIStore = create<UIStore>()(persist((set) => ({
   csvImportDialogOpen: false,
   openCsvImportDialog: () => set({ csvImportDialogOpen: true }),
   closeCsvImportDialog: () => set({ csvImportDialogOpen: false }),
+
+  importDialogOpen: false,
+  openImportDialog: () => set({ importDialogOpen: true }),
+  closeImportDialog: () => set({ importDialogOpen: false }),
 
   addFlowOpen: false,
   addFlowSheetType: null,
