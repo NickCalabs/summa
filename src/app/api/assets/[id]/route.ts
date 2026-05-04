@@ -9,6 +9,7 @@ import {
   validateUuid,
 } from "@/lib/api-helpers";
 import { parseBody, updateAsset } from "@/types";
+import { upsertTodayAssetSnapshot } from "@/lib/snapshots";
 
 export async function GET(
   request: Request,
@@ -98,6 +99,16 @@ export async function PATCH(
       .set(updateData)
       .where(eq(assets.id, id))
       .returning();
+
+    // Refresh today's snapshot so lens/recap views stay live (otherwise
+    // they'd lag until tonight's midnight cron run).
+    if (
+      updateData.currentValue !== undefined ||
+      updateData.quantity !== undefined ||
+      updateData.currentPrice !== undefined
+    ) {
+      await upsertTodayAssetSnapshot(id);
+    }
 
     return jsonResponse(updated);
   } catch (error) {
