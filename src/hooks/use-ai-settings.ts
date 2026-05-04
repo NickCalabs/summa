@@ -61,8 +61,12 @@ export function useUpdateAiSettings() {
 
 export function useTestAiConnection() {
   return useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/settings/ai/test", { method: "POST" });
+    mutationFn: async (override?: { endpoint?: string; model?: string | null }) => {
+      const res = await fetch("/api/settings/ai/test", {
+        method: "POST",
+        headers: override ? { "Content-Type": "application/json" } : undefined,
+        body: override ? JSON.stringify(override) : undefined,
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Test failed");
       return data;

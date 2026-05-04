@@ -140,7 +140,12 @@ export function AiSettings() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => testConnection.mutate()}
+                onClick={() =>
+                  testConnection.mutate({
+                    endpoint,
+                    model: model === AUTO_VALUE ? null : model,
+                  })
+                }
                 disabled={testConnection.isPending}
               >
                 {testConnection.isPending ? (
