@@ -12,6 +12,7 @@ import {
   UploadIcon,
   DownloadIcon,
   FilterIcon,
+  SparklesIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export function ToolbarActions({ portfolioId }: ToolbarActionsProps) {
   const toggleHideDust = useUIStore((s) => s.toggleHideDust);
   const openPlaidDialog = useUIStore((s) => s.openPlaidDialog);
   const openCsvImportDialog = useUIStore((s) => s.openCsvImportDialog);
+  const openImportDialog = useUIStore((s) => s.openImportDialog);
 
   // Sync only makes sense when we have a portfolio context; call hook unconditionally
   // and gate the UI.
@@ -125,6 +127,11 @@ export function ToolbarActions({ portfolioId }: ToolbarActionsProps) {
               <DropdownMenuItem onClick={openCsvImportDialog}>
                 <UploadIcon className="size-4 mr-2" />
                 Import CSV
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={openImportDialog}>
+                <SparklesIcon className="size-4 mr-2" />
+                Import Document (AI)
               </DropdownMenuItem>
 
               <DropdownMenuItem

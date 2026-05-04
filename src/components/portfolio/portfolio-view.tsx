@@ -38,6 +38,10 @@ const CsvImportDialog = dynamic(
   () => import("./csv-import-dialog").then((m) => ({ default: m.CsvImportDialog })),
   { ssr: false },
 );
+const ImportDialog = dynamic(
+  () => import("@/components/import/import-dialog").then((m) => ({ default: m.ImportDialog })),
+  { ssr: false },
+);
 
 interface PortfolioViewProps {
   portfolioId: string;
@@ -240,6 +244,7 @@ export function PortfolioView({ portfolioId }: PortfolioViewProps) {
           currency={portfolio.currency}
           sections={allSections}
         />
+        <ImportDialog portfolioId={portfolioId} />
       </div>
     </CurrencyProvider>
   );
