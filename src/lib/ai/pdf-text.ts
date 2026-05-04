@@ -1,4 +1,6 @@
-import { getDocument } from "pdfjs-dist";
+// Use the legacy build for Node.js environments (no DOM APIs available).
+// The default import path requires `DOMMatrix`, which doesn't exist in Node.
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   const data = new Uint8Array(buffer);
