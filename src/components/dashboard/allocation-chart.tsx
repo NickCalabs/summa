@@ -230,7 +230,7 @@ function ReportBlock({
         </div>
       ) : (
         <div className="mt-6 overflow-hidden rounded-2xl border border-border/70">
-          <div className="grid grid-cols-[minmax(0,1fr)_88px_140px] border-b border-border/70 bg-muted/20 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="grid grid-cols-[minmax(120px,1fr)_64px_auto] border-b border-border/70 bg-muted/20 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
             <span>Sheet</span>
             <span className="text-right">Share</span>
             <span className="text-right">Value</span>
@@ -241,7 +241,7 @@ function ReportBlock({
                 key={item.id}
                 type="button"
                 onClick={() => onSelect(item.id)}
-                className="grid w-full grid-cols-[minmax(0,1fr)_88px_140px] items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-muted/20"
+                className="grid w-full grid-cols-[minmax(120px,1fr)_64px_auto] items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-muted/20"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
