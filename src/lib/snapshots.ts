@@ -145,3 +145,92 @@ export async function takePortfolioSnapshot(portfolioId: string) {
     portfolioSnapshot: portfolioSnap,
   };
 }
+
+/**
+ * Upsert today's `asset_snapshots` row for a single asset.
+ *
+ * Called whenever an asset's value changes (manual PATCH, sync paths) so
+ * snapshot-based views (lens chart, recap drill-down) stay fresh between
+ * daily cron runs. Without this, a manual edit at 10am wouldn't show up on
+ * the lens until midnight UTC the next snapshot run.
+ *
+ * Best-effort: failures here log + continue, since the live `assets` table
+ * has already been updated with the authoritative value.
+ */
+export async function upsertTodayAssetSnapshot(assetId: string): Promise<void> {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    const [asset] = await db
+      .select({
+        currentValue: assets.currentValue,
+        currency: assets.currency,
+        currentPrice: assets.currentPrice,
+        quantity: assets.quantity,
+        sectionId: assets.sectionId,
+      })
+      .from(assets)
+      .where(eq(assets.id, assetId))
+      .limit(1);
+
+    if (!asset) return;
+
+    // Resolve portfolio currency via section → sheet → portfolio
+    const [section] = await db
+      .select({ sheetId: sections.sheetId })
+      .from(sections)
+      .where(eq(sections.id, asset.sectionId))
+      .limit(1);
+    if (!section) return;
+
+    const [sheet] = await db
+      .select({ portfolioId: sheets.portfolioId })
+      .from(sheets)
+      .where(eq(sheets.id, section.sheetId))
+      .limit(1);
+    if (!sheet) return;
+
+    const [portfolio] = await db
+      .select({ currency: portfolios.currency })
+      .from(portfolios)
+      .where(eq(portfolios.id, sheet.portfolioId))
+      .limit(1);
+    if (!portfolio) return;
+
+    const baseCurrency = portfolio.currency;
+    const rates =
+      asset.currency !== baseCurrency
+        ? await getExchangeRates(baseCurrency)
+        : {};
+
+    const valueInBase = convertToBase(
+      Number(asset.currentValue),
+      asset.currency,
+      baseCurrency,
+      rates
+    ).toFixed(2);
+
+    await db
+      .insert(assetSnapshots)
+      .values({
+        assetId,
+        date: today,
+        value: asset.currentValue,
+        valueInBase,
+        price: asset.currentPrice,
+        quantity: asset.quantity,
+        source: "manual",
+      })
+      .onConflictDoUpdate({
+        target: [assetSnapshots.assetId, assetSnapshots.date],
+        set: {
+          value: asset.currentValue,
+          valueInBase,
+          price: asset.currentPrice,
+          quantity: asset.quantity,
+        },
+      });
+  } catch (err) {
+    console.error(`[snapshots] upsertTodayAssetSnapshot(${assetId}) failed:`, err);
+  }
+}
