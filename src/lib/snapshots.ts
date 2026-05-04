@@ -11,7 +11,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
 import { getCurrentBtcUsd } from "@/lib/providers/cryptocompare";
 import { convertToBase } from "@/lib/currency";
-import { isLiabilityAsset } from "@/lib/portfolio-utils";
+import { aggregatePortfolioTotals } from "@/lib/snapshots-aggregate";
 
 export async function takePortfolioSnapshot(portfolioId: string) {
   const today = new Date().toISOString().split("T")[0];
@@ -100,42 +100,14 @@ export async function takePortfolioSnapshot(portfolioId: string) {
     snapshotCount++;
   }
 
-  // Compute portfolio aggregates with currency conversion
-  let totalAssets = 0;
-  let totalDebts = 0;
-  let cashOnHand = 0;
-  let investableTotal = 0;
-
-  for (const asset of assetRows) {
-    const val = convertToBase(
-      Number(asset.currentValue),
-      asset.currency,
+  const { totalAssets, totalDebts, cashOnHand, investableTotal } =
+    aggregatePortfolioTotals({
+      assetRows,
+      sectionSheetMap,
+      sheetTypeMap,
       baseCurrency,
-      rates
-    );
-    const sheetId = sectionSheetMap.get(asset.sectionId);
-    const sheetType = sheetId ? sheetTypeMap.get(sheetId) : "assets";
-    const sheet = { type: sheetType ?? "assets" };
-    const isLiability = isLiabilityAsset(sheet, asset);
-
-    if (isLiability) {
-      totalDebts += val;
-    } else {
-      totalAssets += val;
-    }
-    if (asset.isCashEquivalent) {
-      cashOnHand += val;
-    }
-    if (asset.isInvestable && !isLiability) {
-      const ownership = Number(asset.ownershipPct ?? 100) / 100;
-      investableTotal += convertToBase(
-        Number(asset.currentValue) * ownership,
-        asset.currency,
-        baseCurrency,
-        rates
-      );
-    }
-  }
+      rates,
+    });
 
   const netWorth = totalAssets - totalDebts;
 

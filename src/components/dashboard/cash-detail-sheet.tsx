@@ -20,17 +20,28 @@ function getCashAssets(portfolio: Portfolio): Array<{ asset: Asset; valueInBase:
   const result: Array<{ asset: Asset; valueInBase: number }> = [];
   const rates = portfolio.rates ?? {};
 
+  const pushIfCash = (asset: Asset, ownership: number) => {
+    if (!asset.isCashEquivalent || asset.isArchived) return;
+    const rawVal = Number(asset.currentValue) * ownership;
+    const valueInBase =
+      asset.currency !== portfolio.currency
+        ? convertToBase(rawVal, asset.currency, portfolio.currency, rates)
+        : rawVal;
+    result.push({ asset, valueInBase });
+  };
+
   for (const sheet of portfolio.sheets) {
     if (sheet.type === "debts") continue;
     for (const section of sheet.sections) {
       for (const asset of section.assets) {
-        if (asset.isCashEquivalent && !asset.isArchived) {
-          const rawVal = Number(asset.currentValue);
-          const valueInBase =
-            asset.currency !== portfolio.currency
-              ? convertToBase(rawVal, asset.currency, portfolio.currency, rates)
-              : rawVal;
-          result.push({ asset, valueInBase });
+        const ownership = Number(asset.ownershipPct ?? 100) / 100;
+        // Walk children when present (mirrors API/recomputeAggregates) so
+        // provider-grouped cash equivalents like Coinbase USDC appear here.
+        const children = asset.children ?? [];
+        if (children.length > 0) {
+          for (const child of children) pushIfCash(child, ownership);
+        } else {
+          pushIfCash(asset, ownership);
         }
       }
     }
