@@ -22,6 +22,7 @@ import { MappingStep, type MappingValue } from "./mapping-step";
 import { ConfirmationStep } from "./confirmation-step";
 import { SuccessStep } from "./success-step";
 import type { Asset } from "@/hooks/use-portfolio";
+import { computeSeverity } from "@/lib/ai/anomaly";
 
 type Step = "upload" | "extracting" | "mapping" | "confirmation" | "success";
 
@@ -119,11 +120,14 @@ export function ImportDialog({ portfolioId }: Props) {
       const mapping = mappingResult.mappings[item.account];
       if (!mapping || !mapping.assetId) continue;
       const value = String(item.balance);
+      // Don't overwrite asset.currency on import — that's user-managed asset
+      // metadata, not something the document should change. The confirmation
+      // step warns on currency mismatches; if the user proceeds, we update
+      // the value/quantity but leave the asset's currency alone.
       updates.push({
         assetId: mapping.assetId,
         field: mapping.field,
         value,
-        currency: item.currency,
       });
       fieldMappings.push({
         extractedKey: item.account,
@@ -172,22 +176,46 @@ export function ImportDialog({ portfolioId }: Props) {
         const delta = newNum - currentNum;
         const pct = currentNum !== 0 ? (delta / currentNum) * 100 : null;
 
+        // Use a safe currency code for Intl.NumberFormat — the AI sometimes
+        // returns non-ISO codes (e.g., "sats") that Intl rejects. Fall back to
+        // a plain number with the code appended.
+        function fmtCurrency(n: number, code: string): string {
+          try {
+            return n.toLocaleString(undefined, {
+              style: "currency",
+              currency: code,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+          } catch {
+            return `${n.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })} ${code}`;
+          }
+        }
+
         const fmt = (n: number) => {
           if (mapping.field === "quantity") {
             return `${parseFloat(n.toFixed(8)).toString()} ${item.currency}`;
           }
-          return n.toLocaleString(undefined, {
-            style: "currency",
-            currency: item.currency,
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+          return fmtCurrency(n, item.currency);
         };
 
         const deltaStr =
           (delta >= 0 ? "+" : "") +
           fmt(delta) +
           (pct !== null ? ` (${(delta >= 0 ? "+" : "") + pct.toFixed(1)}%)` : "");
+
+        // For quantity-based assets, the asset's "currency" represents the
+        // crypto/unit it holds, so we should compare against the extracted
+        // currency of the quantity. For value updates, same thing.
+        const { severity, warnings } = computeSeverity({
+          currentNum,
+          newNum,
+          assetCurrency: asset.currency,
+          extractedCurrency: item.currency,
+        });
 
         return {
           assetId: asset.id,
@@ -196,6 +224,8 @@ export function ImportDialog({ portfolioId }: Props) {
           currentDisplay: fmt(currentNum),
           newDisplay: fmt(newNum),
           delta: deltaStr,
+          severity,
+          warnings,
         };
       })
       .filter(Boolean) as Array<{
@@ -205,6 +235,8 @@ export function ImportDialog({ portfolioId }: Props) {
       currentDisplay: string;
       newDisplay: string;
       delta: string;
+      severity: import("@/lib/ai/anomaly").Severity;
+      warnings: string[];
     }>;
   })();
 
