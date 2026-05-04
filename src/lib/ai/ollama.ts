@@ -90,16 +90,47 @@ export function parseExtractedBalances(content: string): ExtractedBalance[] {
 
   const parsed = JSON.parse(cleaned);
 
-  const arr: any[] = Array.isArray(parsed)
-    ? parsed
-    : parsed.balances || parsed.accounts || parsed.data || [];
+  let arr: any[];
+  if (Array.isArray(parsed)) {
+    arr = parsed;
+  } else if (parsed && typeof parsed === "object") {
+    // Common wrapper keys
+    const wrapped = parsed.balances || parsed.accounts || parsed.data || parsed.results;
+    if (Array.isArray(wrapped)) {
+      arr = wrapped;
+    } else if ("account" in parsed || "name" in parsed || "balance" in parsed || "amount" in parsed) {
+      // Small models sometimes return a single object instead of an array
+      arr = [parsed];
+    } else {
+      arr = [];
+    }
+  } else {
+    arr = [];
+  }
 
-  return arr.map((item: any) => ({
-    account: String(item.account || item.name || "Unknown"),
-    balance: Number(item.balance ?? item.amount ?? 0),
-    currency: String(item.currency || "USD"),
-    asOfDate: item.asOfDate || item.as_of_date || item.date || undefined,
-    confidence: Number(item.confidence ?? 0.5),
-    rawText: item.rawText || item.raw_text || undefined,
-  }));
+  return arr.map((item: any) => {
+    // Some models embed the currency in the balance string (e.g., "0.65 BTC")
+    let balance: number;
+    let currency = String(item.currency || "USD");
+    const rawBalance = item.balance ?? item.amount ?? 0;
+    if (typeof rawBalance === "string") {
+      const match = rawBalance.match(/(-?[\d,]*\.?\d+)\s*([A-Z]{2,5})?/);
+      if (match) {
+        balance = Number(match[1].replace(/,/g, ""));
+        if (match[2] && !item.currency) currency = match[2];
+      } else {
+        balance = Number(rawBalance.replace(/[^\d.\-]/g, "")) || 0;
+      }
+    } else {
+      balance = Number(rawBalance);
+    }
+    return {
+      account: String(item.account || item.name || "Unknown"),
+      balance,
+      currency,
+      asOfDate: item.asOfDate || item.as_of_date || item.date || undefined,
+      confidence: Number(item.confidence ?? 0.5),
+      rawText: item.rawText || item.raw_text || undefined,
+    };
+  });
 }

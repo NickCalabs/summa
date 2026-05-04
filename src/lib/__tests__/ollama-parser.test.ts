@@ -75,4 +75,59 @@ describe("parseExtractedBalances", () => {
   it("throws on unparseable content", () => {
     expect(() => parseExtractedBalances("not json at all")).toThrow();
   });
+
+  it("handles a single object response from small models", () => {
+    // llama3.2:3b sometimes returns a bare object instead of an array
+    const input = JSON.stringify({
+      account: "River Bitcoin",
+      balance: 0.65,
+      currency: "BTC",
+      confidence: 0.9,
+    });
+    const result = parseExtractedBalances(input);
+    expect(result).toHaveLength(1);
+    expect(result[0].account).toBe("River Bitcoin");
+    expect(result[0].balance).toBe(0.65);
+    expect(result[0].currency).toBe("BTC");
+  });
+
+  it("handles object with 'results' wrapper key", () => {
+    const input = JSON.stringify({
+      results: [{ account: "Test", balance: 100, currency: "USD", confidence: 1 }],
+    });
+    const result = parseExtractedBalances(input);
+    expect(result).toHaveLength(1);
+    expect(result[0].account).toBe("Test");
+  });
+
+  it("parses balance with embedded currency (e.g. '0.65 BTC')", () => {
+    const input = JSON.stringify({
+      account: "Bitcoin Wallet",
+      balance: "0.65 BTC",
+      confidence: 0.9,
+    });
+    const result = parseExtractedBalances(input);
+    expect(result).toHaveLength(1);
+    expect(result[0].balance).toBe(0.65);
+    expect(result[0].currency).toBe("BTC");
+  });
+
+  it("parses balance with currency symbol (e.g. '$1,234.56')", () => {
+    const input = JSON.stringify({
+      account: "Cash",
+      balance: "$1,234.56",
+      currency: "USD",
+      confidence: 1,
+    });
+    const result = parseExtractedBalances(input);
+    expect(result).toHaveLength(1);
+    expect(result[0].balance).toBe(1234.56);
+    expect(result[0].currency).toBe("USD");
+  });
+
+  it("returns empty array for unrelated object structure", () => {
+    const input = JSON.stringify({ foo: "bar", count: 5 });
+    const result = parseExtractedBalances(input);
+    expect(result).toEqual([]);
+  });
 });
