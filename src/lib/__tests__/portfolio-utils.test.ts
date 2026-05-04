@@ -200,6 +200,92 @@ describe("recomputeAggregates", () => {
     expect(recomputed.aggregates.totalDebts).toBe(2500);
     expect(recomputed.aggregates.netWorth).toBe(7500);
   });
+
+  it("counts cash-equivalent children of provider-grouped parents", () => {
+    // Models a Coinbase parent containing a USDC child marked as cash
+    // equivalent. The parent itself is just a container — its own
+    // isCashEquivalent flag is false. Cash-on-hand must still pick up
+    // the child's USDC balance.
+    const childAsset = {
+      ...basePortfolio.sheets[0].sections[0].assets[0],
+      id: "usdc",
+      name: "USDC",
+      type: "crypto",
+      currentValue: "5000",
+      ownershipPct: "100",
+      linkedDebtId: null,
+      isCashEquivalent: true,
+      isInvestable: false,
+      parentAssetId: "coinbase",
+      isChild: true,
+    };
+    const portfolio: Portfolio = {
+      ...basePortfolio,
+      sheets: [
+        {
+          ...basePortfolio.sheets[0],
+          sections: [
+            {
+              ...basePortfolio.sheets[0].sections[0],
+              assets: [
+                {
+                  ...basePortfolio.sheets[0].sections[0].assets[0],
+                  id: "coinbase",
+                  name: "Coinbase",
+                  type: "investment",
+                  currentValue: "5000",
+                  ownershipPct: "100",
+                  linkedDebtId: null,
+                  isCashEquivalent: false,
+                  isInvestable: true,
+                  children: [childAsset],
+                  childCount: 1,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const recomputed = recomputeAggregates(portfolio);
+
+    expect(recomputed.aggregates.totalAssets).toBe(5000);
+    expect(recomputed.aggregates.cashOnHand).toBe(5000);
+  });
+
+  it("falls back to a leaf asset's own flag when there are no children", () => {
+    const portfolio: Portfolio = {
+      ...basePortfolio,
+      sheets: [
+        {
+          ...basePortfolio.sheets[0],
+          sections: [
+            {
+              ...basePortfolio.sheets[0].sections[0],
+              assets: [
+                {
+                  ...basePortfolio.sheets[0].sections[0].assets[0],
+                  id: "checking",
+                  name: "Chase Checking",
+                  type: "cash",
+                  currentValue: "12000",
+                  ownershipPct: "100",
+                  linkedDebtId: null,
+                  isCashEquivalent: true,
+                  isInvestable: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const recomputed = recomputeAggregates(portfolio);
+
+    expect(recomputed.aggregates.cashOnHand).toBe(12000);
+  });
 });
 
 describe("buildPortfolioRecapFlow", () => {

@@ -155,7 +155,26 @@ export function recomputeAggregates(portfolio: Portfolio): Portfolio {
         } else {
           totalAssets += val;
         }
-        if (asset.isCashEquivalent) {
+        // Walk children for cash-on-hand (mirrors API aggregation in
+        // src/app/api/portfolios/[id]/route.ts). Parent containers'
+        // isCashEquivalent flag is meaningless — pick it up from the leaves.
+        const children = asset.children ?? [];
+        if (children.length > 0) {
+          for (const child of children) {
+            if (child.isCashEquivalent) {
+              const childRaw = Number(child.currentValue) * ownership;
+              cashOnHand +=
+                child.currency !== portfolio.currency
+                  ? convertToBase(
+                      childRaw,
+                      child.currency,
+                      portfolio.currency,
+                      rates
+                    )
+                  : childRaw;
+            }
+          }
+        } else if (asset.isCashEquivalent) {
           cashOnHand += val;
         }
       }
