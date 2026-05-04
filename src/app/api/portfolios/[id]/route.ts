@@ -179,7 +179,23 @@ export async function GET(
           } else {
             totalAssets += val;
           }
-          if (asset.isCashEquivalent) {
+          // Cash-on-hand respects nested cash equivalents. Provider-grouped
+          // assets (Coinbase, etc.) keep their holdings as children of a
+          // container parent — the parent's own flag is meaningless, so walk
+          // the children. For leaf assets, fall back to the asset's own flag.
+          const children = asset.children ?? [];
+          if (children.length > 0) {
+            for (const child of children) {
+              if (child.isCashEquivalent) {
+                cashOnHand += convertToBase(
+                  Number(child.currentValue) * ownership,
+                  child.currency,
+                  portfolio.currency,
+                  rates
+                );
+              }
+            }
+          } else if (asset.isCashEquivalent) {
             cashOnHand += val;
           }
         }
