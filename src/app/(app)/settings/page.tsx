@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { AiSettings } from "@/components/settings/ai-settings";
 
 export default function SettingsPage() {
   const session = authClient.useSession();
@@ -137,6 +139,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* AI Provider */}
+      <AiSettings />
+
       {/* Appearance */}
       <Card>
         <CardHeader>
@@ -157,6 +162,20 @@ export default function SettingsPage() {
               </Button>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Imports */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Imports</CardTitle>
+          <CardDescription>View document import history.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            render={<Link href="/settings/imports">View import history</Link>}
+          />
         </CardContent>
       </Card>
 
