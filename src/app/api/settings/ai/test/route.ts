@@ -21,11 +21,15 @@ export async function POST(request: Request) {
       return jsonResponse({ ok: false, error: health.error }, 503);
     }
 
-    const testResult = await provider.extractBalances(
-      "Account: Test Savings\nBalance: $1,234.56\nAs of: 2026-01-01"
-    );
-
-    return jsonResponse({ ok: true, model: health.model, testResult });
+    try {
+      const testResult = await provider.extractBalances(
+        "Account: Test Savings\nBalance: $1,234.56\nAs of: 2026-01-01"
+      );
+      return jsonResponse({ ok: true, model: health.model, testResult });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      return jsonResponse({ ok: false, model: health.model, error: message }, 502);
+    }
   } catch (error) {
     return handleError(error);
   }
