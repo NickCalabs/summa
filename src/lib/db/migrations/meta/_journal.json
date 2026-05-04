@@ -127,6 +127,13 @@
       "when": 1777839134599,
       "tag": "0017_naive_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1777859737884,
+      "tag": "0018_funny_wonder_man",
+      "breakpoints": true
     }
   ]
 }
