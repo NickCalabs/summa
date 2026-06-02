@@ -38,6 +38,7 @@ import {
   useSyncPlaidConnection,
   useReconnectLinkToken,
   useDisconnectPlaid,
+  useRelinkPlaidAccount,
   type PlaidConnection,
   type PlaidAccount,
 } from "@/hooks/use-plaid";
@@ -301,6 +302,14 @@ function ConnectionCard({
 }) {
   const hasError = !!connection.errorCode;
   const [relinkAccountId, setRelinkAccountId] = useState<string | null>(null);
+  const relinkMutation = useRelinkPlaidAccount();
+  const [linkExistingId, setLinkExistingId] = useState<string | null>(null);
+
+  const allAssets = sheets.flatMap((sheet) =>
+    sheet.sections.flatMap((section) =>
+      section.assets.map((a) => ({ id: a.id, name: a.name, sectionName: section.name }))
+    )
+  );
 
   const relinkAccount = relinkAccountId
     ? connection.accounts.find((a) => a.plaidAccountId === relinkAccountId) ?? null
@@ -390,22 +399,46 @@ function ConnectionCard({
               </span>
               {a.isTracked ? (
                 <span className="tabular-nums">Tracked</span>
-              ) : relinkAccountId === a.plaidAccountId ? (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setRelinkAccountId(null)}
-                >
-                  Cancel
-                </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => setRelinkAccountId(a.plaidAccountId)}
-                >
-                  Link
-                </Button>
+                <div className="flex items-center gap-1">
+                  {relinkAccountId === a.plaidAccountId ? (
+                    <Button variant="ghost" size="xs" onClick={() => setRelinkAccountId(null)}>
+                      Cancel
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="xs" onClick={() => setRelinkAccountId(a.plaidAccountId)}>
+                      Link new
+                    </Button>
+                  )}
+                  {linkExistingId === a.id ? (
+                    <select
+                      className="z-10 w-56 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-md"
+                      defaultValue=""
+                      autoFocus
+                      onBlur={() => setLinkExistingId(null)}
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        relinkMutation.mutate(
+                          { accountId: a.id, action: "relink", assetId: e.target.value },
+                          { onSuccess: () => setLinkExistingId(null) }
+                        );
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select an asset…
+                      </option>
+                      {allAssets.map((asset) => (
+                        <option key={asset.id} value={asset.id}>
+                          {asset.name} ({asset.sectionName})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Button variant="ghost" size="xs" onClick={() => setLinkExistingId(a.id)}>
+                      Link existing
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           ))}
