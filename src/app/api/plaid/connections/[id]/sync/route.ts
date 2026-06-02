@@ -42,29 +42,32 @@ export async function POST(
         .returning();
 
       if (updated?.assetId) {
-        const holding = cryptoHoldings.get(balance.accountId);
-        if (holding) {
-          // Crypto: drive quantity from the holding; value = quantity × the
-          // asset's own price (kept fresh by the price-refresh cron).
-          const [asset] = await db
-            .select({ currentPrice: assets.currentPrice })
-            .from(assets)
-            .where(eq(assets.id, updated.assetId))
-            .limit(1);
-          const value = computeCryptoValue(
-            holding.quantity,
-            asset?.currentPrice != null ? Number(asset.currentPrice) : null
-          );
-          await db
-            .update(assets)
-            .set({
-              quantity: holding.quantity.toString(),
-              ...(value != null && { currentValue: value }),
-              lastSyncedAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(assets.id, updated.assetId));
-          updatedCount++;
+        const [asset] = await db
+          .select({ type: assets.type, currentPrice: assets.currentPrice })
+          .from(assets)
+          .where(eq(assets.id, updated.assetId))
+          .limit(1);
+        if (asset?.type === "crypto") {
+          // Crypto: drive quantity from holdings; value = quantity × the asset's
+          // own price. If holdings are unavailable, leave quantity AND value
+          // unchanged — never write the Plaid USD balance into a crypto row.
+          const holding = cryptoHoldings.get(balance.accountId);
+          if (holding) {
+            const value = computeCryptoValue(
+              holding.quantity,
+              asset.currentPrice != null ? Number(asset.currentPrice) : null
+            );
+            await db
+              .update(assets)
+              .set({
+                quantity: holding.quantity.toString(),
+                ...(value != null && { currentValue: value }),
+                lastSyncedAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(assets.id, updated.assetId));
+            updatedCount++;
+          }
         } else if (balance.currentBalance != null) {
           const limitPatch =
             balance.limit != null ? { creditLimit: balance.limit } : null;
