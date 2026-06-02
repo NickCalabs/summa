@@ -37,18 +37,34 @@ export function LensCard({ lens, currency, btcUsdRate }: LensCardProps) {
   const dc = useDisplayCurrency();
   const updateLens = useUpdateLens();
 
-  // Chart data stays in USD throughout. MoneyDisplay handles conversion
-  // internally via btcUsdRate; the chart's tooltip/axis convert at render
-  // time. Pre-converting AND letting MoneyDisplay convert again caused a
-  // divide-by-btcUsdRate-twice bug on pinned cards.
+  // In BTC mode, use each day's pre-summed BTC amount so the line is stable
+  // for BTC-only lenses (no daily wiggle from dividing by today's rate).
+  // In USD mode, keep the historical "plot USD; format at render" path —
+  // MoneyDisplay does its own conversion for the headline.
+  const isBtcMode = dc.displayCurrency !== "USD";
+  const satsFactor = dc.displayCurrency === "sats" ? 1e8 : 1;
+  // In BTC/sats mode plot the BTC sum directly and drop any day that's missing
+  // it. Falling back to the USD value here would mix scales and crush the line
+  // toward the floor of the YAxis.
   const chartData = useMemo(() => {
     if (!data?.series) return [];
+    if (isBtcMode) {
+      return data.series
+        .filter((pt) => pt.valueInBtc != null)
+        .map((pt) => ({ date: pt.date, value: pt.valueInBtc! * satsFactor }));
+    }
     return data.series.map((pt) => ({ date: pt.date, value: pt.value }));
-  }, [data]);
+  }, [data, isBtcMode, satsFactor]);
+  const skipClientConvert = isBtcMode;
 
+  // Headline always reads from the source-of-truth USD series — MoneyDisplay
+  // is the only consumer that should be converting headline numbers.
   const latestUsd =
-    chartData.length > 0 ? chartData[chartData.length - 1].value : null;
-  const earliestUsd = chartData.length > 1 ? chartData[0].value : null;
+    data?.series && data.series.length > 0
+      ? data.series[data.series.length - 1].value
+      : null;
+  const earliestUsd =
+    data?.series && data.series.length > 1 ? data.series[0].value : null;
   const changeUsd =
     latestUsd != null && earliestUsd != null ? latestUsd - earliestUsd : null;
   const changePct =
@@ -155,11 +171,13 @@ export function LensCard({ lens, currency, btcUsdRate }: LensCardProps) {
               <Tooltip
                 content={({ active, payload, label: tipLabel }) => {
                   if (!active || !payload?.[0]) return null;
-                  const usd = payload[0].value as number;
+                  const raw = payload[0].value as number;
                   const display =
-                    btcUsdRate && dc.displayCurrency !== "USD"
-                      ? dc.convert(usd, btcUsdRate)
-                      : usd;
+                    !skipClientConvert &&
+                    btcUsdRate &&
+                    dc.displayCurrency !== "USD"
+                      ? dc.convert(raw, btcUsdRate)
+                      : raw;
                   return (
                     <div className="rounded-lg bg-popover px-2 py-1 text-xs ring-1 ring-border shadow-md">
                       <p className="text-muted-foreground">

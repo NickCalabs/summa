@@ -34,21 +34,36 @@ export function AssetsDebtsChart({
 }: AssetsDebtsChartProps) {
   const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
   const { displayCurrency, convert, formatCompact: dcFormatCompact } = useDisplayCurrency();
+  const isBtcMode = displayCurrency !== "USD";
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
+    const satsFactor = displayCurrency === "sats" ? 1e8 : 1;
     const data = [...snapshots]
       .reverse()
       .filter((s) => {
         if (displayCurrency === "USD") return true;
-        return s.btcUsdRate != null;
+        return (
+          s.totalAssetsInBtc != null ||
+          s.btcUsdRate != null
+        );
       })
       .map((s) => {
         const rate = s.btcUsdRate ? Number(s.btcUsdRate) : null;
+        const assetsDisplay = isBtcMode
+          ? s.totalAssetsInBtc != null
+            ? Number(s.totalAssetsInBtc) * satsFactor
+            : convert(Number(s.totalAssets), rate)
+          : Number(s.totalAssets);
+        const debtsDisplay = isBtcMode
+          ? s.totalDebtsInBtc != null
+            ? Number(s.totalDebtsInBtc) * satsFactor
+            : convert(Number(s.totalDebts), rate)
+          : Number(s.totalDebts);
         return {
           date: s.date,
-          assets: convert(Number(s.totalAssets), rate),
-          debts: convert(Number(s.totalDebts), rate),
+          assets: assetsDisplay,
+          debts: debtsDisplay,
         };
       });
 
@@ -67,7 +82,7 @@ export function AssetsDebtsChart({
     }
 
     return data;
-  }, [snapshots, displayCurrency, convert, todayAssets, todayDebts, todayBtcUsdRate]);
+  }, [snapshots, displayCurrency, isBtcMode, convert, todayAssets, todayDebts, todayBtcUsdRate]);
 
   if (isLoading) return <Skeleton className="h-[200px] md:h-[300px] w-full" />;
   if (chartData.length < 2) {
@@ -106,6 +121,7 @@ export function AssetsDebtsChart({
             tickLine={false}
             axisLine={false}
             width={70}
+            domain={[0, (max: number) => max * 1.05]}
           />
           <Tooltip content={<AssetsDebtsTooltip />} />
           <Area

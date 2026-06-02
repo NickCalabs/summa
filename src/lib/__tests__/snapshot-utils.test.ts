@@ -17,6 +17,12 @@ function makeSnapshot(
     netWorth: "8000",
     cashOnHand: "3000",
     investableTotal: null,
+    totalAssetsInBtc: null,
+    totalDebtsInBtc: null,
+    netWorthInBtc: null,
+    cashOnHandInBtc: null,
+    investableInBtc: null,
+    btcUsdRate: null,
     createdAt: date,
     ...overrides,
   };

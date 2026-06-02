@@ -67,15 +67,25 @@ export async function takePortfolioSnapshot(portfolioId: string) {
     ? await getExchangeRates(baseCurrency)
     : {};
 
+  // Fetch today's BTC/USD rate up-front so per-asset valueInBtc and rolled-up
+  // portfolio totals share the exact same denominator. Without this the chart
+  // wiggles in BTC mode because each layer uses a slightly different rate.
+  const btcUsdRate = await getCurrentBtcUsd();
+  const btcDivisor = btcUsdRate && btcUsdRate > 0 ? btcUsdRate : null;
+
   // Upsert asset snapshots
   let snapshotCount = 0;
   for (const asset of assetRows) {
-    const valueInBase = convertToBase(
+    const valueInBaseNum = convertToBase(
       Number(asset.currentValue),
       asset.currency,
       baseCurrency,
       rates
-    ).toFixed(2);
+    );
+    const valueInBase = valueInBaseNum.toFixed(2);
+    const valueInBtc = btcDivisor
+      ? (valueInBaseNum / btcDivisor).toFixed(10)
+      : null;
 
     await db
       .insert(assetSnapshots)
@@ -84,6 +94,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
         date: today,
         value: asset.currentValue,
         valueInBase,
+        valueInBtc,
         price: asset.currentPrice,
         quantity: asset.quantity,
         source: "manual",
@@ -93,6 +104,7 @@ export async function takePortfolioSnapshot(portfolioId: string) {
         set: {
           value: asset.currentValue,
           valueInBase,
+          valueInBtc,
           price: asset.currentPrice,
           quantity: asset.quantity,
         },
@@ -100,19 +112,31 @@ export async function takePortfolioSnapshot(portfolioId: string) {
     snapshotCount++;
   }
 
-  const { totalAssets, totalDebts, cashOnHand, investableTotal } =
-    aggregatePortfolioTotals({
-      assetRows,
-      sectionSheetMap,
-      sheetTypeMap,
-      baseCurrency,
-      rates,
-    });
+  const {
+    totalAssets,
+    totalDebts,
+    cashOnHand,
+    investableTotal,
+    totalAssetsInBtc,
+    totalDebtsInBtc,
+    cashOnHandInBtc,
+    investableInBtc,
+  } = aggregatePortfolioTotals({
+    assetRows,
+    sectionSheetMap,
+    sheetTypeMap,
+    baseCurrency,
+    rates,
+    btcUsdRate: btcDivisor,
+  });
 
   const netWorth = totalAssets - totalDebts;
+  const netWorthInBtc =
+    totalAssetsInBtc != null && totalDebtsInBtc != null
+      ? totalAssetsInBtc - totalDebtsInBtc
+      : null;
 
-  // Fetch today's BTC/USD rate for historical chart re-denomination
-  const btcUsdRate = await getCurrentBtcUsd();
+  const fixBtc = (v: number | null) => (v != null ? v.toFixed(10) : null);
 
   // Upsert portfolio snapshot
   const [portfolioSnap] = await db
@@ -125,6 +149,11 @@ export async function takePortfolioSnapshot(portfolioId: string) {
       netWorth: netWorth.toFixed(2),
       cashOnHand: cashOnHand.toFixed(2),
       investableTotal: investableTotal.toFixed(2),
+      totalAssetsInBtc: fixBtc(totalAssetsInBtc),
+      totalDebtsInBtc: fixBtc(totalDebtsInBtc),
+      netWorthInBtc: fixBtc(netWorthInBtc),
+      cashOnHandInBtc: fixBtc(cashOnHandInBtc),
+      investableInBtc: fixBtc(investableInBtc),
       btcUsdRate: btcUsdRate != null ? btcUsdRate.toFixed(2) : null,
     })
     .onConflictDoUpdate({
@@ -135,6 +164,11 @@ export async function takePortfolioSnapshot(portfolioId: string) {
         netWorth: netWorth.toFixed(2),
         cashOnHand: cashOnHand.toFixed(2),
         investableTotal: investableTotal.toFixed(2),
+        totalAssetsInBtc: fixBtc(totalAssetsInBtc),
+        totalDebtsInBtc: fixBtc(totalDebtsInBtc),
+        netWorthInBtc: fixBtc(netWorthInBtc),
+        cashOnHandInBtc: fixBtc(cashOnHandInBtc),
+        investableInBtc: fixBtc(investableInBtc),
         ...(btcUsdRate != null ? { btcUsdRate: btcUsdRate.toFixed(2) } : {}),
       },
     })
@@ -203,12 +237,19 @@ export async function upsertTodayAssetSnapshot(assetId: string): Promise<void> {
         ? await getExchangeRates(baseCurrency)
         : {};
 
-    const valueInBase = convertToBase(
+    const valueInBaseNum = convertToBase(
       Number(asset.currentValue),
       asset.currency,
       baseCurrency,
       rates
-    ).toFixed(2);
+    );
+    const valueInBase = valueInBaseNum.toFixed(2);
+
+    const btcUsdRate = await getCurrentBtcUsd();
+    const valueInBtc =
+      btcUsdRate && btcUsdRate > 0
+        ? (valueInBaseNum / btcUsdRate).toFixed(10)
+        : null;
 
     await db
       .insert(assetSnapshots)
@@ -217,6 +258,7 @@ export async function upsertTodayAssetSnapshot(assetId: string): Promise<void> {
         date: today,
         value: asset.currentValue,
         valueInBase,
+        valueInBtc,
         price: asset.currentPrice,
         quantity: asset.quantity,
         source: "manual",
@@ -226,6 +268,7 @@ export async function upsertTodayAssetSnapshot(assetId: string): Promise<void> {
         set: {
           value: asset.currentValue,
           valueInBase,
+          valueInBtc,
           price: asset.currentPrice,
           quantity: asset.quantity,
         },

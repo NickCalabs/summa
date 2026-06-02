@@ -9,6 +9,11 @@ export interface PortfolioSnapshot {
   netWorth: string;
   cashOnHand: string;
   investableTotal: string | null;
+  totalAssetsInBtc: string | null;
+  totalDebtsInBtc: string | null;
+  netWorthInBtc: string | null;
+  cashOnHandInBtc: string | null;
+  investableInBtc: string | null;
   btcUsdRate: string | null;
   createdAt: string;
 }
@@ -19,6 +24,7 @@ export interface AssetSnapshot {
   date: string;
   value: string;
   valueInBase: string;
+  valueInBtc: string | null;
   price: string | null;
   quantity: string | null;
   source: string;

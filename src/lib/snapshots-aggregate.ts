@@ -19,6 +19,9 @@ interface AggregateInput<T extends AggregatableAsset> {
   sheetTypeMap: Map<string, string>;
   baseCurrency: string;
   rates: Record<string, number>;
+  /** BTC/USD rate captured atomically with this snapshot — used to compute the
+   *  *_in_btc totals so they're consistent with each per-asset valueInBtc. */
+  btcUsdRate: number | null;
 }
 
 export interface PortfolioTotals {
@@ -26,6 +29,11 @@ export interface PortfolioTotals {
   totalDebts: number;
   cashOnHand: number;
   investableTotal: number;
+  /** Same totals denominated in BTC (null when btcUsdRate is unavailable). */
+  totalAssetsInBtc: number | null;
+  totalDebtsInBtc: number | null;
+  cashOnHandInBtc: number | null;
+  investableInBtc: number | null;
 }
 
 /**
@@ -39,8 +47,14 @@ export interface PortfolioTotals {
 export function aggregatePortfolioTotals<T extends AggregatableAsset>(
   input: AggregateInput<T>
 ): PortfolioTotals {
-  const { assetRows, sectionSheetMap, sheetTypeMap, baseCurrency, rates } =
-    input;
+  const {
+    assetRows,
+    sectionSheetMap,
+    sheetTypeMap,
+    baseCurrency,
+    rates,
+    btcUsdRate,
+  } = input;
 
   const parentIds = new Set<string>();
   for (const a of assetRows) {
@@ -79,5 +93,20 @@ export function aggregatePortfolioTotals<T extends AggregatableAsset>(
     }
   }
 
-  return { totalAssets, totalDebts, cashOnHand, investableTotal };
+  // Derive the BTC totals from the USD totals using a single rate captured at
+  // snapshot time. Same rate across every total → portfolio_snapshots stays
+  // internally consistent (net_worth_in_btc == total_assets_in_btc - total_debts_in_btc).
+  const toBtc = (usd: number): number | null =>
+    btcUsdRate && btcUsdRate > 0 ? usd / btcUsdRate : null;
+
+  return {
+    totalAssets,
+    totalDebts,
+    cashOnHand,
+    investableTotal,
+    totalAssetsInBtc: toBtc(totalAssets),
+    totalDebtsInBtc: toBtc(totalDebts),
+    cashOnHandInBtc: toBtc(cashOnHand),
+    investableInBtc: toBtc(investableTotal),
+  };
 }

@@ -74,7 +74,8 @@ export async function GET(
     const result = await db.execute(sql`
       SELECT
         s.date::text AS date,
-        SUM(s.value_in_base::numeric * (${sql.raw(ownershipExpr)})) AS total
+        SUM(s.value_in_base::numeric * (${sql.raw(ownershipExpr)})) AS total,
+        SUM(s.value_in_btc::numeric * (${sql.raw(ownershipExpr)})) AS total_btc
       FROM asset_snapshots s
       WHERE s.asset_id IN (SELECT id FROM (VALUES ${idValues}) AS v(id))
         ${fromClause}
@@ -82,12 +83,22 @@ export async function GET(
       ORDER BY s.date ASC
     `);
 
-    const series = (result as unknown as { date: string; total: string }[]).map(
-      (row) => ({
-        date: row.date,
-        value: Number(Number(row.total).toFixed(2)),
-      })
-    );
+    const series = (
+      result as unknown as {
+        date: string;
+        total: string;
+        total_btc: string | null;
+      }[]
+    ).map((row) => ({
+      date: row.date,
+      value: Number(Number(row.total).toFixed(2)),
+      // Charted in BTC mode without re-dividing — uses each day's captured rate
+      // so pure-BTC lenses produce a stable line instead of drift.
+      valueInBtc:
+        row.total_btc != null
+          ? Number(Number(row.total_btc).toFixed(10))
+          : null,
+    }));
 
     return jsonResponse({ series });
   } catch (error) {

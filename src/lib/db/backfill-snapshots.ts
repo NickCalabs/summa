@@ -140,15 +140,28 @@ async function backfill() {
         });
       }
 
+      // Use the BTC rate recorded on that day's portfolio_snapshot so historical
+      // BTC-denominated totals reflect what the user actually saw at the time.
+      const dayBtcRate = portfolioSnap.btcUsdRate
+        ? Number(portfolioSnap.btcUsdRate)
+        : null;
+      const btcDivisor = dayBtcRate && dayBtcRate > 0 ? dayBtcRate : null;
+
       const totals = aggregatePortfolioTotals({
         assetRows: aggregateInputs,
         sectionSheetMap,
         sheetTypeMap,
         baseCurrency: portfolio.currency,
         rates: {}, // unused; conversions are no-ops
+        btcUsdRate: btcDivisor,
       });
 
       const netWorth = totals.totalAssets - totals.totalDebts;
+      const netWorthInBtc =
+        totals.totalAssetsInBtc != null && totals.totalDebtsInBtc != null
+          ? totals.totalAssetsInBtc - totals.totalDebtsInBtc
+          : null;
+      const fixBtc = (v: number | null) => (v != null ? v.toFixed(10) : null);
 
       await db
         .update(schema.portfolioSnapshots)
@@ -158,6 +171,11 @@ async function backfill() {
           netWorth: netWorth.toFixed(2),
           cashOnHand: totals.cashOnHand.toFixed(2),
           investableTotal: totals.investableTotal.toFixed(2),
+          totalAssetsInBtc: fixBtc(totals.totalAssetsInBtc),
+          totalDebtsInBtc: fixBtc(totals.totalDebtsInBtc),
+          netWorthInBtc: fixBtc(netWorthInBtc),
+          cashOnHandInBtc: fixBtc(totals.cashOnHandInBtc),
+          investableInBtc: fixBtc(totals.investableInBtc),
         })
         .where(
           and(
@@ -165,6 +183,19 @@ async function backfill() {
             eq(schema.portfolioSnapshots.date, portfolioSnap.date)
           )
         );
+
+      // Backfill value_in_btc on every asset_snapshot for this day using the
+      // same per-day rate. Pure BTC wallets line up to a flat series because
+      // value_in_base was captured against the same daily BTC rate.
+      if (btcDivisor) {
+        for (const snap of daySnapshots) {
+          const valBtc = (Number(snap.valueInBase) / btcDivisor).toFixed(10);
+          await db
+            .update(schema.assetSnapshots)
+            .set({ valueInBtc: valBtc })
+            .where(eq(schema.assetSnapshots.id, snap.id));
+        }
+      }
       portfolioRowsUpdated++;
     }
 

@@ -267,6 +267,73 @@ export const brokerageImportRequest = z.object({
   positions: z.array(brokerageImportPosition).min(1, "At least one position required"),
 });
 
+// ── AI Settings schemas ──
+
+export const updateAiSettings = z.object({
+  endpoint: z.string().url().optional(),
+  model: z.string().nullable().optional(),
+});
+
+// ── AI Import schemas ──
+
+export const importApplyRequest = z.object({
+  sourceId: z.string().uuid().optional(),
+  filename: z.string().min(1).max(500),
+  saveSource: z
+    .object({
+      name: z.string().min(1).max(200),
+      extractionHints: z.string().max(2000).optional(),
+      fieldMappings: z.array(
+        z.object({
+          extractedKey: z.string(),
+          assetId: z.string().uuid(),
+          field: z.enum(["currentValue", "quantity"]),
+          currency: z.string(),
+        })
+      ),
+    })
+    .optional(),
+  updates: z
+    .array(
+      z.object({
+        assetId: z.string().uuid(),
+        field: z.enum(["currentValue", "quantity"]),
+        value: z.string(),
+        currency: z.string().max(10).optional(),
+      })
+    )
+    .min(1),
+});
+
+export const createImportSource = z.object({
+  name: z.string().min(1).max(200),
+  fileType: z.string().max(10).optional(),
+  extractionHints: z.string().max(2000).optional(),
+  fieldMappings: z.array(
+    z.object({
+      extractedKey: z.string(),
+      assetId: z.string().uuid(),
+      field: z.enum(["currentValue", "quantity"]),
+      currency: z.string(),
+    })
+  ),
+});
+
+export const updateImportSource = z.object({
+  name: z.string().min(1).max(200).optional(),
+  extractionHints: z.string().max(2000).nullable().optional(),
+  fieldMappings: z
+    .array(
+      z.object({
+        extractedKey: z.string(),
+        assetId: z.string().uuid(),
+        field: z.enum(["currentValue", "quantity"]),
+        currency: z.string(),
+      })
+    )
+    .optional(),
+});
+
 // ── Parse helper ──
 
 export async function parseBody<T>(

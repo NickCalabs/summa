@@ -206,6 +206,7 @@ export const assetSnapshots = pgTable(
     date: date("date").notNull(),
     value: numeric("value", { precision: 20, scale: 2 }).notNull(),
     valueInBase: numeric("value_in_base", { precision: 20, scale: 2 }).notNull(),
+    valueInBtc: numeric("value_in_btc", { precision: 28, scale: 10 }),
     price: numeric("price", { precision: 20, scale: 8 }),
     quantity: numeric("quantity", { precision: 20, scale: 8 }),
     source: snapshotSourceEnum("source").notNull().default("provider"),
@@ -231,6 +232,11 @@ export const portfolioSnapshots = pgTable(
     netWorth: numeric("net_worth", { precision: 20, scale: 2 }).notNull(),
     cashOnHand: numeric("cash_on_hand", { precision: 20, scale: 2 }).notNull(),
     investableTotal: numeric("investable_total", { precision: 20, scale: 2 }),
+    totalAssetsInBtc: numeric("total_assets_in_btc", { precision: 28, scale: 10 }),
+    totalDebtsInBtc: numeric("total_debts_in_btc", { precision: 28, scale: 10 }),
+    netWorthInBtc: numeric("net_worth_in_btc", { precision: 28, scale: 10 }),
+    cashOnHandInBtc: numeric("cash_on_hand_in_btc", { precision: 28, scale: 10 }),
+    investableInBtc: numeric("investable_in_btc", { precision: 28, scale: 10 }),
     btcUsdRate: numeric("btc_usd_rate", { precision: 20, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
@@ -436,3 +442,69 @@ export const exchangeRates = pgTable("exchange_rates", {
 }, (table) => [
   uniqueIndex("exchange_rates_base_unique").on(table.base),
 ]);
+
+// ── AI Settings ──
+
+export const aiSettings = pgTable("ai_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().default("http://192.168.1.250:11434"),
+  model: text("model"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ── Import Sources (saved mappings for repeat imports) ──
+
+export const importSources = pgTable("import_sources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  fileType: text("file_type"),
+  extractionHints: text("extraction_hints"),
+  fieldMappings: jsonb("field_mappings")
+    .$type<
+      Array<{
+        extractedKey: string;
+        assetId: string;
+        field: "currentValue" | "quantity";
+        currency: string;
+      }>
+    >()
+    .notNull()
+    .default([]),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ── Import Logs (audit trail) ──
+
+export const importLogs = pgTable("import_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sourceId: uuid("source_id").references(() => importSources.id, {
+    onDelete: "set null",
+  }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  filename: text("filename").notNull(),
+  status: text("status").notNull(),
+  extractedData: jsonb("extracted_data"),
+  appliedChanges: jsonb("applied_changes").$type<
+    Array<{
+      assetId: string;
+      assetName: string;
+      previousValue: string;
+      newValue: string;
+      field: string;
+    }>
+  >(),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
