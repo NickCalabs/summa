@@ -14,7 +14,7 @@ import { getCoinGeckoBatchPrices } from "@/lib/providers/coingecko";
 import { getCoinbaseSpotPrices } from "@/lib/providers/coinbase";
 import { takePortfolioSnapshot } from "@/lib/snapshots";
 import { refreshAndStoreRates } from "@/lib/providers/exchange-rates";
-import { isPlaidConfigured, getBalances } from "@/lib/providers/plaid";
+import { isPlaidConfigured, getBalances, getCryptoHoldings, computeCryptoValue } from "@/lib/providers/plaid";
 import { decrypt } from "@/lib/encryption";
 import { refreshBtcWallets, refreshEthWallets, refreshSolWallets } from "@/lib/wallets";
 import { syncCoinbaseConnection } from "@/lib/coinbase-sync";
@@ -300,6 +300,7 @@ export async function refreshPlaidBalances() {
       try {
         const accessToken = decrypt(connection.accessTokenEnc);
         const balances = await getBalances(accessToken);
+        const cryptoHoldings = await getCryptoHoldings(accessToken);
 
         for (const balance of balances) {
           const [updated] = await db
@@ -313,21 +314,46 @@ export async function refreshPlaidBalances() {
             .where(eq(plaidAccounts.plaidAccountId, balance.accountId))
             .returning();
 
-          if (updated?.assetId && balance.currentBalance != null) {
-            const limitPatch =
-              balance.limit != null ? { creditLimit: balance.limit } : null;
-            await db
-              .update(assets)
-              .set({
-                currentValue: Math.abs(balance.currentBalance).toFixed(2),
-                ...(limitPatch && {
-                  providerConfig: sql`coalesce(${assets.providerConfig}, '{}'::jsonb) || ${JSON.stringify(limitPatch)}::jsonb`,
-                }),
-                lastSyncedAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .where(eq(assets.id, updated.assetId));
-            updatedCount++;
+          if (updated?.assetId) {
+            const holding = cryptoHoldings.get(balance.accountId);
+            if (holding) {
+              // Crypto: drive quantity from the holding; value = quantity × the
+              // asset's own price (kept fresh by the price-refresh cron).
+              const [asset] = await db
+                .select({ currentPrice: assets.currentPrice })
+                .from(assets)
+                .where(eq(assets.id, updated.assetId))
+                .limit(1);
+              const value = computeCryptoValue(
+                holding.quantity,
+                asset?.currentPrice != null ? Number(asset.currentPrice) : null
+              );
+              await db
+                .update(assets)
+                .set({
+                  quantity: holding.quantity.toString(),
+                  ...(value != null && { currentValue: value }),
+                  lastSyncedAt: new Date(),
+                  updatedAt: new Date(),
+                })
+                .where(eq(assets.id, updated.assetId));
+              updatedCount++;
+            } else if (balance.currentBalance != null) {
+              const limitPatch =
+                balance.limit != null ? { creditLimit: balance.limit } : null;
+              await db
+                .update(assets)
+                .set({
+                  currentValue: Math.abs(balance.currentBalance).toFixed(2),
+                  ...(limitPatch && {
+                    providerConfig: sql`coalesce(${assets.providerConfig}, '{}'::jsonb) || ${JSON.stringify(limitPatch)}::jsonb`,
+                  }),
+                  lastSyncedAt: new Date(),
+                  updatedAt: new Date(),
+                })
+                .where(eq(assets.id, updated.assetId));
+              updatedCount++;
+            }
           }
         }
 
