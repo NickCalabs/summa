@@ -38,13 +38,26 @@ export function LensChart({
   const { data, isLoading } = useRecapDrillDown(portfolioId, assetIds, from);
   const dc = useDisplayCurrency();
 
-  // Plot in USD; tickFormatter and tooltip convert at render time.
-  // Pre-converting series values would double-convert when display
-  // currency is BTC/sats and inputs flow through other consumers.
+  // In USD mode, plot the raw USD value and let the render-time formatters
+  // pass it through. In BTC/sats mode, plot the *per-day* BTC sum so each
+  // point uses the rate that was active when that snapshot was written
+  // (instead of forcing every historical day through today's rate, which is
+  // what produced the daily wiggle for pure-BTC assets). Drop any day that
+  // doesn't have a BTC value — mixing scales would crush the line.
+  const isBtcMode = dc.displayCurrency !== "USD";
+  const satsFactor = dc.displayCurrency === "sats" ? 1e8 : 1;
   const chartData = useMemo(() => {
     if (!data?.series) return [];
+    if (isBtcMode) {
+      return data.series
+        .filter((pt) => pt.valueInBtc != null)
+        .map((pt) => ({ date: pt.date, value: pt.valueInBtc! * satsFactor }));
+    }
     return data.series.map((pt) => ({ date: pt.date, value: pt.value }));
-  }, [data]);
+  }, [data, isBtcMode, satsFactor]);
+  // Chart data is already in display units when we're in BTC/sats mode, so
+  // suppress the legacy USD→BTC divide on axis/tooltip rendering.
+  const skipClientConvert = isBtcMode;
 
   if (isLoading) return <Skeleton className="h-72 w-full" />;
   if (chartData.length <= 1) {
@@ -82,7 +95,7 @@ export function LensChart({
           <YAxis
             tickFormatter={(v: number) => {
               const display =
-                btcUsdRate && dc.displayCurrency !== "USD"
+                !skipClientConvert && btcUsdRate && dc.displayCurrency !== "USD"
                   ? dc.convert(v, btcUsdRate)
                   : v;
               return formatCompactDisplayCurrency(
@@ -100,11 +113,11 @@ export function LensChart({
           <Tooltip
             content={({ active, payload, label: tipLabel }) => {
               if (!active || !payload?.[0]) return null;
-              const usd = payload[0].value as number;
+              const raw = payload[0].value as number;
               const display =
-                btcUsdRate && dc.displayCurrency !== "USD"
-                  ? dc.convert(usd, btcUsdRate)
-                  : usd;
+                !skipClientConvert && btcUsdRate && dc.displayCurrency !== "USD"
+                  ? dc.convert(raw, btcUsdRate)
+                  : raw;
               return (
                 <div className="rounded-lg bg-popover px-3 py-2 text-sm ring-1 ring-border shadow-md">
                   <p className="text-muted-foreground text-xs">

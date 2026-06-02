@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ResponsiveContainer, LineChart, Line } from "recharts";
+import { ResponsiveContainer, LineChart, Line, Tooltip } from "recharts";
 import { useAssetSnapshots } from "@/hooks/use-snapshots";
+import { formatChartDate } from "@/lib/chart-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
@@ -669,11 +670,25 @@ function AssetSparkline({ assetId }: { assetId: string }) {
   }, []);
 
   const { data: snapshots, isLoading } = useAssetSnapshots(assetId, from);
+  const dc = useOptionalDisplayCurrency();
+  const displayCurrency = dc?.displayCurrency ?? "USD";
+  const isBtcMode = displayCurrency !== "USD";
+  const satsFactor = displayCurrency === "sats" ? 1e8 : 1;
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
-    return [...snapshots].reverse().map((s) => ({ date: s.date, value: Number(s.value) }));
-  }, [snapshots]);
+    return [...snapshots]
+      .reverse()
+      .map((s) => {
+        const v = isBtcMode
+          ? s.valueInBtc != null
+            ? Number(s.valueInBtc) * satsFactor
+            : null
+          : Number(s.value);
+        return v != null && v > 0 ? { date: s.date, value: v } : null;
+      })
+      .filter((p): p is { date: string; value: number } => p != null);
+  }, [snapshots, isBtcMode, satsFactor]);
 
   if (isLoading) return <Skeleton className="h-24" />;
 
@@ -689,6 +704,29 @@ function AssetSparkline({ assetId }: { assetId: string }) {
     <div className="h-24">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
+          <Tooltip
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.[0]) return null;
+              const v = payload[0].value as number;
+              const formatted = dc
+                ? isBtcMode
+                  ? dc.format(v)
+                  : new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    }).format(v)
+                : v.toFixed(2);
+              return (
+                <div className="rounded-md bg-popover px-2 py-1 text-xs ring-1 ring-border shadow-md">
+                  <p className="text-muted-foreground">
+                    {label ? formatChartDate(label as string) : ""}
+                  </p>
+                  <p className="font-medium tabular-nums">{formatted}</p>
+                </div>
+              );
+            }}
+          />
           <Line
             type="monotone"
             dataKey="value"

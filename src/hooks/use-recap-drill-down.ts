@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 interface DrillDownPoint {
   date: string;
   value: number;
+  valueInBtc: number | null;
 }
 
 interface DrillDownResponse {

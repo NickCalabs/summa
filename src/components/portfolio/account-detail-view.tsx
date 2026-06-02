@@ -45,6 +45,12 @@ import {
 } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { getProviderLabel } from "@/lib/asset-helpers";
+import { useDisplayCurrency } from "@/contexts/display-currency-context";
+import {
+  getFromDate,
+  formatChartDate,
+  type DateRangeKey,
+} from "@/lib/chart-utils";
 
 interface AccountDetailViewProps {
   portfolioId: string;
@@ -1351,6 +1357,8 @@ function DocumentsTab({ asset }: { asset: AccountAsset }) {
   );
 }
 
+const HISTORY_RANGES: DateRangeKey[] = ["1M", "3M", "6M", "YTD", "1Y", "ALL"];
+
 function HistoryTab({
   assetId,
   currency,
@@ -1360,11 +1368,8 @@ function HistoryTab({
   currency: string;
   title?: string;
 }) {
-  const from = useMemo(() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 1);
-    return toDateString(d);
-  }, []);
+  const [range, setRange] = useState<DateRangeKey>("1Y");
+  const from = getFromDate(range);
   const { data: snapshots, isLoading } = useAssetSnapshots(assetId, from);
   const rows = useMemo(
     () =>
@@ -1374,15 +1379,50 @@ function HistoryTab({
     [snapshots]
   );
 
+  // The chart's window is whatever range the user selected, but the rendered
+  // line may be shorter (MiniChart filters bogus $0 days). Caption shows the
+  // span of points we actually drew so it matches what's on screen.
+  const visibleRange = useMemo(() => {
+    const dates = rows
+      .filter((r) => Number(r.value) > 0)
+      .map((r) => r.date);
+    if (dates.length === 0) return null;
+    const sorted = [...dates].sort();
+    return {
+      first: sorted[0],
+      last: sorted[sorted.length - 1],
+    };
+  }, [rows]);
+
   return (
     <div className="space-y-6">
       <Surface title={title} description="Recent valuation history for the account.">
         <div className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {visibleRange
+                ? `${formatChartDate(visibleRange.first)} → ${formatChartDate(visibleRange.last)}`
+                : ""}
+            </span>
+            <div className="flex gap-1">
+              {HISTORY_RANGES.map((r) => (
+                <Button
+                  key={r}
+                  variant={r === range ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setRange(r)}
+                >
+                  {r}
+                </Button>
+              ))}
+            </div>
+          </div>
           <div className="h-56 rounded-xl border border-border/70 bg-muted/10 p-4">
             {isLoading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : (
-              <MiniChart values={rows.map((row) => Number(row.value)).reverse()} />
+              <MiniChart snapshots={rows} />
             )}
           </div>
 
@@ -1629,7 +1669,28 @@ function EmptyState({
   );
 }
 
-function MiniChart({ values }: { values: number[] }) {
+function MiniChart({
+  snapshots,
+}: {
+  snapshots: AssetSnapshot[];
+}) {
+  const dc = useDisplayCurrency();
+  const isBtcMode = dc.displayCurrency !== "USD";
+  const satsFactor = dc.displayCurrency === "sats" ? 1e8 : 1;
+
+  // Pick the right value per row, then drop any leading-zero / pre-tracking
+  // points so the auto-scale isn't dragged to the floor. `snapshots` arrives
+  // newest-first; reverse to chronological so the line reads left-to-right.
+  const values = [...snapshots]
+    .reverse()
+    .map((s) => {
+      if (isBtcMode) {
+        return s.valueInBtc != null ? Number(s.valueInBtc) * satsFactor : null;
+      }
+      return Number(s.value);
+    })
+    .filter((v): v is number => v != null && v > 0);
+
   if (values.length < 2) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

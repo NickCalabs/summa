@@ -44,6 +44,7 @@ export function NetWorthChart({
 }: NetWorthChartProps) {
   const { data: snapshots, isLoading } = usePortfolioSnapshots(portfolioId, from);
   const { displayCurrency, convert } = useDisplayCurrency();
+  const isBtcMode = displayCurrency !== "USD";
 
   const chartData = useMemo(() => {
     if (!snapshots) return [];
@@ -51,17 +52,30 @@ export function NetWorthChart({
       .reverse()
       .filter((s) => {
         if (displayCurrency === "USD") return true;
-        return s.btcUsdRate != null;
+        // BTC/sats mode needs the rolled-up BTC field. Fall back to the
+        // legacy on-the-fly conversion when the backfill hasn't run yet.
+        return s.netWorthInBtc != null || s.btcUsdRate != null;
       })
       .map((s) => {
         const rate = s.btcUsdRate ? Number(s.btcUsdRate) : null;
+        const netWorthDisplay = isBtcMode
+          ? s.netWorthInBtc != null
+            ? Number(s.netWorthInBtc) * (displayCurrency === "sats" ? 1e8 : 1)
+            : convert(Number(s.netWorth), rate)
+          : Number(s.netWorth);
+        const investableDisplay = isBtcMode
+          ? s.investableInBtc != null
+            ? Number(s.investableInBtc) * (displayCurrency === "sats" ? 1e8 : 1)
+            : s.investableTotal != null
+              ? convert(Number(s.investableTotal), rate)
+              : null
+          : s.investableTotal != null
+            ? Number(s.investableTotal)
+            : null;
         return {
           date: s.date,
-          netWorth: convert(Number(s.netWorth), rate),
-          investable:
-            s.investableTotal != null
-              ? convert(Number(s.investableTotal), rate)
-              : null,
+          netWorth: netWorthDisplay,
+          investable: investableDisplay,
         };
       });
 
@@ -83,7 +97,7 @@ export function NetWorthChart({
     }
 
     return data;
-  }, [snapshots, displayCurrency, convert, todayNetWorth, todayInvestable, todayBtcUsdRate]);
+  }, [snapshots, displayCurrency, isBtcMode, convert, todayNetWorth, todayInvestable, todayBtcUsdRate]);
 
   const hasInvestable = chartData.some((d) => d.investable != null);
 
@@ -123,7 +137,13 @@ export function NetWorthChart({
             stroke="color-mix(in srgb, var(--border) 78%, transparent)"
             strokeDasharray="0"
           />
-          <YAxis hide domain={["dataMin", "dataMax"]} />
+          {/* Anchor to zero on the low end so a 14% dip doesn't render as a
+              cliff to the floor. dataMax * 1.05 leaves headroom at the top. */}
+          <YAxis
+            hide
+            domain={[0, (max: number) => max * 1.05]}
+            allowDataOverflow={false}
+          />
           <XAxis
             dataKey="date"
             tickFormatter={formatChartDate}
