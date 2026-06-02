@@ -26,12 +26,24 @@ describe("parseCryptoHoldings", () => {
     expect(parseCryptoHoldings(holdings, securities).size).toBe(0);
   });
 
-  it("keeps the largest holding when an account has more than one crypto holding", () => {
+  it("keeps the largest holding when the winner arrives second", () => {
     const holdings = [
-      { account_id: "acct_btc", security_id: "sec_btc", quantity: 0.1, institution_price: 1 },
-      { account_id: "acct_btc", security_id: "sec_btc", quantity: 0.24, institution_price: 1 },
+      { account_id: "acct_btc", security_id: "sec_btc", quantity: 0.1, institution_price: 100 },
+      { account_id: "acct_btc", security_id: "sec_btc", quantity: 0.24, institution_price: 200 },
     ];
-    expect(parseCryptoHoldings(holdings, securities).get("acct_btc")?.quantity).toBe(0.24);
+    const h = parseCryptoHoldings(holdings, securities).get("acct_btc");
+    expect(h?.quantity).toBe(0.24);
+    expect(h?.institutionPrice).toBe(200);
+  });
+
+  it("keeps the largest holding when the winner arrives first", () => {
+    const holdings = [
+      { account_id: "acct_btc", security_id: "sec_btc", quantity: 0.24, institution_price: 200 },
+      { account_id: "acct_btc", security_id: "sec_btc", quantity: 0.1, institution_price: 100 },
+    ];
+    const h = parseCryptoHoldings(holdings, securities).get("acct_btc");
+    expect(h?.quantity).toBe(0.24);
+    expect(h?.institutionPrice).toBe(200);
   });
 });
 

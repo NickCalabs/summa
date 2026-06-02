@@ -211,13 +211,14 @@ interface RawHolding {
   quantity: number;
   institution_price?: number | null;
 }
+
 interface RawSecurity {
   security_id: string;
   type?: string | null;
 }
 
 // Pure: reduce Plaid holdings + securities to one crypto holding per account
-// (largest quantity wins — River exposes a single BTC holding per account).
+// (largest quantity wins — assumes one crypto asset per account, as River does.).
 export function parseCryptoHoldings(
   holdings: RawHolding[],
   securities: RawSecurity[]
@@ -246,9 +247,9 @@ export function computeCryptoValue(
   return (quantity * price).toFixed(2);
 }
 
-// Fetches crypto holdings for a connection. Returns an empty map (and logs)
-// if the Investments product is unavailable — callers must NOT fall back to
-// USD for crypto rows; they simply leave quantity unchanged.
+// Fetches crypto holdings for a connection. Returns an empty map on any error
+// (unavailable Investments product, network failure, etc.) — callers leave
+// quantity unchanged rather than falling back to USD for crypto rows.
 export async function getCryptoHoldings(
   accessToken: string
 ): Promise<Map<string, PlaidCryptoHolding>> {
