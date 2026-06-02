@@ -39,6 +39,7 @@ describe("computePlaidTakeover — crypto", () => {
   it("does NOT overwrite quantity when the holding is missing", () => {
     const patch = computePlaidTakeover(cryptoAccount, targetCrypto, null);
     expect(patch.quantity).toBeUndefined();
+    expect(patch.currentValue).toBeUndefined();
     expect(patch.providerType).toBe("plaid");
   });
 });

@@ -34,10 +34,12 @@ export function computePlaidTakeover(
   const isCrypto = account.type === "investment" && target.type === "crypto";
 
   if (isCrypto) {
-    const quantity =
-      holdingQuantity ?? (target.quantity != null ? Number(target.quantity) : null);
+    // River crypto accounts are Plaid "investment" type while the asset side is
+    // "crypto"; both must match. A "crypto" asset on a depository account is an
+    // edge case that deliberately falls through to the cash/balance branch.
     const price = target.currentPrice != null ? Number(target.currentPrice) : null;
-    const value = computeCryptoValue(quantity, price);
+    const value =
+      holdingQuantity != null ? computeCryptoValue(holdingQuantity, price) : null;
     return {
       providerType: "plaid",
       providerConfig: {
