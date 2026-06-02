@@ -56,7 +56,12 @@ export async function refreshPrices(opts: { sources?: string[] } = {}) {
     const tickerAssets = await db
       .select()
       .from(assets)
-      .where(eq(assets.providerType, "ticker"));
+      .where(
+        or(
+          eq(assets.providerType, "ticker"),
+          and(eq(assets.providerType, "plaid"), eq(assets.type, "crypto"))
+        )
+      );
 
     const activeAssets = tickerAssets.filter((a) => !a.isArchived);
 

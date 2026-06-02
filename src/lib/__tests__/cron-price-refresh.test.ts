@@ -210,4 +210,51 @@ describe("refreshPrices", () => {
     expect(mocks.mockGetYahooBatchPrices).toHaveBeenCalledWith(["AAPL", "MSFT"]);
     expect(mocks.mockSet).toHaveBeenCalledTimes(2);
   });
+
+  it("prices a plaid+crypto asset via coingecko and the WHERE clause covers plaid/crypto", async () => {
+    const plaidCryptoAsset = {
+      id: "plaid-crypto-1",
+      providerType: "plaid",
+      type: "crypto",
+      isArchived: false,
+      currency: "USD",
+      quantity: "0.2",
+      providerConfig: {
+        source: "coingecko",
+        ticker: "bitcoin",
+        exchange: "crypto",
+        connectionId: "c1",
+        plaidAccountId: "p1",
+      },
+    };
+    setupSelectReturning([plaidCryptoAsset]);
+    mocks.mockGetCoinGeckoBatchPrices.mockResolvedValue(
+      new Map([["bitcoin", { symbol: "bitcoin", price: 70000, currency: "USD", timestamp: new Date() }]])
+    );
+
+    await refreshPrices({ sources: ["coingecko"] });
+
+    // Assert the WHERE predicate passed to the query covers the plaid+crypto condition.
+    // We do this by walking the drizzle SQL queryChunks tree and serialising all
+    // string-like values to a single string, then checking it mentions both
+    // "plaid" and "crypto" (which only appears in the widened OR clause).
+    function flattenSql(node: unknown): string {
+      if (node == null) return "";
+      if (typeof node === "string") return node;
+      if (Array.isArray(node)) return node.map(flattenSql).join("");
+      const obj = node as Record<string, unknown>;
+      if ("queryChunks" in obj) return flattenSql(obj.queryChunks);
+      if ("value" in obj) return flattenSql(obj.value);
+      return "";
+    }
+    const whereArg = mocks.mockSelectWhere.mock.calls[0]?.[0];
+    const sqlText = flattenSql(whereArg);
+    expect(sqlText).toContain("plaid");
+    expect(sqlText).toContain("crypto");
+
+    // Assert the asset was priced: quantity 0.2 × price 70000 = 14000.00
+    expect(mocks.mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ currentValue: "14000.00" })
+    );
+  });
 });
