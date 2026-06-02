@@ -198,3 +198,72 @@ export function isDepositoryAccount(type: string): boolean {
 export function isLiabilityAccount(type: string): boolean {
   return type === "credit" || type === "loan";
 }
+
+export interface PlaidCryptoHolding {
+  plaidAccountId: string;
+  quantity: number;
+  institutionPrice: number | null;
+}
+
+interface RawHolding {
+  account_id: string;
+  security_id: string;
+  quantity: number;
+  institution_price?: number | null;
+}
+interface RawSecurity {
+  security_id: string;
+  type?: string | null;
+}
+
+// Pure: reduce Plaid holdings + securities to one crypto holding per account
+// (largest quantity wins — River exposes a single BTC holding per account).
+export function parseCryptoHoldings(
+  holdings: RawHolding[],
+  securities: RawSecurity[]
+): Map<string, PlaidCryptoHolding> {
+  const secType = new Map(securities.map((s) => [s.security_id, s.type ?? null]));
+  const result = new Map<string, PlaidCryptoHolding>();
+  for (const h of holdings) {
+    if (secType.get(h.security_id) !== "cryptocurrency") continue;
+    const existing = result.get(h.account_id);
+    if (existing && existing.quantity >= h.quantity) continue;
+    result.set(h.account_id, {
+      plaidAccountId: h.account_id,
+      quantity: h.quantity,
+      institutionPrice: h.institution_price ?? null,
+    });
+  }
+  return result;
+}
+
+// Pure: value = quantity × price, 2dp; null if either input missing.
+export function computeCryptoValue(
+  quantity: number | null,
+  price: number | null
+): string | null {
+  if (quantity == null || price == null) return null;
+  return (quantity * price).toFixed(2);
+}
+
+// Fetches crypto holdings for a connection. Returns an empty map (and logs)
+// if the Investments product is unavailable — callers must NOT fall back to
+// USD for crypto rows; they simply leave quantity unchanged.
+export async function getCryptoHoldings(
+  accessToken: string
+): Promise<Map<string, PlaidCryptoHolding>> {
+  const plaid = getPlaidClient();
+  try {
+    const response = await plaid.investmentsHoldingsGet({ access_token: accessToken });
+    return parseCryptoHoldings(
+      response.data.holdings as RawHolding[],
+      response.data.securities as RawSecurity[]
+    );
+  } catch (err: any) {
+    console.warn(
+      "[plaid] investmentsHoldingsGet failed:",
+      err?.response?.data?.error_code ?? err?.message
+    );
+    return new Map();
+  }
+}
