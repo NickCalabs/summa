@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computePlaidTakeover } from "@/lib/plaid-relink";
+import { computePlaidTakeover, isCryptoTakeover } from "@/lib/plaid-relink";
 
 const cryptoAccount = {
   connectionId: "conn1",
@@ -13,6 +13,14 @@ const cashAccount = {
   type: "depository",
   currentBalance: "1730.41",
 };
+
+describe("isCryptoTakeover", () => {
+  it("is true only for investment account + crypto asset", () => {
+    expect(isCryptoTakeover("investment", "crypto")).toBe(true);
+    expect(isCryptoTakeover("depository", "crypto")).toBe(false);
+    expect(isCryptoTakeover("investment", "cash")).toBe(false);
+  });
+});
 
 describe("computePlaidTakeover — crypto", () => {
   const targetCrypto = {

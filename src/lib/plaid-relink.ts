@@ -23,6 +23,10 @@ export interface AssetTakeoverPatch {
   quantity?: string;
 }
 
+export function isCryptoTakeover(accountType: string, assetType: string): boolean {
+  return accountType === "investment" && assetType === "crypto";
+}
+
 // Decide how a relink takes over the target asset. Crypto: drive quantity from
 // the holding, value = quantity × the asset's own price, and MERGE providerConfig
 // so the pricing source/ticker survive. Cash/other: USD balance, fresh config.
@@ -31,7 +35,7 @@ export function computePlaidTakeover(
   target: TakeoverTargetAsset,
   holdingQuantity: number | null
 ): AssetTakeoverPatch {
-  const isCrypto = account.type === "investment" && target.type === "crypto";
+  const isCrypto = isCryptoTakeover(account.type, target.type);
 
   if (isCrypto) {
     // River crypto accounts are Plaid "investment" type while the asset side is

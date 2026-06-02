@@ -5,12 +5,13 @@ import {
   errorResponse,
   handleError,
   jsonResponse,
+  requireAssetOwnership,
   requireAuth,
   validateUuid,
 } from "@/lib/api-helpers";
 import { decrypt } from "@/lib/encryption";
 import { getCryptoHoldings } from "@/lib/providers/plaid";
-import { computePlaidTakeover } from "@/lib/plaid-relink";
+import { computePlaidTakeover, isCryptoTakeover } from "@/lib/plaid-relink";
 import { z } from "zod";
 
 const relinkBody = z.discriminatedUnion("action", [
@@ -46,12 +47,14 @@ export async function PATCH(
     const plaidAccount = row.account;
 
     if (body.action === "unlink") {
+      // Revert old asset to manual if it exists
       if (plaidAccount.assetId) {
         await db
           .update(assets)
           .set({ providerType: "manual", providerConfig: {}, updatedAt: new Date() })
           .where(eq(assets.id, plaidAccount.assetId));
       }
+      // Mark account as untracked
       await db
         .update(plaidAccounts)
         .set({ assetId: null, isTracked: false, updatedAt: new Date() })
@@ -61,12 +64,7 @@ export async function PATCH(
 
     // action === "relink"
     const targetAssetId = body.assetId;
-    const [targetAsset] = await db
-      .select()
-      .from(assets)
-      .where(eq(assets.id, targetAssetId))
-      .limit(1);
-    if (!targetAsset) return errorResponse("Target asset not found", 404);
+    const { asset: targetAsset } = await requireAssetOwnership(targetAssetId, user.id);
 
     // Target must not already be linked to a different tracked Plaid account
     const [existingLink] = await db
@@ -93,7 +91,7 @@ export async function PATCH(
 
     // For a crypto takeover, pull the coin quantity from holdings
     let holdingQuantity: number | null = null;
-    if (plaidAccount.type === "investment" && targetAsset.type === "crypto") {
+    if (isCryptoTakeover(plaidAccount.type, targetAsset.type)) {
       const accessToken = decrypt(row.connection.accessTokenEnc);
       const holdings = await getCryptoHoldings(accessToken);
       holdingQuantity = holdings.get(plaidAccount.plaidAccountId)?.quantity ?? null;
