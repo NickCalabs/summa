@@ -43,3 +43,23 @@ export function planAssetSnapshots(
   }
   return out;
 }
+
+export function filterExistingAssetSnapshots(
+  planned: PlannedAssetSnapshot[],
+  existingKeys: Set<string> // "assetId@date"
+): PlannedAssetSnapshot[] {
+  return planned.filter((p) => !existingKeys.has(`${p.assetId}@${p.date}`));
+}
+
+// Portfolio snapshots are created only for pre-Summa-era union dates that don't
+// already have a row — so we never undercount a mixed (partly-live) date and
+// never touch an existing snapshot.
+export function portfolioDatesToCreate(
+  unionDates: string[],
+  globalCutoff: string | null,     // earliest existing portfolio_snapshot date
+  existingDates: Set<string>
+): string[] {
+  return unionDates.filter(
+    (d) => (globalCutoff == null || d < globalCutoff) && !existingDates.has(d)
+  );
+}

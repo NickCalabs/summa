@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mostRecentOnOrBefore, planAssetSnapshots } from "@/lib/kubera-history/plan";
+import { mostRecentOnOrBefore, planAssetSnapshots, filterExistingAssetSnapshots, portfolioDatesToCreate } from "@/lib/kubera-history/plan";
 
 const btcRows = [
   { date: "2025-01-01", usd: 100, qty: 1, price: 100 },
@@ -39,5 +39,26 @@ describe("planAssetSnapshots", () => {
     const dates = planned.map((p) => p.date);
     expect(dates).toContain("2025-01-01");
     expect(dates).not.toContain("2025-03-01"); // cutoff is exclusive
+  });
+});
+
+describe("insert-only filters", () => {
+  it("drops planned asset snapshots whose (assetId,date) already exists", () => {
+    const planned = [
+      { assetId: "btc", date: "2025-01-01", usd: 100, qty: 1, price: 100 },
+      { assetId: "btc", date: "2025-02-01", usd: 100, qty: 1, price: 100 },
+    ];
+    const existing = new Set(["btc@2025-02-01"]);
+    const kept = filterExistingAssetSnapshots(planned, existing);
+    expect(kept.map((p) => p.date)).toEqual(["2025-01-01"]);
+  });
+
+  it("only creates portfolio snapshots for union dates before the global cutoff and not already present", () => {
+    const dates = portfolioDatesToCreate(
+      ["2025-01-01", "2025-02-01", "2025-03-01"],
+      "2025-03-01",                 // globalCutoff (earliest existing portfolio_snapshot)
+      new Set(["2025-01-01"])       // existing portfolio_snapshot dates
+    );
+    expect(dates).toEqual(["2025-02-01"]); // 01 exists, 03 is >= cutoff
   });
 });
