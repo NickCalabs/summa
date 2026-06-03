@@ -1,3 +1,7 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
 interface HistodayEntry { time: number; close: number }
 
 export function parseHistoday(json: unknown): Map<string, number> {
@@ -11,12 +15,20 @@ export function parseHistoday(json: unknown): Map<string, number> {
   return out;
 }
 
+const CACHE_PATH = path.join(os.tmpdir(), "summa-btc-history-cache.json");
+
 // Fetches up to 2000 days of daily BTC/USD closes (covers ~5.5y). Returns
-// date(YYYY-MM-DD) -> USD close.
+// date(YYYY-MM-DD) -> USD close. Caches the raw response to CACHE_PATH so
+// re-runs require no network call.
 export async function getBtcUsdHistory(): Promise<Map<string, number>> {
+  if (fs.existsSync(CACHE_PATH)) {
+    return parseHistoday(JSON.parse(fs.readFileSync(CACHE_PATH, "utf8")));
+  }
   const res = await fetch(
     "https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=2000"
   );
   if (!res.ok) throw new Error(`CryptoCompare histoday failed: ${res.status}`);
-  return parseHistoday(await res.json());
+  const json = await res.json() as unknown;
+  fs.writeFileSync(CACHE_PATH, JSON.stringify(json));
+  return parseHistoday(json);
 }
