@@ -128,6 +128,8 @@ async function main() {
   }
 }
 
+type DbOrTx = ReturnType<typeof drizzle> | Parameters<Parameters<ReturnType<typeof drizzle>["transaction"]>[0]>[0];
+
 async function commit(
   db: ReturnType<typeof drizzle>,
   ctx: {
@@ -142,81 +144,92 @@ async function commit(
   const { portfolio, planned, portfolioDates, sheetTypeMap, sectionSheetMap, assetMetaById } = ctx;
 
   // Invariant BEFORE: sum of current asset values (must be unchanged after).
+  // Fetched OUTSIDE the transaction so a long-running network call does not hold a TX open.
   const before = await currentValueSum(db, portfolio.id);
 
+  // BTC history fetch OUTSIDE the transaction (network I/O must not block a TX).
   const btc = await getBtcUsdHistory();
   const insertedAssetIds: string[] = [];
   const insertedPortfolioIds: string[] = [];
 
-  // Insert asset snapshots (insert-only via onConflictDoNothing)
-  for (const p of planned) {
-    const rate = btc.get(p.date) ?? null;
-    const valueInBtc = rate ? (p.usd / rate).toFixed(10) : null;
-    const [row] = await db.insert(schema.assetSnapshots).values({
-      assetId: p.assetId, date: p.date,
-      value: p.usd.toFixed(2), valueInBase: p.usd.toFixed(2), valueInBtc,
-      price: p.price != null ? p.price.toFixed(8) : null,
-      quantity: p.qty != null ? p.qty.toFixed(8) : null,
-      source: "import",
-    }).onConflictDoNothing({ target: [schema.assetSnapshots.assetId, schema.assetSnapshots.date] }).returning();
-    if (row) insertedAssetIds.push(row.id);
-  }
-
-  // Create portfolio snapshots for each historical date (insert-only)
-  const plannedByDate = new Map<string, typeof planned>();
-  for (const p of planned) {
-    const list = plannedByDate.get(p.date) ?? [];
-    list.push(p);
-    plannedByDate.set(p.date, list);
-  }
-  for (const date of portfolioDates) {
-    const dayRows = plannedByDate.get(date) ?? [];
-    const rate = btc.get(date) ?? null;
-    const aggInputs: AggregatableAsset[] = [];
-    for (const p of dayRows) {
-      const meta = assetMetaById.get(p.assetId);
-      if (!meta) continue;
-      aggInputs.push({
-        id: meta.id, sectionId: meta.sectionId, parentAssetId: meta.parentAssetId,
-        currency: portfolio.currency, currentValue: p.usd.toFixed(2),
-        ownershipPct: meta.ownershipPct, type: meta.type,
-        isCashEquivalent: meta.isCashEquivalent, isInvestable: meta.isInvestable,
-      });
+  // Single atomic transaction: all inserts + invariant check.
+  // On any error (insert failure or invariant violation) Drizzle rolls back the entire TX
+  // and the exception propagates — no manifest is written.
+  await db.transaction(async (tx) => {
+    // Insert asset snapshots (insert-only via onConflictDoNothing)
+    for (const p of planned) {
+      const rate = btc.get(p.date) ?? null;
+      const valueInBtc = rate ? (p.usd / rate).toFixed(10) : null;
+      const [row] = await tx.insert(schema.assetSnapshots).values({
+        assetId: p.assetId, date: p.date,
+        value: p.usd.toFixed(2), valueInBase: p.usd.toFixed(2), valueInBtc,
+        price: p.price != null ? p.price.toFixed(8) : null,
+        quantity: p.qty != null ? p.qty.toFixed(8) : null,
+        source: "import",
+      }).onConflictDoNothing({ target: [schema.assetSnapshots.assetId, schema.assetSnapshots.date] }).returning();
+      if (row) insertedAssetIds.push(row.id);
     }
-    const t = aggregatePortfolioTotals({
-      assetRows: aggInputs, sectionSheetMap, sheetTypeMap,
-      baseCurrency: portfolio.currency, rates: {}, btcUsdRate: rate && rate > 0 ? rate : null,
-    });
-    const netWorth = t.totalAssets - t.totalDebts;
-    const nwBtc = t.totalAssetsInBtc != null && t.totalDebtsInBtc != null ? t.totalAssetsInBtc - t.totalDebtsInBtc : null;
-    const fb = (v: number | null) => (v != null ? v.toFixed(10) : null);
-    const [row] = await db.insert(schema.portfolioSnapshots).values({
-      portfolioId: portfolio.id, date,
-      totalAssets: t.totalAssets.toFixed(2), totalDebts: t.totalDebts.toFixed(2),
-      netWorth: netWorth.toFixed(2), cashOnHand: t.cashOnHand.toFixed(2),
-      investableTotal: t.investableTotal.toFixed(2),
-      totalAssetsInBtc: fb(t.totalAssetsInBtc), totalDebtsInBtc: fb(t.totalDebtsInBtc),
-      netWorthInBtc: fb(nwBtc), cashOnHandInBtc: fb(t.cashOnHandInBtc), investableInBtc: fb(t.investableInBtc),
-      btcUsdRate: rate ? rate.toFixed(2) : null,
-    }).onConflictDoNothing({ target: [schema.portfolioSnapshots.portfolioId, schema.portfolioSnapshots.date] }).returning();
-    if (row) insertedPortfolioIds.push(row.id);
-  }
 
-  // Invariant AFTER
-  const after = await currentValueSum(db, portfolio.id);
-  if (before !== after) {
-    throw new Error(`INVARIANT VIOLATED: current value sum changed ${before} -> ${after}. Investigate before trusting this run.`);
-  }
+    // Create portfolio snapshots for each historical date (insert-only)
+    const plannedByDate = new Map<string, typeof planned>();
+    for (const p of planned) {
+      const list = plannedByDate.get(p.date) ?? [];
+      list.push(p);
+      plannedByDate.set(p.date, list);
+    }
+    for (const date of portfolioDates) {
+      const dayRows = plannedByDate.get(date) ?? [];
+      const rate = btc.get(date) ?? null;
+      const aggInputs: AggregatableAsset[] = [];
+      for (const p of dayRows) {
+        const meta = assetMetaById.get(p.assetId);
+        if (!meta) continue;
+        aggInputs.push({
+          id: meta.id, sectionId: meta.sectionId, parentAssetId: meta.parentAssetId,
+          currency: portfolio.currency, currentValue: p.usd.toFixed(2),
+          ownershipPct: meta.ownershipPct, type: meta.type,
+          isCashEquivalent: meta.isCashEquivalent, isInvestable: meta.isInvestable,
+        });
+      }
+      const t = aggregatePortfolioTotals({
+        assetRows: aggInputs, sectionSheetMap, sheetTypeMap,
+        baseCurrency: portfolio.currency, rates: {}, btcUsdRate: rate && rate > 0 ? rate : null,
+      });
+      const netWorth = t.totalAssets - t.totalDebts;
+      const nwBtc = t.totalAssetsInBtc != null && t.totalDebtsInBtc != null ? t.totalAssetsInBtc - t.totalDebtsInBtc : null;
+      const fb = (v: number | null) => (v != null ? v.toFixed(10) : null);
+      const [row] = await tx.insert(schema.portfolioSnapshots).values({
+        portfolioId: portfolio.id, date,
+        totalAssets: t.totalAssets.toFixed(2), totalDebts: t.totalDebts.toFixed(2),
+        netWorth: netWorth.toFixed(2), cashOnHand: t.cashOnHand.toFixed(2),
+        investableTotal: t.investableTotal.toFixed(2),
+        totalAssetsInBtc: fb(t.totalAssetsInBtc), totalDebtsInBtc: fb(t.totalDebtsInBtc),
+        netWorthInBtc: fb(nwBtc), cashOnHandInBtc: fb(t.cashOnHandInBtc), investableInBtc: fb(t.investableInBtc),
+        btcUsdRate: rate ? rate.toFixed(2) : null,
+      }).onConflictDoNothing({ target: [schema.portfolioSnapshots.portfolioId, schema.portfolioSnapshots.date] }).returning();
+      if (row) insertedPortfolioIds.push(row.id);
+    }
 
+    // Invariant AFTER (inside TX so a violation rolls back all writes)
+    const after = await currentValueSum(tx, portfolio.id);
+    if (before !== after) {
+      throw new Error(`INVARIANT VIOLATED: current value sum changed ${before} -> ${after}. Rolled back; investigate.`);
+    }
+  });
+
+  // Manifest written only after the transaction commits successfully.
   const manifest = { ts: new Date().toISOString(), portfolioId: portfolio.id, insertedAssetIds, insertedPortfolioIds };
   const file = `kubera-backfill-manifest-${manifest.ts.replace(/[:.]/g, "-")}.json`;
   fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+
+  // Capture `after` for the success log (re-read outside TX is fine for display only).
+  const afterDisplay = await currentValueSum(db, portfolio.id);
   console.log(`\nInserted ${insertedAssetIds.length} asset snapshots, ${insertedPortfolioIds.length} portfolio snapshots.`);
-  console.log(`Invariant OK (current value sum unchanged: ${after}).`);
+  console.log(`Invariant OK (current value sum unchanged: ${afterDisplay}).`);
   console.log(`Undo manifest written: ${file}`);
 }
 
-async function currentValueSum(db: ReturnType<typeof drizzle>, portfolioId: string): Promise<string> {
+async function currentValueSum(db: DbOrTx, portfolioId: string): Promise<string> {
   const sheetRows = await db.select().from(schema.sheets).where(eq(schema.sheets.portfolioId, portfolioId));
   const sectionRows = sheetRows.length
     ? await db.select().from(schema.sections).where(inArray(schema.sections.sheetId, sheetRows.map((s) => s.id))) : [];
