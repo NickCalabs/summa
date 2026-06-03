@@ -4,9 +4,13 @@ export interface AssetPlanInput {
   assetId: string;
   rows: KuberaHistoryRow[];   // sorted ascending
   cutoff: string | null;      // earliest existing Summa snapshot date (exclusive), or null = no cutoff
-  firstDate: string;          // rows[0].date
 }
 
+/**
+ * Returns the latest row with date <= the given date, or null if none.
+ * PRECONDITION: `rows` MUST be sorted ascending by date (the parser guarantees
+ * this). With unsorted input the early `break` yields silently wrong results.
+ */
 export function mostRecentOnOrBefore(
   rows: KuberaHistoryRow[],
   date: string
@@ -31,7 +35,6 @@ export function planAssetSnapshots(
   const out: PlannedAssetSnapshot[] = [];
   for (const a of inputs) {
     for (const date of union) {
-      if (date < a.firstDate) continue;          // asset didn't exist yet
       if (a.cutoff != null && date >= a.cutoff) continue; // Summa era
       const row = mostRecentOnOrBefore(a.rows, date);
       if (!row) continue;

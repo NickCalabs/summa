@@ -20,8 +20,8 @@ describe("mostRecentOnOrBefore", () => {
 describe("planAssetSnapshots", () => {
   it("carries forward each asset across the union of dates, within its active range", () => {
     const planned = planAssetSnapshots([
-      { assetId: "btc", rows: btcRows, cutoff: null, firstDate: "2025-01-01" },
-      { assetId: "cash", rows: cashRows, cutoff: null, firstDate: "2025-02-01" },
+      { assetId: "btc", rows: btcRows, cutoff: null },
+      { assetId: "cash", rows: cashRows, cutoff: null },
     ]);
     const byKey = new Map(planned.map((p) => [`${p.assetId}@${p.date}`, p]));
     expect(byKey.get("btc@2025-01-01")?.usd).toBe(100);
@@ -34,7 +34,7 @@ describe("planAssetSnapshots", () => {
 
   it("excludes dates on/after an asset's cutoff (Summa-era boundary)", () => {
     const planned = planAssetSnapshots([
-      { assetId: "btc", rows: btcRows, cutoff: "2025-03-01", firstDate: "2025-01-01" },
+      { assetId: "btc", rows: btcRows, cutoff: "2025-03-01" },
     ]);
     const dates = planned.map((p) => p.date);
     expect(dates).toContain("2025-01-01");
