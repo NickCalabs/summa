@@ -20,6 +20,11 @@ describe("parseKuberaHistoryFile", () => {
     const r = parseKuberaHistoryFile(csv);
     expect(r.assetName).toBe("Cash USD");
     expect(r.rows[0]).toEqual({ date: "2025-01-02", usd: 1000, qty: null, price: null });
+
+    const spaced = `Riv (BTC)\nDate        USD         QTY          PRICE (USD)\n2025-05-10  5856.25     0.05602784   104524.00`;
+    const r2 = parseKuberaHistoryFile(spaced);
+    expect(r2.assetName).toBe("Riv (BTC)");
+    expect(r2.rows[0]).toEqual({ date: "2025-05-10", usd: 5856.25, qty: 0.05602784, price: 104524 });
   });
 
   it("throws with the bad line when a row has a non-numeric USD or bad date", () => {

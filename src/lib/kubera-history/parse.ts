@@ -18,7 +18,7 @@ function num(cell: string | undefined): number | null {
 }
 
 export function parseKuberaHistoryFile(text: string): ParsedKuberaFile {
-  const lines = text.split(/\r?\n/).map((l) => l).filter((l) => l.trim().length > 0);
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length === 0) throw new Error("empty file");
   const assetName = lines[0].trim();
 
