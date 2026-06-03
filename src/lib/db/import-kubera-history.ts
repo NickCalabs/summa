@@ -33,6 +33,10 @@ function arg(flag: string): string | undefined {
 const COMMIT = process.argv.includes("--commit");
 const UNDO = arg("--undo");
 
+if (process.argv.includes("--undo") && !UNDO) {
+  throw new Error("--undo requires a manifest file path");
+}
+
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL not set (run with --env-file=.env)");
@@ -124,7 +128,112 @@ async function main() {
   }
 }
 
-async function commit(_db: unknown, _ctx: unknown): Promise<void> { throw new Error("commit not implemented yet"); }
-async function undo(_db: unknown, _manifest: string): Promise<void> { throw new Error("undo not implemented yet"); }
+async function commit(
+  db: ReturnType<typeof drizzle>,
+  ctx: {
+    portfolio: typeof schema.portfolios.$inferSelect;
+    planned: { assetId: string; date: string; usd: number; qty: number | null; price: number | null }[];
+    portfolioDates: string[];
+    sheetTypeMap: Map<string, string>;
+    sectionSheetMap: Map<string, string>;
+    assetMetaById: Map<string, typeof schema.assets.$inferSelect>;
+  }
+): Promise<void> {
+  const { portfolio, planned, portfolioDates, sheetTypeMap, sectionSheetMap, assetMetaById } = ctx;
+
+  // Invariant BEFORE: sum of current asset values (must be unchanged after).
+  const before = await currentValueSum(db, portfolio.id);
+
+  const btc = await getBtcUsdHistory();
+  const insertedAssetIds: string[] = [];
+  const insertedPortfolioIds: string[] = [];
+
+  // Insert asset snapshots (insert-only via onConflictDoNothing)
+  for (const p of planned) {
+    const rate = btc.get(p.date) ?? null;
+    const valueInBtc = rate ? (p.usd / rate).toFixed(10) : null;
+    const [row] = await db.insert(schema.assetSnapshots).values({
+      assetId: p.assetId, date: p.date,
+      value: p.usd.toFixed(2), valueInBase: p.usd.toFixed(2), valueInBtc,
+      price: p.price != null ? p.price.toFixed(8) : null,
+      quantity: p.qty != null ? p.qty.toFixed(8) : null,
+      source: "import",
+    }).onConflictDoNothing({ target: [schema.assetSnapshots.assetId, schema.assetSnapshots.date] }).returning();
+    if (row) insertedAssetIds.push(row.id);
+  }
+
+  // Create portfolio snapshots for each historical date (insert-only)
+  const plannedByDate = new Map<string, typeof planned>();
+  for (const p of planned) {
+    const list = plannedByDate.get(p.date) ?? [];
+    list.push(p);
+    plannedByDate.set(p.date, list);
+  }
+  for (const date of portfolioDates) {
+    const dayRows = plannedByDate.get(date) ?? [];
+    const rate = btc.get(date) ?? null;
+    const aggInputs: AggregatableAsset[] = [];
+    for (const p of dayRows) {
+      const meta = assetMetaById.get(p.assetId);
+      if (!meta) continue;
+      aggInputs.push({
+        id: meta.id, sectionId: meta.sectionId, parentAssetId: meta.parentAssetId,
+        currency: portfolio.currency, currentValue: p.usd.toFixed(2),
+        ownershipPct: meta.ownershipPct, type: meta.type,
+        isCashEquivalent: meta.isCashEquivalent, isInvestable: meta.isInvestable,
+      });
+    }
+    const t = aggregatePortfolioTotals({
+      assetRows: aggInputs, sectionSheetMap, sheetTypeMap,
+      baseCurrency: portfolio.currency, rates: {}, btcUsdRate: rate && rate > 0 ? rate : null,
+    });
+    const netWorth = t.totalAssets - t.totalDebts;
+    const nwBtc = t.totalAssetsInBtc != null && t.totalDebtsInBtc != null ? t.totalAssetsInBtc - t.totalDebtsInBtc : null;
+    const fb = (v: number | null) => (v != null ? v.toFixed(10) : null);
+    const [row] = await db.insert(schema.portfolioSnapshots).values({
+      portfolioId: portfolio.id, date,
+      totalAssets: t.totalAssets.toFixed(2), totalDebts: t.totalDebts.toFixed(2),
+      netWorth: netWorth.toFixed(2), cashOnHand: t.cashOnHand.toFixed(2),
+      investableTotal: t.investableTotal.toFixed(2),
+      totalAssetsInBtc: fb(t.totalAssetsInBtc), totalDebtsInBtc: fb(t.totalDebtsInBtc),
+      netWorthInBtc: fb(nwBtc), cashOnHandInBtc: fb(t.cashOnHandInBtc), investableInBtc: fb(t.investableInBtc),
+      btcUsdRate: rate ? rate.toFixed(2) : null,
+    }).onConflictDoNothing({ target: [schema.portfolioSnapshots.portfolioId, schema.portfolioSnapshots.date] }).returning();
+    if (row) insertedPortfolioIds.push(row.id);
+  }
+
+  // Invariant AFTER
+  const after = await currentValueSum(db, portfolio.id);
+  if (before !== after) {
+    throw new Error(`INVARIANT VIOLATED: current value sum changed ${before} -> ${after}. Investigate before trusting this run.`);
+  }
+
+  const manifest = { ts: new Date().toISOString(), portfolioId: portfolio.id, insertedAssetIds, insertedPortfolioIds };
+  const file = `kubera-backfill-manifest-${manifest.ts.replace(/[:.]/g, "-")}.json`;
+  fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+  console.log(`\nInserted ${insertedAssetIds.length} asset snapshots, ${insertedPortfolioIds.length} portfolio snapshots.`);
+  console.log(`Invariant OK (current value sum unchanged: ${after}).`);
+  console.log(`Undo manifest written: ${file}`);
+}
+
+async function currentValueSum(db: ReturnType<typeof drizzle>, portfolioId: string): Promise<string> {
+  const sheetRows = await db.select().from(schema.sheets).where(eq(schema.sheets.portfolioId, portfolioId));
+  const sectionRows = sheetRows.length
+    ? await db.select().from(schema.sections).where(inArray(schema.sections.sheetId, sheetRows.map((s) => s.id))) : [];
+  const assetRows = sectionRows.length
+    ? await db.select().from(schema.assets).where(inArray(schema.assets.sectionId, sectionRows.map((s) => s.id))) : [];
+  let sum = 0;
+  for (const a of assetRows) sum += Number(a.currentValue);
+  return sum.toFixed(2);
+}
+
+async function undo(db: ReturnType<typeof drizzle>, manifestPath: string): Promise<void> {
+  const m = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as { insertedAssetIds: string[]; insertedPortfolioIds: string[] };
+  if (m.insertedAssetIds.length)
+    await db.delete(schema.assetSnapshots).where(inArray(schema.assetSnapshots.id, m.insertedAssetIds));
+  if (m.insertedPortfolioIds.length)
+    await db.delete(schema.portfolioSnapshots).where(inArray(schema.portfolioSnapshots.id, m.insertedPortfolioIds));
+  console.log(`Undid ${m.insertedAssetIds.length} asset + ${m.insertedPortfolioIds.length} portfolio snapshots.`);
+}
 
 main().catch((e) => { console.error("import-kubera-history failed:", e); process.exit(1); });
