@@ -13,8 +13,10 @@ function isHeader(cells: string[]): boolean {
 
 function num(cell: string | undefined): number | null {
   if (cell == null || cell === "") return null;
-  const n = Number(cell.replace(/[$,]/g, ""));
-  return Number.isFinite(n) ? n : NaN; // NaN signals a parse error to the caller
+  const cleaned = cell.replace(/[$,]/g, "").trim();
+  if (/^nan$/i.test(cleaned)) return null; // Kubera writes "NaN" for empty qty/price on zero-value days
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : NaN; // NaN signals a genuine parse error to the caller
 }
 
 export function parseKuberaHistoryFile(text: string): ParsedKuberaFile {

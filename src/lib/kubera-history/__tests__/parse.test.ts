@@ -31,4 +31,9 @@ describe("parseKuberaHistoryFile", () => {
     const bad = `X\nDate\tUSD\n2025-13-99\tNaN`;
     expect(() => parseKuberaHistoryFile(bad)).toThrow(/2025-13-99/);
   });
+
+  it("treats a literal NaN in qty/price as null (Kubera zero-value rows)", () => {
+    const r = parseKuberaHistoryFile(`BTC (BTC)\nDate,USD,QTY,PRICE (USD)\n2025-03-15,0.00,0,NaN`);
+    expect(r.rows[0]).toEqual({ date: "2025-03-15", usd: 0, qty: 0, price: null });
+  });
 });
