@@ -30,6 +30,10 @@ export function parseKuberaHistoryFile(text: string): ParsedKuberaFile {
     if (isHeader(cells)) continue;
     const date = cells[0];
     if (!DATE_RE.test(date)) throw new Error(`bad date in row: "${line}"`);
+    // Kubera writes "NaN" for qty/price on zero-value days — omit those rows.
+    if (/^nan$/i.test((cells[2] ?? "").trim()) || /^nan$/i.test((cells[3] ?? "").trim())) {
+      continue;
+    }
     const usd = num(cells[1]);
     if (usd == null || Number.isNaN(usd)) throw new Error(`bad USD in row: "${line}"`);
     const qty = num(cells[2]);
