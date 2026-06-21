@@ -9,7 +9,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
-import { getCurrentBtcUsd } from "@/lib/providers/cryptocompare";
+import { getCurrentBtcUsd } from "@/lib/providers/btc-price";
 import { convertToBase } from "@/lib/currency";
 import { aggregatePortfolioTotals } from "@/lib/snapshots-aggregate";
 

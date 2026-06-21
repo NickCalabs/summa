@@ -15,7 +15,7 @@ import {
 } from "@/lib/api-helpers";
 import { parseBody, updatePortfolio } from "@/types";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
-import { getCurrentBtcUsd } from "@/lib/providers/cryptocompare";
+import { getCurrentBtcUsd } from "@/lib/providers/btc-price";
 import { convertToBase } from "@/lib/currency";
 import { isLiabilityAsset } from "@/lib/portfolio-utils";
 

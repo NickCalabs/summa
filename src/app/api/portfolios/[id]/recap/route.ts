@@ -18,7 +18,7 @@ import {
 import { isLiabilityAsset } from "@/lib/portfolio-utils";
 import { convertToBase } from "@/lib/currency";
 import { getExchangeRates } from "@/lib/providers/exchange-rates";
-import { getCurrentBtcUsd } from "@/lib/providers/cryptocompare";
+import { getCurrentBtcUsd } from "@/lib/providers/btc-price";
 import type {
   RecapReportType,
   RecapPeriod,
